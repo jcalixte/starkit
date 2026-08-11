@@ -14,6 +14,23 @@ enum Palette {
     /// `#FFF2C6` — the fruit itself, on the periwinkle chip at the head of the bar.
     static let fruit = NSColor(hex: 0xFFF2C6)
 
+    /// Not a colour but an opacity: what the panel is made of, under everything else.
+    ///
+    /// `.behindWindow` blending means the desktop sets the bar's brightness, and the text colours
+    /// answer the *appearance* — so a dark-mode bar over a pale wallpaper is white text on whatever
+    /// pale the blur let through, which is the case this exists for. The backing puts a neutral
+    /// between the two, heavy enough that the bar's own luminance wins the argument: against a white
+    /// desktop it leaves around 7:1 behind `labelColor`, and against a dark one it barely shows.
+    ///
+    /// Neutral rather than palette, deliberately. Cream heavy enough to do this job in dark mode
+    /// would be a fifth colour and a bright panel besides; black and white have no hue to add, which
+    /// is what lets the four colours stay the four colours.
+    static let backing = NSColor(name: "starkit.backing") { appearance in
+        appearance.isDark
+            ? NSColor(white: 0, alpha: 0.55)
+            : NSColor(white: 1, alpha: 0.5)
+    }
+
     /// `#FFF8DE` — a warm wash over the blur, so the bar is Starkit's rather than the system's.
     ///
     /// Weighted per appearance, because a fixed alpha cannot be right for both: cream heavy enough

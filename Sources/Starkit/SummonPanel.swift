@@ -794,6 +794,11 @@ private final class Wash: NSView {
             xRadius: 15.5,
             yRadius: 15.5
         )
+        // Backing first, then the cream over it: the first says how dark the bar is, the second says
+        // whose bar it is. Both go over the material rather than replacing it, so the blur is still
+        // doing the work of sitting in front of a desktop — it just no longer decides the contrast.
+        Palette.backing.setFill()
+        outline.fill()
         Palette.wash.setFill()
         outline.fill()
         Palette.edge.setStroke()
