@@ -31,8 +31,8 @@ import gleam/json.{type Json}
 import gleam/list
 import registry
 import starkit.{
-  type Context, type Effect, type Need, type Script, Context, Fetching, Kill,
-  Notify, Open, Paste, RunningApps, Script,
+  type Asking, type Context, type Effect, type Need, type Script, Asks, Context,
+  Decides, Fetching, Kill, Notify, Open, Paste, RunningApps, Script,
 }
 
 /// Every Script's Manifest, as JSON.
@@ -106,7 +106,21 @@ fn manifest(script: Script) -> Json {
     #("keyword", json.string(script.keyword)),
     #("name", json.string(script.name)),
     #("needs", json.array(script.needs, of: need)),
+    #("asks", asks(script.asks)),
   ])
+}
+
+/// The question, or null for a Script that has none.
+///
+/// Null rather than an empty string, because "" is a question a Script could plausibly have meant —
+/// an Input stage with no label — and the two must not collide. The Shelf reads it as an optional,
+/// so a manifests.json written before this field existed still lists every Script, which is F2's
+/// whole promise about a cache surviving what it was written by.
+fn asks(asking: Asking) -> Json {
+  case asking {
+    Decides -> json.null()
+    Asks(for: question) -> json.string(question)
+  }
 }
 
 fn need(need: Need) -> Json {

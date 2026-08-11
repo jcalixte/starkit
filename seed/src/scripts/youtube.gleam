@@ -22,13 +22,16 @@ import gleam/json
 import gleam/list
 import gleam/result
 import gleam/string
-import starkit.{type Effect, type Script, Fetching, Notify, Paste}
+import starkit.{type Effect, type Script, Asks, Fetching, Notify, Paste}
 
 pub fn script() -> Script {
   Fetching(
     keyword: "youtube",
     name: "Youtube",
     needs: [],
+    // The question is what the empty field says, and it is answered from the clipboard nine times
+    // out of ten — which is the whole reason the Seed arrives selected rather than waiting.
+    asks: Asks(for: "YouTube URL"),
     run: fn(input, _context) { decide(input) },
   )
 }

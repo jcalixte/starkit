@@ -51,8 +51,28 @@ pub type Context {
   Context(running_apps: List(String))
 }
 
-/// One Script: a Keyword to summon it by, a name to show, the Needs it declares, and the
-/// decision itself.
+/// Whether a Script asks the person for something before it can decide.
+///
+/// Declared rather than inferred, because the Shelf has to know before the Script runs: a Script
+/// that Asks gets an Input stage in the bar, Seeded from the clipboard and arriving selected, and
+/// one that Decides never does. The bar cannot wait to find out.
+///
+/// Not a Need, which was the cheaper way to say this and the wrong one. A Need is a slice of the
+/// *machine* the Shelf gathers into a Context and hands over; an Input is what the *person* typed,
+/// and it crosses the wire in its own field for that reason. Putting it in the Need list would have
+/// been one word the ContextGatherer has to know not to gather.
+pub type Asking {
+  /// Decides from the Context and nothing else. Never Seeded. `run` still receives an Input, and
+  /// it is always empty unless someone typed one after the Keyword anyway.
+  Decides
+
+  /// Asks for one line. The label is what the empty field shows — a question in the bar's own
+  /// voice, so `Asks(for: "YouTube URL")` reads as one in the place a person is about to answer it.
+  Asks(for: String)
+}
+
+/// One Script: a Keyword to summon it by, a name to show, the Needs it declares, whether it Asks,
+/// and the decision itself.
 ///
 /// `run` receives the Input typed after the Keyword — empty when nothing was typed — and returns
 /// the Effects to perform. It may reach the network on its own; it may never touch the machine.
@@ -66,11 +86,16 @@ pub type Context {
 /// every Script would import a concurrency primitive to wrap a list it already had (G5, G6). The
 /// asymmetry is the point. Decided at T5.2 with the first fetching Script in hand, as DESIGN.md §9
 /// said to.
+/// `asks` was added at T5.1, and adding a field to a constructor is the one change this type can
+/// make that every Script already written has to be edited for. It was taken now on purpose: the
+/// installer never overwrites src/scripts/, so the cost is one line per Script on every machine
+/// Starkit is on, and that number only grows. Five stubs is the cheapest it will ever be.
 pub type Script {
   Script(
     keyword: String,
     name: String,
     needs: List(Need),
+    asks: Asking,
     run: fn(String, Context) -> List(Effect),
   )
 
@@ -81,6 +106,7 @@ pub type Script {
     keyword: String,
     name: String,
     needs: List(Need),
+    asks: Asking,
     run: fn(String, Context) -> Promise(List(Effect)),
   )
 }
