@@ -339,6 +339,18 @@ everything still works but silently goes **Stale**.
   constructor for the asynchronous kind keeps the simple case simple and costs a word in the
   **Vocabulary** (G6 again, and *Ask first*). **Trigger to revisit:** T5.2, which is the first
   **Script** that fetches — decide it there, with a real one in hand, rather than now on a guess.
+
+  **Settled at T5.2: the second constructor.** `Fetching` sits beside `Script` and differs in one
+  field, its `run` answering `Promise(List(Effect))`. Asked, as *Ask first* requires. What decided it
+  was not uniformity but who pays: `Script` is untouched, so Work, Personal and Clean say nothing
+  about promises, and — the part that is not about taste — neither does any **Script** already
+  written in `~/.starkit`, which `install.sh` never overwrites and no install would migrate. The
+  uniform alternative would have broken every one of them on upgrade for the benefit of code that
+  never fetches. What it cost is one branch in `entry.gleam`, which had to be pattern-matched rather
+  than reached through `script.run` — the one field the two constructors do not share a type for,
+  which is the same fact seen from the other side. `entry.run` now returns `Promise(String)` in all
+  cases, because Gleam cannot answer a `String` down one branch and a `Promise` down another, and
+  `run.mjs` has awaited it since T0.3 for exactly this.
 - **The **Shelf** reads Gleam's build output path directly** — `build/dev/javascript/<pkg>/<mod>.mjs`
   is an internal layout, not a documented interface, and F5 depends on it. Mitigation: when a
   build succeeds but the expected **Artefact** is absent, go red with that specific message

@@ -52,18 +52,26 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 > hazard answered before T5.4 exists. Still 2 of 5 **Scripts** usable (Work, Personal) — everything
 > Phase 3 added is how you reach a **Script**, not how many there are.
 
+> **Phase 5 is being taken before Phase 4.** Nothing in it depends on Clean — the dependency column
+> in [plan.md](./plan.md) reads T2.4, T1.1, T0.5 — and it is the phase the plan itself calls the hard
+> one, so the risk in it is worth meeting with four phases of slack rather than none. It also lands
+> T5.4 while T2.4 and T2.6 are still warm, which is the code it rewrites. What it spends early is
+> Checkpoint D's "nothing needs Accessibility yet".
+
 ## Phase 4 — Clean
 
 - [ ] **T4.1** `clean` **Script** — **tests first**, before it runs for real
 - [ ] **T4.2** C8 ContextGatherer + the `needs` → gather → payload path
 - [ ] **T4.3** C7 **Kill** — `forceTerminate`
 
-> **Checkpoint D** — 3 of 5. Nothing needs Accessibility yet.
+> **Checkpoint D** — 3 of 5.
 
 ## Phase 5 — Youtube
 
 - [ ] **T5.1** **Input** stage + **Seed** from clipboard, arriving selected
-- [ ] **T5.2** `youtube` **Script** + tests (6 URL shapes) + `gleam_fetch`
+- [x] **T5.2** `youtube` **Script** + tests (6 URL shapes) + `gleam_fetch` — taken before T5.1,
+      because it needs no UI and proves the slice from a terminal; and it is where the **Vocabulary**
+      grew **Fetching**, which `DESIGN.md` §9 left for the first fetching **Script** to decide
 - [ ] **T5.3** C7 **Paste** — restore focus, ⌘V, leave the pasted text on the clipboard
 - [ ] **T5.4** **Notify** in the bar, spinner, 5 s kill
 - [ ] **T5.5** Accessibility grant survives a rebuild

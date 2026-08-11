@@ -317,6 +317,18 @@ irreversible. See `SPEC.md` § Testing strategy.
 
 The hard slice. Everything permission-, timing- and ordering-sensitive lives here.
 
+**Taken before Phase 4**, which the dependency column permits without a single edit: T5.1 needs T2.4,
+T5.2 needs T1.1, and the rest need each other. Being the hard slice is the argument for moving it
+rather than against — a Paste or a grant that behaves worse than T0.5's spike promised is cheap to
+find now and expensive to find last. It also lands T5.4 while T2.4 and T2.6 are still warm, and T5.4
+rewrites what they built: ↩ dismisses before running today, and a spinner is a reason to stay. What
+moving it spends is Checkpoint D's "nothing needs Accessibility yet", so T5.5 starts mattering to
+every rebuild in Phases 4, 6 and 7 rather than only to the last of them.
+
+**T5.2 was taken before T5.1**, which the plan had the other way round. It needs no UI and it makes
+`Starkit run youtube <url> --dry-run` print a **Paste** from a terminal, so the slice is proven on the
+spine before any surface — Checkpoint B's own argument. T5.1 blocks nothing.
+
 | ID | Task | Depends | Verify with |
 | -- | ---- | ------- | ----------- |
 | T5.1 | **Input** stage in the bar + **Seed** from clipboard, selected | T2.4 | **Seed** arrives selected; typing replaces it without clearing |
@@ -324,6 +336,50 @@ The hard slice. Everything permission-, timing- and ordering-sensitive lives her
 | T5.3 | C7 **Paste** — restore focus, `CGEvent` ⌘V, leave the pasted text on the clipboard | T0.5, T5.2 | pastes into the app frontmost *before* the bar; ⌘V afterwards repeats it |
 | T5.4 | **Notify** in the bar, spinner while running, 5 s kill | T5.3 | offline → **Notify**, no paste; a hung request dies at 5 s with a spinner until then |
 | T5.5 | Accessibility grant survives a rebuild | T5.3 | rebuild, reinstall, paste still works with no new prompt |
+
+T5.2 spent its decision before its code. `DESIGN.md` §9 had carried the asynchronous **Script** as an
+open tension since T1.1 with T5.2 as its trigger, and *Ask first* covers both halves of it — a
+**Vocabulary** word and a `gleam.toml` dependency. Both were asked. `Fetching` won over one uniform
+promise-returning `run` on an argument that only appears once there is an installed machine to think
+about: `install.sh` never overwrites `src/scripts/`, so the uniform version would have broken every
+**Script** already written in `~/.starkit` on upgrade, with no migration possible, for the benefit of
+code that never fetches. `gleam_fetch` won over hand-rolled `@external` because the ban on `@external`
+in a **Script** is what makes the **Vocabulary** the whole interface, and widening it to smuggle in
+HTTP trades a dependency for the one boundary the design has.
+
+The tests are the pure half and nothing else: the ID and the markdown, 23 cases. The fetch is
+untested on purpose — a test that reaches YouTube fails on a train, and what it would check is
+oEmbed's behaviour rather than this **Script**'s. Two of those cases are the ones worth having.
+`?sv=nonsense&v=<id>` is what catches a **Script** that searches the query for `v=` as text: `sv=`
+ends in `v=`, so a text search pastes a working link to the wrong video, which is the failure that
+never looks like one. And `hello world` is eleven characters that are not an ID, which is what stops
+prose from being read as a video. The suite was checked by breaking the code rather than by passing:
+one mutation to the query parser, four failures.
+
+Verified end to end from a terminal against the real endpoint — all six shapes and a bare ID
+canonicalise to the same watch URL, a non-YouTube host declines, and an ID-shaped string that is not a
+video **Notifies**. Three things came out of running it that reading it did not give:
+
+- **oEmbed answers 400, not 404, for an ID that belongs to nothing.** The first pass printed "YouTube
+  answered 400." at a person who cannot act on a status code, so 400 joined 401, 403 and 404 in the
+  one sentence that fits all four.
+- **The canonical URL drops a timestamp.** `?t=42` belongs to the moment someone shared a video rather
+  than to the video, and canonicalising is the whole reason for extracting an ID — three spellings of
+  one video is a note you cannot search. Recorded as the known limit it is, in the same spirit as
+  `link`'s wrong `h1`s.
+- **`rsync -a` restores mtimes, and Gleam's incremental build trusts them.** Restoring a mutated
+  scratch source from `seed/` left the *mutated* artefact in place, and the run that followed measured
+  code that no longer existed. The reading of that run was wrong for one turn. Any scratch build for
+  a measurement gets its `build/` deleted first, not its sources restored.
+
+**A seeded Script cannot be upgraded, and that is now load-bearing.** `install.sh`'s rule — vendor the
+**Shelf**'s half, write `src/scripts/` only when absent — is what keeps an employer's app list out of
+this repo, and it also means every stub shipped is frozen on the machine it landed on. So `youtube`
+working in `seed/` does not make it work in `~/.starkit`, whose copy is still the T5.2 stub. It is not
+a bug in the rule and the rule should not change; it is a gap with no answer yet, and it will arrive
+again for `clean` at T4.1 and `link` at T6.1. **Trigger:** the first stub a person has actually edited,
+where replacing it is no longer obviously safe. Until then the answer is one `cp` and knowing it is
+needed.
 
 **Checkpoint E** — 4 of 5, and the only permission-gated path is working and stable across
 rebuilds.
