@@ -210,7 +210,16 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       - **Component**: C4 Runner
   - **F6** Gather only the declared **Context**
     - **How**: `NSWorkspace.runningApplications` filtered to `.activationPolicy == .regular`,
-      in-process. Replaces a 463 ms `osascript` call that also needed Automation permission
+      in-process. Replaces a 463 ms `osascript` call that also needed Automation permission.
+      Built at T4.2 and measured there at **0.006–0.016 ms** against a 5 ms budget — but only
+      after the first read, which costs 2.8–7.8 ms and is buying the workspace connection rather
+      than the list. That one is paid at launch, where nothing is waiting, for the same reason C1
+      builds its window there. **Declared** is what makes it free rather than merely cheap: a
+      **Script** with an empty `needs` gathers nothing and measures 0.00 ms, so the cost is on the
+      runs that asked for it and on no others. The **Needs** cross the wire under the names
+      `entry.gleam` decodes them by, and a name this binary does not know is a **Refusal** naming
+      it — half a **Context** is not a smaller **Context**, it is a **Script** deciding about a
+      machine that does not exist
       - **Component**: C8 ContextGatherer
   - **F7** Perform each **Effect** in order, restoring focus before **Paste** _(also G5)_
     - **How**: `NSWorkspace.open` / `forceTerminate` need no permission — **Open** measured at

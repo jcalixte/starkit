@@ -364,6 +364,38 @@ could have produced.
 has never been edited, so the copy is safe and known to be safe — which is the whole of the answer
 from T5.1: per file, and you have to know which.
 
+**T4.2 is the smallest component in the system and it beat its budget by three orders of
+magnitude**: one `NSWorkspace` property, filtered to `.regular`, at **0.006–0.016 ms** against F6's
+5 ms — where the `osascript` it replaces cost 463 ms and an Automation grant. `Starkit run clean
+--dry-run` prints the **Context** above the **Effects** it produced, which is the verify line this
+table asked for, and no `osascript` was spawned while it ran.
+
+**The one number that misses the budget is the first one.** The first read of
+`runningApplications` in a process costs 2.8–7.8 ms and every read after it costs a hundredth of a
+millisecond, so what is expensive is connecting to the workspace and not asking it anything. Left
+alone, the first Clean of a session would be the single gather that misses F6, on the main thread.
+It is paid at launch instead — the same trade C1 makes by building its window there (T2.2), and in
+the same place, which is already spending 510 ms on the **Toolchain** with nobody waiting.
+
+**Declared is what makes the cost free rather than merely small.** `Starkit run work --dry-run`
+gathers nothing and measures 0.00 ms, because Work's `needs` is empty. F6 says *only* the declared
+**Context** and this is the half of that sentence a benchmark can show.
+
+**An unknown Need is refused rather than skipped, which is the same call `Effect` makes in the
+other direction.** A **Script** declaring a slice this binary cannot gather would otherwise run and decide
+from an empty **Context**, and nothing downstream can tell that apart from an empty machine — Clean
+would read it as "nothing is running". So `Need.all` refuses, naming the word and the **Script**,
+and blaming the half that is actually ahead: the **Vocabulary** vendored in `~/.starkit`. The
+**Manifest** keeps its **Needs** as strings for the same reason it always did, and now there is a
+sharper one — decoding them at *listing* time would empty the bar of every **Script** on a cache
+that names one unknown slice, which is precisely the collapse F2 exists to prevent.
+
+**Where the gather happens was the one open question, and it is the main actor.** `NSWorkspace`'s
+list is AppKit's own, and `focus.previous` is already read there for a reason that applies twice
+over: both answers should describe the machine as ↩ was pressed, rather than as a `gleam build`
+left it several hundred milliseconds later. The bar path pays 0.01 ms on the main thread for that,
+which is what the warming at launch is for.
+
 **Checkpoint D** — 3 of 5 **Scripts** working. Nothing needs Accessibility yet.
 
 ## Phase 5 — Youtube (slice 4)

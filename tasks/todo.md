@@ -66,7 +66,11 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       promises — `keep` is yours to edit, and Starkit is untouchable whatever it says, since
       **Effects** are performed in order and a **Kill** aimed at Starkit ends the run halfway down
       its own list
-- [ ] **T4.2** C8 ContextGatherer + the `needs` → gather → payload path
+- [x] **T4.2** C8 ContextGatherer + the `needs` → gather → payload path — 0.01 ms against F6's 5,
+      and no `osascript`; the first read in a process costs 2.8–7.8 ms and buys the workspace
+      connection rather than the list, so it is paid at launch where nobody is waiting. A **Need**
+      this binary cannot gather is a **Refusal** naming it, because a **Script** handed half a
+      **Context** decides about a machine that does not exist
 - [ ] **T4.3** C7 **Kill** — `forceTerminate`
 
 > **Checkpoint D** — 3 of 5.
