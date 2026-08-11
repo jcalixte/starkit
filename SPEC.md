@@ -18,7 +18,7 @@ Replace the five Script Kit scripts actually in use with a menu-bar app that com
 Gleam. Success is the whole of Script Kit's ~1.86 GB and 356 injected globals being replaced by
 ~4 MB and 10 names, without any of the five workflows getting slower or less reliable.
 
-One user. No preferences window, no themes, no per-**Script** configuration beyond its manifest.
+One user. No preferences window, no themes, no per-**Script** configuration beyond its **Manifest**.
 
 ## Commands
 
@@ -26,7 +26,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | ------- | ---- |
 | `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else — Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. Asks for the login keychain password once, so that signing never waits on a dialog afterwards. |
 | `./scripts/build.sh [debug\|release]` | Compiles and assembles `build/Starkit.app`. |
-| `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, launches. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app refusing one **Script** beats no app at all. |
+| `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, launches. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app **Refusing** one **Script** beats no app at all. |
 | `./scripts/gen-registry.sh` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do. Graduates into the Watcher in slice 6. |
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
 | `swift test` | The two pure Swift test suites. |
@@ -163,7 +163,7 @@ call into a framework, and a mock would pass while the app was broken. Verified 
 
 **Never**
 
-- Ship a preferences window, a theme, or per-**Script** configuration outside its manifest.
+- Ship a preferences window, a theme, or per-**Script** configuration outside its **Manifest**.
 - Add `@external` to a **Script**.
 - Let a **Script** run another **Script**, or outlive the 5 s deadline.
 - Overwrite a **Script** in `~/.starkit` during install.
@@ -188,7 +188,7 @@ is the boundary working, not a gap in it.
 - `Starkit run work` opens ghostty, Slack, Notion and Zen.
 - `Starkit run work --dry-run` prints four `Open` **Effects** and opens nothing.
 - Breaking `youtube.gleam` and running `Starkit run work` still works; running
-  `Starkit run youtube` refuses and prints the compile error. This is [ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md) working.
+  `Starkit run youtube` **Refuses** and prints the compile error. This is [ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md) working.
 - Deleting `node` from the shell's `PATH` makes `Starkit run work` fail with a message naming
   the **Toolchain**, not a crash.
 

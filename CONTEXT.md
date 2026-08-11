@@ -50,6 +50,21 @@ One thing a **Script** asks the **Shelf** to do to the machine. A **Script** can
 can only ask.
 _Avoid_: command, action, side effect, intent
 
+**Manifest**:
+What a **Script** declares about itself, as against what it decides: its **Keyword**, the name
+shown in the **Shelf**, and the **Context** slices it needs. Everything the **Shelf** must know
+to list a **Script** and gather for it — and nothing that requires building or running one,
+which is why a **Script** that no longer compiles still has a name in the bar. Declared in Gleam
+and compile-checked, so it cannot drift from the **Script** it describes.
+_Avoid_: metadata, header, descriptor, frontmatter, config
+
+**Refusal**:
+Starkit declining to run a **Script** at all, in its own voice, naming which and why — a **Stale**
+**Artefact**, a **Keyword** that resolves to nothing, an absent **Toolchain**. Distinct from
+**Notify**, which is a **Script** that *did* run reporting what it decided: a **Refusal** means no
+**Script** ever got to decide anything.
+_Avoid_: error, failure, rejection
+
 **Vocabulary**:
 Every name a **Script** author must learn from Starkit and could not have guessed from Gleam
 itself — the **Effects**, the **Context** slices, and the `script` contract. Standard Gleam does
@@ -114,6 +129,8 @@ _Avoid_: processes, open apps
 - Every **Script** has exactly one **Keyword**, and no **Keyword** contains a space
 - A **Script** emits zero or more **Effects**, in order
 - Every **Effect** is performed by the **Shelf**; a **Script** performs none of them
+- Every **Script** has exactly one **Manifest**, and the **Shelf** knows them all without building
+- A **Refusal** comes from Starkit, a **Notify** comes from a **Script**, and nothing else reports
 
 ## Example dialogue
 
@@ -139,6 +156,13 @@ _Avoid_: processes, open apps
   between putting back the **Seed** and keeping the pasted text — resolved: keep the pasted
   text. The cost is that **Summoning** the same **Script** again **Seeds** from its own output,
   which is cosmetic, since the **Seed** arrives selected.
+- "error" covered two different speakers: a **Script** that ran and reports it did nothing useful,
+  and Starkit declining to run one at all. Resolved — the second is a **Refusal**, the first is a
+  **Notify**. The wire says `refusal` rather than `error` for that reason, and because `error`
+  would collide with Swift's own in C4.
+- The reply to a run was briefly called an "envelope", a word from messaging that named the JSON
+  shape rather than anything in the domain. Resolved — it carries **Effects** or a **Refusal**, and
+  those two words are enough; the shape needs no name of its own.
 - A **Script** was briefly called pure — wrong. Youtube and Link from URL fetch over HTTP, and
   the response decides the **Effects**, so the network cannot be a **Context** slice. The line
   is not purity: a **Script** owns the network, the **Shelf** owns the machine.
