@@ -26,7 +26,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | ------- | ---- |
 | `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else — Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. Asks for the login keychain password once, so that signing never waits on a dialog afterwards. |
 | `./scripts/build.sh [debug\|release]` | Compiles and assembles `build/Starkit.app`. |
-| `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `~/.starkit` without clobbering edited **Scripts**, runs the first `gleam build`, launches. |
+| `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, launches. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app refusing one **Script** beats no app at all. |
 | `./scripts/gen-registry.sh` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do. Graduates into the Watcher in slice 6. |
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
 | `swift test` | The two pure Swift test suites. |
@@ -45,7 +45,7 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── src/starkit.gleam         #   Shelf-owned — always overwritten
 │   ├── src/entry.gleam           #   Shelf-owned — always overwritten
 │   ├── src/scripts/*.gleam       #   yours — seeded once, never overwritten
-│   └── test/starkit_test.gleam   #   the gleeunit runner
+│   └── test/starkit_test.gleam   #   Shelf-owned — the gleeunit runner; your suites sit beside it
 ├── Sources/Starkit/
 │   ├── main.swift                # GUI, or `run <keyword>` when given arguments
 │   ├── AppDelegate.swift         # wiring
