@@ -243,6 +243,7 @@ everything still works but silently goes **Stale**.
 | T8 | Local `install.sh` over Homebrew | no notarization, no quarantine, a stable signature that keeps the Accessibility grant | nobody else can install it in one line | |
 | T9 | Tree only, no importance matrix | no 72-cell grid to keep current | component priority is argued from goal weights, not computed | |
 | T10 | Borrow the **Toolchain**, resolve it every launch | node and Gleam upgrades are non-events; nothing to configure | 15 ms per launch, and a broken `.zshrc` breaks resolution — though it would break your terminal first | |
+| T11 | `gleam_json` for the wire, over hand-rolled encoding | escaping is the library's problem on the two paths that carry arbitrary text — a page title into **Paste**, an error into **Notify** | one dependency in a **Shelf**-owned `gleam.toml`, resolved on first install; **Scripts** never import it | |
 
 ### Tensions being watched
 
@@ -266,6 +267,19 @@ everything still works but silently goes **Stale**.
   finishes — which would post ⌃⌘V rather than ⌘V. Not reachable from T0.5, whose trigger was a
   menu. **Trigger:** the first **Paste** driven from the chord, at T5.3; the fix is `.privateState`
   or waiting on `flagsChanged`, and it is cheap once seen.
+- **A **Script** that reaches the network cannot satisfy the type the **Vocabulary** gives it.**
+  `starkit.gleam` declares `run: fn(String, Context) -> List(Effect)`, which is synchronous. On the
+  JavaScript target there is no synchronous HTTP and Gleam has no `await`: `gleam_fetch` answers
+  with a `Promise`, so Youtube (T5.2) and Link (T6.1) would return `Promise(List(Effect))` and fail
+  to compile against the one type that must not churn. Found at T1.1 for the cost of reading the
+  signature, which is three slices earlier than running into it. The JS half is already covered —
+  `run.mjs` awaits whatever `entry.run` hands back, and awaiting a plain string costs nothing — so
+  what is open is the Gleam type, not the plumbing. The candidates are not equal: making every
+  `run` return a `Promise` is uniform but puts `gleam/javascript/promise` in front of Clean and
+  Work, which pay for a concurrency primitive they never use (G5, G6); a second `Script`
+  constructor for the asynchronous kind keeps the simple case simple and costs a word in the
+  **Vocabulary** (G6 again, and *Ask first*). **Trigger to revisit:** T5.2, which is the first
+  **Script** that fetches — decide it there, with a real one in hand, rather than now on a guess.
 - **The **Shelf** reads Gleam's build output path directly** — `build/dev/javascript/<pkg>/<mod>.mjs`
   is an internal layout, not a documented interface, and F5 depends on it. Mitigation: when a
   build succeeds but the expected **Artefact** is absent, go red with that specific message

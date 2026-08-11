@@ -170,6 +170,10 @@ thing that makes a new one visible, expect to want this immediately after MVP �
   only because their absence is what makes the **Paste** **Effect** as simple as it is.
 - **T1.4 misses 20 ms** → fall back to cold spawn at 53 ms, which still meets F5's original
   target. Budget risk, not design risk.
+- **T5.2 cannot return `List(Effect)`** → it can't, and this is now known rather than pending.
+  `gleam_fetch` is asynchronous on this target, so the **Vocabulary**'s `run` type has to admit a
+  `Promise` one way or another. Surfaced at T1.1; the options and the reason for not choosing yet
+  are in `DESIGN.md` §9. It costs a **Vocabulary** decision at T5.2, not a redesign.
 - **T2.2 misses 50 ms** → drop the panel's blur/material before dropping anything behavioural.
 - **Gleam moves its build output path** → C4 and C5 both hardcode
   `build/dev/javascript/<pkg>/<mod>.mjs`, which is not a documented interface. Narrowed at T0.3 to
