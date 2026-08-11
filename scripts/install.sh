@@ -26,7 +26,7 @@ DEST="/Applications/Starkit.app"
 # app gets a minimal PATH and asks the login shell instead (DESIGN.md §4, F9). The two can disagree,
 # and only the app's answer matters at Summon time; this check exists to fail the install clearly,
 # not to stand in for C12.
-for tool in gleam node; do
+for tool in gleam bun; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		echo "! The Toolchain is incomplete: '$tool' is not on this shell's PATH." >&2
 		echo "  Install it, then run this again. If it is installed but your shell hides it," >&2

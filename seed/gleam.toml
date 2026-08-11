@@ -6,6 +6,11 @@ version = "0.1.0"
 # not BEAM Gleam: no OTP, no actors, and no Erlang-only Hex packages.
 target = "javascript"
 
+# bun, not node — see docs/adr/0003-run-artefacts-on-bun.md. This line only affects `gleam test`;
+# the Shelf spawns bun itself. It is here so tests run on the same runtime the Scripts will.
+[javascript]
+runtime = "bun"
+
 [dependencies]
 gleam_stdlib = ">= 0.60.0 and < 2.0.0"
 

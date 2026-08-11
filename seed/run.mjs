@@ -1,8 +1,11 @@
-// The shim the Shelf actually executes: `node run.mjs`.
+// The shim the Shelf actually executes: `bun run.mjs`. The node: imports below are not a leftover —
+// bun implements them, and keeping them means this file is runtime-agnostic if that ever changes
+// back (docs/adr/0003-run-artefacts-on-bun.md).
 //
 // Why this file exists. Gleam's JavaScript output is a plain ES module — entry.mjs ends in
-// `export function main() {...}` and nothing calls it, so `node entry.mjs` loads the module and
-// exits silently. `gleam run` works only because it generates a second file to do the calling,
+// `export function main() {...}` and nothing calls it, so running entry.mjs directly loads the
+// module and exits silently. `gleam run` works only because it generates a second file to do the
+// calling,
 // and that file is named:
 //
 //     build/dev/javascript/starkit/gleam@@private_main_v1.18.1.mjs
