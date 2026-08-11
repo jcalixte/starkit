@@ -60,7 +60,12 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 4 — Clean
 
-- [ ] **T4.1** `clean` **Script** — **tests first**, before it runs for real
+- [x] **T4.1** `clean` **Script** — **tests first**, before it runs for real: the first run was a
+      compile error, and emptying the untouchable list turns four assertions red, so the suite is
+      known to catch the bug with no undo rather than assumed to. Two lists, because they are two
+      promises — `keep` is yours to edit, and Starkit is untouchable whatever it says, since
+      **Effects** are performed in order and a **Kill** aimed at Starkit ends the run halfway down
+      its own list
 - [ ] **T4.2** C8 ContextGatherer + the `needs` → gather → payload path
 - [ ] **T4.3** C7 **Kill** — `forceTerminate`
 

@@ -325,6 +325,45 @@ is how you *reach* a **Script**, not how many there are.
 Tests precede implementation here and nowhere else: **Kill** never asks, and a filter bug is
 irreversible. See `SPEC.md` § Testing strategy.
 
+**T4.1's first run was a compile error**, which is the only honest shape "tests first" can take:
+`clean.kills` did not exist when the sixteen assertions asking about it were written. The one that
+matters was then confirmed by breaking the code rather than by reading it — emptying the untouchable
+list turns four of them red — so the suite is known to catch the bug that has no undo, rather than
+assumed to.
+
+**The keep list is an argument, and that is what made the destructive half testable.** It is edited
+per machine, so a suite asserting its contents would pass on exactly one computer; `kills` takes it
+instead, the tests pass their own, and what is asserted about the *shipped* **Script** is only what
+must hold everywhere: Starkit survives, and **Running Apps** is declared. The **Script**'s whole body
+is that one call, so there is no step between what the tests pin and what the **Shelf** performs.
+
+**Two lists, because they are two different promises.** `keep` is a preference and sits at the top of
+a file the installer never overwrites. `untouchable` is a rule that holds whatever `keep` says, and
+Starkit is in it for a reason that outlives the current code: **Effects** are performed in order, so
+a **Kill** aimed at Starkit would end the run partway down its own list and leave the rest of the
+screen open. C8 already makes that unreachable — it hands over `.regular` applications and Starkit is
+an accessory — so the line is a second lock on a shut door, kept because the two locks are on
+opposite sides of the wire and only one of them has tests. Finder went in the other list, and the
+difference is the point: killing Finder is not dangerous, it is pointless, because macOS starts it
+again.
+
+**Names match whole, without case or surrounding spaces.** Both allowances lean the same way — they
+make keeping more likely, never less — which is the only direction an irreversible **Effect** should
+be forgiving in. Prefix matching leans that way too and much further, and costs the thing worth more
+here than kindness to a typo: with it, nobody can say in advance what a keep list keeps. The price is
+paid in the obvious place, and it is written down where the list is: `Chrome` does not keep
+`Google Chrome`.
+
+**Nothing dies yet, by construction rather than by luck.** `running_apps` arrives empty until C8
+exists at T4.2, and a **Kill** is a **Refusal** naming itself until T4.3. So Clean is complete and
+inert, which is the order this phase asked for and the reason the tests are the only evidence T4.1
+could have produced.
+
+**The seeded-Script gap arrived again, exactly where this file predicted it.** `~/.starkit`'s
+`clean.gleam` is still the stub and no install will replace it, because `src/scripts/` is yours. It
+has never been edited, so the copy is safe and known to be safe — which is the whole of the answer
+from T5.1: per file, and you have to know which.
+
 **Checkpoint D** — 3 of 5 **Scripts** working. Nothing needs Accessibility yet.
 
 ## Phase 5 — Youtube (slice 4)
