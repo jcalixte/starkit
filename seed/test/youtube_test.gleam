@@ -121,19 +121,67 @@ pub fn eleven_characters_is_not_enough_test() {
   assert youtube.video_id("hello world") == Error(Nil)
 }
 
-// The markdown. Canonical rather than as-typed, which is the whole reason for extracting an ID.
+// The note. Its shape is inherited from the Script Kit script this replaces, so these tests are
+// pinning a decision made elsewhere — which is exactly why they are worth having: notes written
+// before today and notes written after it have to read as one set.
 
-pub fn markdown_is_a_canonical_watch_link_test() {
-  assert youtube.markdown("Never Gonna Give You Up", "dQw4w9WgXcQ")
-    == "[Never Gonna Give You Up](https://www.youtube.com/watch?v=dQw4w9WgXcQ)"
+pub fn markdown_is_an_embed_then_a_titled_line_test() {
+  assert youtube.markdown(
+      "Never Gonna Give You Up",
+      "Rick Astley",
+      "dQw4w9WgXcQ",
+    )
+    == "@[youtube](dQw4w9WgXcQ)\n\n- Never Gonna Give You Up | Rick Astley"
 }
 
-/// A title with brackets in it. Left exactly as YouTube gave it: escaping them would be inventing
-/// a markdown flavour, and the person pasting can see what arrived.
-pub fn a_title_keeps_its_own_punctuation_test() {
+/// Brackets in a title are left alone. `@[youtube](…)` carries the ID, not the title, so there is
+/// nothing for them to break.
+pub fn a_title_keeps_its_own_brackets_test() {
   assert youtube.markdown(
-      "[Official Video] Rick Astley — Never (1987)",
+      "[Official Video] Never",
+      "Rick Astley",
       "abc_-123XYZ",
     )
-    == "[[Official Video] Rick Astley — Never (1987)](https://www.youtube.com/watch?v=abc_-123XYZ)"
+    == "@[youtube](abc_-123XYZ)\n\n- [Official Video] Never | Rick Astley"
+}
+
+/// The title is normalised on its way into the note and the channel is not, which is what the
+/// Script Kit lib did — pinned here because it is the sort of asymmetry a later reader would tidy.
+pub fn the_title_is_normalised_and_the_channel_is_not_test() {
+  assert youtube.markdown(
+      "Don\u{2019}t Stop",
+      "Bob\u{2019}s Channel",
+      "dQw4w9WgXcQ",
+    )
+    == "@[youtube](dQw4w9WgXcQ)\n\n- Don't Stop | Bob\u{2019}s Channel"
+}
+
+// Normalisation, character for character as the Script Kit lib had it. A title pasted with curly
+// quotes is a title you later fail to find by typing the straight ones.
+
+pub fn curly_single_quotes_become_straight_test() {
+  assert youtube.normalise("\u{2018}quoted\u{2019}") == "'quoted'"
+}
+
+pub fn curly_double_quotes_become_straight_test() {
+  assert youtube.normalise("\u{201C}quoted\u{201D}") == "\"quoted\""
+}
+
+pub fn an_en_dash_becomes_one_hyphen_test() {
+  assert youtube.normalise("a \u{2013} b") == "a - b"
+}
+
+/// Two hyphens, not one. That is what the existing notes contain, and a normaliser that disagreed
+/// with them would split the set it exists to unify.
+pub fn an_em_dash_becomes_two_hyphens_test() {
+  assert youtube.normalise("a \u{2014} b") == "a -- b"
+}
+
+pub fn an_ellipsis_becomes_three_dots_test() {
+  assert youtube.normalise("wait\u{2026}") == "wait..."
+}
+
+pub fn a_plain_title_is_untouched_test() {
+  assert youtube.normalise("Rick Astley - Never Gonna Give You Up (4K)")
+    == "Rick Astley - Never Gonna Give You Up (4K)"
 }

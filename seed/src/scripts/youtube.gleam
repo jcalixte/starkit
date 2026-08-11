@@ -1,7 +1,12 @@
-//// Turns a YouTube link into a markdown link, titled, and pastes it.
+//// Turns a YouTube link into the note a video gets written down as, and pastes it.
 ////
 //// The first Fetching Script, and the reason that constructor exists: the title has to be asked
 //// for, and there is no synchronous HTTP on this target.
+////
+//// The shape of the note is not a design decision made here — it is the one the Script Kit script
+//// this replaces already pasted, carried over deliberately, because notes written before today and
+//// notes written after it have to read as one set. `@[youtube](<id>)` is an embed the note-taking
+//// side understands, which is why the ID appears alone rather than inside a URL.
 ////
 //// oEmbed rather than scraping the watch page. It is a documented endpoint that answers with JSON
 //// and needs no key, so the title arrives decoded instead of extracted from HTML — which is the
@@ -40,13 +45,18 @@ const id_length = 11
 /// characters wins; no real URL carries two of these.
 const path_markers = ["youtu.be/", "/shorts/", "/embed/", "/live/", "/v/"]
 
+/// What oEmbed says a video is, which is all this Script asks it.
+type Video {
+  Video(title: String, channel: String)
+}
+
 fn decide(input: String) -> Promise(List(Effect)) {
   case video_id(input) {
     Error(_) -> promise.resolve([Notify(nothing_to_go_on(input))])
     Ok(id) -> {
-      use title <- promise.map(title_of(id))
-      case title {
-        Ok(title) -> [Paste(markdown(title, id))]
+      use found <- promise.map(video_of(id))
+      case found {
+        Ok(video) -> [Paste(markdown(video.title, video.channel, id))]
         Error(why) -> [Notify(why)]
       }
     }
@@ -66,22 +76,39 @@ pub fn video_id(input: String) -> Result(String, Nil) {
   }
 }
 
-/// `[title](url)`, with the URL canonical rather than as typed.
+/// The note a video is written down as: an embed, a blank line, then the title and the channel.
 ///
-/// Canonical is the point of extracting an ID at all: a `shorts` link, a `youtu.be` link and a
-/// mobile link all name the same video, and notes that spell it three ways are notes you cannot
-/// search. What that costs is a timestamp — `?t=42` is dropped, because it belongs to the moment
-/// somebody shared it rather than to the video. Recorded as the known limit it is; a Script wanting
-/// timestamps keeps the URL instead.
+/// Carried over from the Script Kit script this replaces rather than designed. The ID stands alone
+/// inside `@[youtube](…)` because that is what the note-taking side reads as an embed, and it is why
+/// every URL shape collapses to an ID: `shorts`, `youtu.be` and mobile links all name one video, and
+/// three spellings of it are three things to search for. What that costs is the timestamp — `?t=42`
+/// belongs to the moment somebody shared a video rather than to the video, and there is nowhere in
+/// this shape to put it.
 ///
-/// A title is pasted exactly as YouTube gave it, brackets and all. Escaping them would be inventing
-/// a markdown flavour on a Script's behalf, and whoever pressed ↩ can see what arrived.
-pub fn markdown(title: String, id: String) -> String {
-  "[" <> title <> "](" <> watch_url(id) <> ")"
+/// The title is normalised and the channel is not, which is also carried over rather than decided.
+pub fn markdown(title: String, channel: String, id: String) -> String {
+  "@[youtube](" <> id <> ")\n\n- " <> normalise(title) <> " | " <> channel
 }
 
-fn watch_url(id: String) -> String {
-  "https://www.youtube.com/watch?v=" <> id
+/// Typographic punctuation, flattened to what a keyboard types.
+///
+/// A title arrives however YouTube spells it, and one pasted with curly quotes is a title you later
+/// fail to find by typing the straight ones. The mapping is the Script Kit lib's, character for
+/// character, including an em dash becoming two hyphens rather than one — that is what the existing
+/// notes contain, and a normaliser that disagreed with them would split the set it exists to unify.
+///
+/// `link` wants this too at T6.1, where SPEC already asks for quotes and dashes normalised. Sharing
+/// it means a module outside `src/scripts/`, which is Shelf-owned ground and a decision worth making
+/// with the second caller in hand rather than the first.
+pub fn normalise(title: String) -> String {
+  title
+  |> string.replace("\u{2018}", "'")
+  |> string.replace("\u{2019}", "'")
+  |> string.replace("\u{201C}", "\"")
+  |> string.replace("\u{201D}", "\"")
+  |> string.replace("\u{2013}", "-")
+  |> string.replace("\u{2014}", "--")
+  |> string.replace("\u{2026}", "...")
 }
 
 fn from_url(url: String) -> Result(String, Nil) {
@@ -172,11 +199,11 @@ fn is_id(candidate: String) -> Bool {
   |> list.all(fn(character) { string.contains(id_characters, character) })
 }
 
-/// Ask YouTube what the video is called.
+/// Ask YouTube what the video is and who made it.
 ///
 /// Every failure arrives as a sentence rather than a code, because the only place it can be shown is
 /// a Notify in the bar and there is nowhere to look anything up from there.
-fn title_of(id: String) -> Promise(Result(String, String)) {
+fn video_of(id: String) -> Promise(Result(Video, String)) {
   case request.to(oembed_url(id)) {
     Error(_) ->
       promise.resolve(Error("Starkit could not build a request for that ID."))
@@ -190,12 +217,20 @@ fn title_of(id: String) -> Promise(Result(String, String)) {
           use read <- promise.await(fetch.read_text_body(response))
           promise.resolve(case read {
             Error(_) -> Error("YouTube's answer could not be read.")
-            Ok(body) -> title_in(body.status, body.body)
+            Ok(body) -> video_in(body.status, body.body)
           })
         }
       }
     }
   }
+}
+
+/// `author_name` is oEmbed's word for the channel. Both fields are required rather than optional: a
+/// note missing half its line is worse than a Notify saying so.
+fn video_decoder() -> decode.Decoder(Video) {
+  use title <- decode.field("title", decode.string)
+  use channel <- decode.field("author_name", decode.string)
+  decode.success(Video(title:, channel:))
 }
 
 /// oEmbed wants the watch URL as a parameter, so it arrives percent-encoded inside one.
@@ -205,10 +240,10 @@ fn oembed_url(id: String) -> String {
   <> "&format=json"
 }
 
-fn title_in(status: Int, body: String) -> Result(String, String) {
+fn video_in(status: Int, body: String) -> Result(Video, String) {
   case status {
     200 ->
-      json.parse(body, decode.at(["title"], decode.string))
+      json.parse(body, video_decoder())
       |> result.replace_error("YouTube answered without a title.")
     // What oEmbed returns for a video that is private, deleted, or never existed. It answers 400 to
     // an ID that is the right shape and belongs to nothing, which is the same news as 404 from
