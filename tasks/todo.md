@@ -32,7 +32,8 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 3 — The bar
 
-- [ ] **T2.1** C3 HotKey ⌃⌘K + C10 MenuBarStatus red when the chord can't be held
+- [x] **T2.1** C3 HotKey ⌃⌘K + C10 MenuBarStatus red when the chord can't be held — the red is
+      withdrawn, because macOS reports no such failure ([plan.md](./plan.md), `DESIGN.md` §4 F8)
 - [ ] **T2.2** C1 SummonPanel — built once at launch, activates, shown/hidden, Escape
 - [ ] **T2.3** C2 Catalogue + `Keyword` pure parsing **+ its 3 tests**
 - [ ] **T2.4** Bar view — list, filter, selection, ↩ runs

@@ -100,6 +100,14 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F8** Hold the chord, be visibly broken when it can't
     - **How**: `RegisterEventHotKey` — needs no permission and cannot be silently disabled,
       unlike the `CGEventTap` in `cmd-tab`, which only needed a tap because it *intercepts* ⌘⇥
+      - **The second half of this function does not exist, and cannot.** Measured at T2.1: Carbon
+        does not arbitrate between applications. Two processes both asking for ⌃⌘K are both given
+        it, each told nothing about the other — and a `CGEventTap`, which is how Script Kit
+        listens, sees the key before hotkey dispatch and can consume it, so the chord never
+        arrives and macOS reports that to nobody. Registration succeeds either way. "Be visibly
+        broken when it can't" therefore covers only the failures that are ours to see; a chord
+        eaten upstream is visible in one place only, which is the bar not coming up. Paying
+        Accessibility for a tap of our own buys nothing — an earlier tap still consumes first
       - **Component**: C3 HotKey · C10 MenuBarStatus
   - **F9** Be ready after login _(also G4)_
     - **How**: `SMAppService.mainApp`, no helper bundle. A login-launched app gets a minimal
@@ -294,6 +302,13 @@ everything still works but silently goes **Stale**.
   finishes — which would post ⌃⌘V rather than ⌘V. Not reachable from T0.5, whose trigger was a
   menu. **Trigger:** the first **Paste** driven from the chord, at T5.3; the fix is `.privateState`
   or waiting on `flagsChanged`, and it is cheap once seen.
+- **Any application with an event tap can take ⌃⌘K, and Starkit cannot tell.** Measured at T2.1
+  against Script Kit: its `uiohook` tap consumes the key before Carbon dispatch, so Starkit's
+  handler never runs and its registration still reports success. Left alone rather than worked
+  around — the detection does not exist, and the two things that look like it (our own tap,
+  `CGGetEventTapList`) cost a permission or produce false alarms on any machine with a text
+  expander on it. **Trigger to revisit:** the chord going dead against something worth keeping
+  installed, at which point the answer is a configurable chord, not a cleverer detector.
 - **A **Script** that reaches the network cannot satisfy the type the **Vocabulary** gives it.**
   `starkit.gleam` declares `run: fn(String, Context) -> List(Effect)`, which is synchronous. On the
   JavaScript target there is no synchronous HTTP and Gleam has no `await`: `gleam_fetch` answers

@@ -129,11 +129,31 @@ is surface.
 
 | ID | Task | Depends | Verify with |
 | -- | ---- | ------- | ----------- |
-| T2.1 | C3 HotKey ⌃⌘K + C10 MenuBarStatus going red when it can't hold the chord | T0.1 | with Script Kit running, icon is red **and** ⌃⌘K reaches Script Kit — never swallowed |
+| T2.1 | C3 HotKey ⌃⌘K + C10 MenuBarStatus going red when it can't hold the chord | T0.1 | with Script Kit running, ⌃⌘K reaches Script Kit and Starkit does not take it; with Script Kit quit, the chord arrives |
 | T2.2 | C1 SummonPanel — one `NSPanel` built at launch, shown/hidden, Escape hides | T2.1 | ≤ 50 ms to visible; the first ⌃⌘K is no slower than the tenth |
 | T2.3 | C2 Catalogue — read `manifests.json`; `Keyword` parsing as a pure, tested rule | T1.1 | `swift test` — first token splits from **Input**; no match; **Keyword** that prefixes another |
 | T2.4 | Bar view — list, filter, selection, ↩ runs | T2.2, T2.3 | `wo` selects Work, ↩ runs it, bar disappears |
 | T2.5 | F13 — handle `moveUp:`/`moveDown:`/`insertNewline:`/`cancelOperation:` rather than keycodes | T2.4 | ⌃N/⌃P **and** ↑/↓ both move the selection |
+
+T2.1 removed half of its own function rather than implementing it. The chord registers and fires,
+and it registers *before* the **Toolchain** resolution that costs 510 ms, which is visible in the
+launch log — but "red when it can't hold the chord" turned out to have no signal behind it. Three
+measurements, in the order they were taken: two processes both asking Carbon for ⌃⌘K are both
+given it, neither told about the other; asking twice within one process is the only thing that
+returns `eventHotKeyExistsErr`, so that branch guards a bug of ours rather than a conflict; and
+with Script Kit running, ⌃⌘K opened Script Kit while Starkit's handler never ran at all — its
+`uiohook` tap sees the key before Carbon dispatches it and consumes it. So the swallowing runs the
+opposite way to the one the criterion feared, and the application being swallowed is Starkit.
+
+Nothing was built to work around it. A tap of our own would cost the Accessibility grant F8 chose
+`RegisterEventHotKey` to avoid, and would still lose to a tap inserted earlier; going red because
+`CGGetEventTapList` reports *some* tap would be red on most machines, since text expanders and
+window managers all keep one. What C10 reports is now the failures that are Starkit's own, and
+`SPEC.md` slice 2 carries the withdrawal.
+
+C10 grew a **Concern** in the process. C3 and C12 fail independently and at the same moment — no
+`bun` on a machine where Script Kit also holds the chord — and a single `reason` meant whichever
+was written second erased the first, which is the silence F8 exists to prevent.
 
 **Checkpoint C** — ⌃⌘K runs Work. Starkit is usable for 2 of 5 **Scripts** (Work, Personal).
 

@@ -215,8 +215,10 @@ is the boundary working, not a gap in it.
 - ⌃⌘K shows the bar in ≤ 50 ms; ⌃⌘K again hides it; Escape hides it.
 - Typing `wo` selects Work; ↩ runs it and the bar disappears.
 - ⌃N and ⌃P move the selection, as do ↓ and ↑.
-- With Script Kit running, Starkit's menu bar icon is red and ⌃⌘K reaches Script Kit — the chord
-  is never swallowed silently.
+- With Script Kit running, ⌃⌘K reaches Script Kit and Starkit stays quiet — the chord is never
+  taken from whoever else is listening for it. The red icon this criterion also asked for is
+  **withdrawn**: measured at T2.1, macOS tells an application nothing about another one claiming
+  the same chord, so there is no failure for C10 to report (`DESIGN.md` §4, F8).
 - The first ⌃⌘K after launch is no slower than the tenth.
 
 ### Slice 3 — Clean
