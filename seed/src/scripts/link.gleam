@@ -17,6 +17,7 @@ import gleam/fetch
 import gleam/http/request
 import gleam/int
 import gleam/javascript/promise.{type Promise}
+import gleam/list
 import gleam/result
 import gleam/string
 import starkit.{type Effect, type Script, Asks, Fetching, Notify, Paste}
@@ -38,21 +39,68 @@ fn decide(input: String) -> Promise(List(Effect)) {
   case string.trim(input) {
     "" ->
       promise.resolve([Notify("Paste a URL, or type one after the Keyword.")])
-    url -> {
-      use fetched <- promise.map(page_at(url))
-      case fetched {
-        Error(why) -> [Notify(why)]
-        Ok(html) ->
-          case title_in(html) {
-            Ok(title) -> [Paste(markdown(title, url))]
-            Error(_) -> [
-              Notify("That page has no h1 for Starkit to read."),
-            ]
+    typed ->
+      case fetchable(typed) {
+        Error(why) -> promise.resolve([Notify(why)])
+        Ok(url) -> {
+          use fetched <- promise.map(page_at(url))
+          case fetched {
+            Error(why) -> [Notify(why)]
+            Ok(html) ->
+              case title_in(html) {
+                Ok(title) -> [Paste(markdown(title, url))]
+                Error(_) -> [Notify("That page has no h1 for Starkit to read.")]
+              }
           }
+        }
       }
-    }
   }
 }
+
+/// The URL this Script will fetch, or the sentence saying why it will not.
+///
+/// https and nothing else. A title read over cleartext is a title anything between you and the
+/// server can choose, and this Script's whole output is that title, written into a note verbatim
+/// and trusted from then on — there is no second look, and nothing downstream that could tell a
+/// page's own heading from one inserted on the way. Refusing is the only check available.
+///
+/// The URL comes back exactly as it was typed, uppercase scheme and all. Schemes are
+/// case-insensitive so `HTTPS://` is judged the same as `https://`, but what goes into the note is
+/// what was copied — this Script is not the place a URL gets tidied.
+pub fn fetchable(input: String) -> Result(String, String) {
+  let url = string.trim(input)
+
+  case scheme_of(url) {
+    Ok("https") -> Ok(url)
+    Ok(other) ->
+      Error("Starkit reads https links only, and that one is " <> other <> ".")
+    Error(_) ->
+      Error("That does not start with https://: " <> string.inspect(url))
+  }
+}
+
+/// The scheme, lowercased, when there is one and it is spelled like a scheme.
+///
+/// Letters, digits and `+-.` only, so `hello world://x` has no scheme rather than one named after
+/// the sentence — a refusal that quoted it back would be reporting the wrong problem. Something has
+/// to follow the `://` too: `https://` on its own is a scheme and no page.
+fn scheme_of(url: String) -> Result(String, Nil) {
+  use #(scheme, rest) <- result.try(string.split_once(url, "://"))
+  let scheme = string.lowercase(scheme)
+
+  case scheme != "" && rest != "" && spelled_like_a_scheme(scheme) {
+    True -> Ok(scheme)
+    False -> Error(Nil)
+  }
+}
+
+fn spelled_like_a_scheme(scheme: String) -> Bool {
+  scheme
+  |> string.to_graphemes
+  |> list.all(fn(character) { string.contains(scheme_characters, character) })
+}
+
+const scheme_characters = "abcdefghijklmnopqrstuvwxyz0123456789+-."
 
 /// The link a page is written down as.
 ///
@@ -184,6 +232,10 @@ fn single_spaced(text: String) -> String {
 /// is a Notify in the bar and there is nowhere to look anything up from there.
 fn page_at(url: String) -> Promise(Result(String, String)) {
   case request.to(url) {
+    // Nearly unreachable since T6.2: `fetchable` has already refused anything without an https
+    // scheme. What is left is a URL with an https scheme and something wrong further along —
+    // a space in the host, a port that is not a number — and it is kept for those rather than
+    // trusting one check to be the only one.
     Error(_) -> promise.resolve(Error("Starkit could not read that as a URL."))
     Ok(asked) -> {
       use sent <- promise.await(fetch.send(asked))

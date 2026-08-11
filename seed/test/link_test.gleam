@@ -150,6 +150,68 @@ pub fn a_greater_than_inside_an_attribute_ends_the_tag_early_test() {
     == Ok("b\">Getting Started")
 }
 
+// What it will fetch (T6.2). https and nothing else: the output of this Script is a page's own
+// heading written into a note verbatim, and over cleartext that heading is whatever anything
+// between you and the server decided it should be. Nothing downstream can tell the difference, so
+// the refusal is the only check there is.
+
+pub fn an_https_url_is_fetchable_test() {
+  assert link.fetchable("https://example.com/start")
+    == Ok("https://example.com/start")
+}
+
+/// Schemes are case-insensitive, so this is an https link and is judged as one. What comes back is
+/// what was typed — a URL is not tidied on its way into a note.
+pub fn an_uppercase_scheme_is_still_https_test() {
+  assert link.fetchable("HTTPS://Example.com/Start")
+    == Ok("HTTPS://Example.com/Start")
+}
+
+pub fn surrounding_whitespace_is_not_the_url_test() {
+  assert link.fetchable("  https://example.com\n") == Ok("https://example.com")
+}
+
+pub fn http_is_refused_and_told_why_test() {
+  assert link.fetchable("http://example.com")
+    == Error("Starkit reads https links only, and that one is http.")
+}
+
+/// Every other scheme takes the same sentence, naming itself. `file://` and `data:` are the ones
+/// worth thinking about: both would have this Script read something local and paste it.
+pub fn another_scheme_is_refused_by_name_test() {
+  assert link.fetchable("ftp://example.com/file.txt")
+    == Error("Starkit reads https links only, and that one is ftp.")
+}
+
+pub fn a_file_url_is_refused_test() {
+  assert link.fetchable("file:///Users/someone/notes.html")
+    == Error("Starkit reads https links only, and that one is file.")
+}
+
+/// A host with no scheme in front of it. Common enough to deserve a message that says the fix
+/// rather than one that says "no".
+pub fn a_bare_host_is_refused_test() {
+  assert link.fetchable("example.com/start")
+    == Error("That does not start with https://: \"example.com/start\"")
+}
+
+pub fn a_scheme_with_nothing_after_it_is_refused_test() {
+  assert link.fetchable("https://")
+    == Error("That does not start with https://: \"https://\"")
+}
+
+/// `hello world://x` has no scheme rather than one named "hello world" — a refusal that quoted that
+/// back would be reporting the wrong problem.
+pub fn a_sentence_containing_a_separator_has_no_scheme_test() {
+  assert link.fetchable("hello world://x")
+    == Error("That does not start with https://: \"hello world://x\"")
+}
+
+pub fn prose_is_refused_test() {
+  assert link.fetchable("what was that page called")
+    == Error("That does not start with https://: \"what was that page called\"")
+}
+
 // The note. `[Title](url)`, which is what SPEC asks for and what every Markdown reader takes.
 
 pub fn markdown_is_a_title_and_the_url_it_came_from_test() {
