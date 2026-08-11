@@ -8,7 +8,7 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [x] **T0.1** `Package.swift`, `Info.plist` (`LSUIElement`), `main.swift` with a menu bar item
 - [x] **T0.2** `setup-signing.sh` + signing in `build.sh` — adapt from `cmd-tab`
 - [x] **T0.3** `~/.starkit` skeleton: `gleam.toml`, `starkit.gleam`, `entry.gleam`, 5 stubs, `gen-registry.sh`
-- [ ] **T0.4** `install.sh` — `/Applications`, idempotent seed, first `gleam build`
+- [x] **T0.4** `install.sh` — `/Applications`, idempotent seed, first `gleam build`
 - [ ] **T0.5** Paste spike (throwaway) — ⌘V into the previously frontmost app from a signed bundle
 
 > **Checkpoint A** — installs, keeps its signature, Paste proven possible.
