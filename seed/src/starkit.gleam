@@ -9,6 +9,8 @@
 //// seed/src/starkit.gleam in the Starkit repo. Your own Scripts live in src/scripts/ and are
 //// never overwritten.
 
+import gleam/javascript/promise.{type Promise}
+
 /// Something a Script asks the Shelf to do.
 ///
 /// The Vocabulary is closed but not frozen: it may grow, and each addition is a decision rather
@@ -54,12 +56,32 @@ pub type Context {
 ///
 /// `run` receives the Input typed after the Keyword — empty when nothing was typed — and returns
 /// the Effects to perform. It may reach the network on its own; it may never touch the machine.
+///
+/// Two constructors, because there is no synchronous HTTP on this target: a Script that fetches
+/// answers with a Promise, and one that does not should never have to mention one. Write `Script`
+/// unless you reach the network, which is the common case and the one that stays plain — Work and
+/// Clean decide from what they were given and nothing about them is asynchronous.
+///
+/// The alternative was one constructor returning a Promise always, which is more uniform and worse:
+/// every Script would import a concurrency primitive to wrap a list it already had (G5, G6). The
+/// asymmetry is the point. Decided at T5.2 with the first fetching Script in hand, as DESIGN.md §9
+/// said to.
 pub type Script {
   Script(
     keyword: String,
     name: String,
     needs: List(Need),
     run: fn(String, Context) -> List(Effect),
+  )
+
+  /// A Script that reaches the network before it can decide. The Shelf awaits it and is otherwise
+  /// indifferent: the same Effects arrive, and a Fetching Script is under the same 5 s deadline as
+  /// any other, because a fetch that never returns is what that deadline is for.
+  Fetching(
+    keyword: String,
+    name: String,
+    needs: List(Need),
+    run: fn(String, Context) -> Promise(List(Effect)),
   )
 }
 

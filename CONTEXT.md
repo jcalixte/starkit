@@ -17,6 +17,16 @@ One Gleam module, addressed by name, that turns an **Input** and a **Context** i
 **Effects**. A **Script** may reach the network on its own; it may never touch the machine.
 _Avoid_: command, action, task, automation
 
+**Fetching**:
+A **Script** that reaches the network before it can decide, and therefore answers with a promise of
+**Effects** rather than with **Effects**. Named in the **Vocabulary** as a second way of writing a
+**Script**, because there is no synchronous HTTP on this target and a **Script** that stays local
+should not have to say so. It is the only asymmetry in the **Vocabulary** and it is deliberate: the
+**Shelf** awaits it and is otherwise indifferent, and the 5 s deadline applies unchanged — a fetch
+that never returns is what that deadline was always for. Added at T5.2 with `youtube`, the first one.
+_Avoid_: async, promise-returning, remote — those describe the mechanism; this names the kind of
+**Script** it is.
+
 ### What crosses the boundary
 
 **Summon**:

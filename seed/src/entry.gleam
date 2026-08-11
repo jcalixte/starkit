@@ -26,12 +26,13 @@
 //// This file is Shelf-owned: vendored into ~/.starkit and overwritten on every install.
 
 import gleam/dynamic/decode.{type Decoder}
+import gleam/javascript/promise.{type Promise}
 import gleam/json.{type Json}
 import gleam/list
 import registry
 import starkit.{
-  type Context, type Effect, type Need, type Script, Context, Kill, Notify, Open,
-  Paste, RunningApps,
+  type Context, type Effect, type Need, type Script, Context, Fetching, Kill,
+  Notify, Open, Paste, RunningApps, Script,
 }
 
 /// Every Script's Manifest, as JSON.
@@ -40,26 +41,41 @@ pub fn describe() -> String {
 }
 
 /// Run the Script with this Keyword against the payload the Shelf gathered.
-pub fn run(keyword: String, payload: String) -> String {
-  let answer = case find(keyword) {
-    Error(why) -> refusal(why)
+///
+/// A Promise even when nothing here is asynchronous, because one kind of Script is: Gleam cannot
+/// return a String down one branch and a Promise down another, so the wider of the two wins and the
+/// synchronous case is resolved into it. `run.mjs` has awaited this since T0.3 in anticipation, and
+/// awaiting a plain string costs nothing — so the shape changes here and nowhere else.
+pub fn run(keyword: String, payload: String) -> Promise(String) {
+  case find(keyword) {
+    Error(why) -> promise.resolve(refusal(why))
     Ok(script) ->
       case json.parse(payload, payload_decoder()) {
         Error(_) ->
-          refusal(
+          promise.resolve(refusal(
             "The payload for \""
             <> keyword
             <> "\" is not the shape the Shelf promised.",
-          )
-        Ok(#(input, context)) -> {
-          let decide = script.run
-          json.object([
-            #("effects", json.array(decide(input, context), of: effect)),
-          ])
-        }
+          ))
+        Ok(#(input, context)) -> decide(script, input, context)
       }
   }
-  json.to_string(answer)
+  |> promise.map(json.to_string)
+}
+
+/// Let the Script decide, awaiting it only if it is the kind that fetches.
+///
+/// Pattern-matched rather than reached through `script.run`, which is the one field the two
+/// constructors do not share a type for — and the reason they are two constructors at all.
+fn decide(script: Script, input: String, context: Context) -> Promise(Json) {
+  case script {
+    Script(run: run, ..) -> promise.resolve(answer(run(input, context)))
+    Fetching(run: run, ..) -> promise.map(run(input, context), answer)
+  }
+}
+
+fn answer(effects: List(Effect)) -> Json {
+  json.object([#("effects", json.array(effects, of: effect))])
 }
 
 fn find(keyword: String) -> Result(Script, String) {
