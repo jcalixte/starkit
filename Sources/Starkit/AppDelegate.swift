@@ -4,19 +4,25 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var status: MenuBarStatus!
     private var hotKey: HotKey!
+    private var panel: SummonPanel!
     private var toolchain: Toolchain?
     private var builder: Builder?
 
-    /// The chord first, then everything it will eventually need.
+    /// The chord and the bar first, then everything they will eventually need.
     ///
     /// Ordered against a measurement rather than by taste: resolving the **Toolchain** costs 510 ms
     /// on this thread (T1.2, `DESIGN.md` §4 F9), and nothing else runs while it does. Registering
     /// after it would leave ⌃⌘K dead for half a second after every login — the one moment F9 exists
-    /// to protect. The reverse costs nothing, because a chord pressed before the build finishes
-    /// finds a **Refusal** waiting for it, which is the answer it should get anyway.
+    /// to protect. The panel is built ahead of it for the same reason and one more: F1 is the
+    /// tightest budget in the system, and building the window is what a lazy first **Summon** would
+    /// have made it pay for.
+    ///
+    /// A chord pressed before the build finishes costs nothing either, because it finds a
+    /// **Refusal** waiting for it, which is the answer it should get anyway.
     func applicationDidFinishLaunching(_ notification: Notification) {
         status = MenuBarStatus()
         listen()
+        panel = SummonPanel()
         prepare()
     }
 
@@ -37,9 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// What ⌃⌘K does, until T2.2 gives it a panel to show.
+    /// Safe to reach the panel from here even though it is built after the chord is registered:
+    /// Carbon dispatches on the run loop, which is not turning until this method has returned.
     private func summon() {
-        report("⌃⌘K")
+        panel.toggle()
     }
 
     /// Resolve the **Toolchain**, then build, before anything reaches for either.
@@ -69,11 +76,4 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Everything also goes to stderr, which is where it is visible when the executable is run from
-    /// a terminal during development. Under `SMAppService` there is nothing on the other end and
-    /// the menu bar is the only channel — which is why C10 carries the same sentence, and why the
-    /// `detail` does not go there: a Gleam error is many lines and a menu item is one.
-    private func report(_ line: String) {
-        FileHandle.standardError.write(Data((line + "\n").utf8))
-    }
 }

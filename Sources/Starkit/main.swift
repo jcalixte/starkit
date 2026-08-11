@@ -104,9 +104,3 @@ private func ensureCurrent(_ keyword: String, _ builder: Builder) throws(Refusal
         detail: failed?.detail ?? "Expected it at \(builder.artefact(of: keyword).path)."
     )
 }
-
-/// stderr, not stdout. stdout carries the **Effects** and nothing else, so a **Refusal** cannot be
-/// mistaken for one by anything reading the output.
-private func report(_ line: String) {
-    FileHandle.standardError.write(Data((line + "\n").utf8))
-}
