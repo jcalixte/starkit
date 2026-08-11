@@ -62,9 +62,11 @@ echo "→ $DEST (signature verified)"
 # Derived from the directory rather than a list, so a file added to seed/ later is vendored without
 # anyone having to remember this script exists.
 #
-# Vendored files are compared before being written. Copying an identical file would still move its
-# mtime, and starkit.gleam is a shared module — a moved mtime there marks every Script Stale and
-# makes the next Summon rebuild all five for no reason. Same reasoning as gen-registry.sh.
+# Vendored files are compared before being written, so an identical file keeps its mtime. This was
+# load-bearing until T1.4: the Stale rule compared mtimes, so re-vendoring an unchanged
+# starkit.gleam marked every Script Stale. The rule now compares content (ADR 0002) and cannot be
+# fooled that way, so this is down to not touching what it did not change — worth keeping, no longer
+# propping anything up. Same reasoning as gen-registry.sh.
 vendored=0
 kept=0
 seeded=0

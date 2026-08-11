@@ -30,6 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let builder = Builder(toolchain: toolchain, home: Toolchain.home)
             self.builder = builder
             try builder.build()
+            // While it is true: every **Artefact** matches the source beside it, and this is the
+            // record a later failed build is attributed against (ADR 0002).
+            builder.remember()
             report("Scripts compile.")
         } catch {
             status.set(.broken(reason: error.reason))
