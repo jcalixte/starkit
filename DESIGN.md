@@ -21,7 +21,7 @@ One user, so weights are asserted directly rather than derived from segments.
 | G1  | The automation fires before I notice waiting  |   9    | stated twice: "speed is important" |
 | G4  | It costs nothing while I'm not using it       |   8    | stated: "smallest footprint", sharpened to idle cost |
 | G3  | A new automation is one file and one minute   |   7    | original ask: "create or edit files" |
-| G7  | Upgrading node or Gleam never breaks it, and I never tell it where they are | 7 | stated: "easily update node and gleam versions or getting the default one" |
+| G7  | Upgrading bun or Gleam never breaks it, and I never tell it where they are | 7 | stated: "easily update node and gleam versions or getting the default one" |
 | G5  | I write Gleam, not glue around Gleam          |   6    | choosing Gleam was the point; [ADR 0001](./docs/adr/0001-compile-gleam-to-javascript.md) |
 | G6  | There's almost nothing to remember            |   6    | stated: "real simplicity" — a small **Vocabulary** baseline, not a cap |
 
@@ -104,10 +104,10 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F9** Be ready after login _(also G4)_
     - **How**: `SMAppService.mainApp`, no helper bundle. A login-launched app gets a minimal
       `PATH`, so the toolchain is resolved at each launch by asking the login shell
-      (`/bin/zsh -lc 'command -v node'`) — 15 ms, and it follows version-manager moves for free.
-      Rejected: caching absolute paths at install, which pins whatever the shim happened to
-      resolve to. `~/.starkit/starkit.toml` holds an *override* for when the shell lies, not the
-      source of truth
+      (`/bin/zsh -lc 'command -v bun'`) — measured 16.4 ms min / 22.4 ms median, and `gleam` costs
+      the same again, so budget ~40 ms of the 3 s for resolution. It follows version-manager moves
+      for free. Rejected: caching absolute paths at install, which pins whatever was current then.
+      `~/.starkit/starkit.toml` holds an *override* for when the shell lies, not the source of truth
       - **Component**: C9 LoginItem · C12 Toolchain
   - **F10** Surface breakage at save time, not **Summon** time
     - **How**: `FSEventStream` on `~/.starkit/src` → build, then set the menu bar state
@@ -139,14 +139,21 @@ Each function sits under the goal it serves most; secondary goals are noted inli
     - **How**: prefix match on **Keyword** over ~5 entries; no index worth building
       - **Component**: C2 Catalogue · C1 SummonPanel
   - **F5** Execute the **Artefact**
-    - **How**: spawn `node` when the bar appears, kill it once idle and dismissed. Ready in
-      46 ms of the 400–800 ms you spend typing, then 6.7 ms per run, at 0 MB idle. Rejected:
-      resident `node` (0.03 ms but 52 MB and needs mtime cache-busting), cold spawn per run
-      (53 ms). A fresh process per **Summon** also means a fresh module cache, so an edited
-      **Script** is always the one that runs
-    - **Conflicts with F1**: the spawn must happen *after* the panel is on screen, never before
-      it. 46 ms of `posix_spawn` ahead of the bar would eat most of F1's 50 ms budget to save
-      time later — exactly backwards, since the bar appearing is the part you can see
+    - **How**: spawn `bun` when the bar appears, kill it once idle and dismissed (T3). Ready in
+      ~17 ms of the 400–800 ms you spend typing, then 6.7 ms per run, at 0 MB idle. Rejected:
+      resident `bun` (sub-ms but holds memory and needs mtime cache-busting). A fresh process per
+      **Summon** also means a fresh module cache, so an edited **Script** is always the one that runs
+    - **Open — T3 may no longer be needed.** Its whole justification was that a cold spawn per run
+      cost 54.9 ms on node, 2.7× over budget. On bun a cold spawn of the *real* seed — 5 **Scripts**,
+      `gleam_json`, harness overhead subtracted — measures 16.0 ms min / 17.6 ms median / 21.9 ms
+      p90 on bun 1.3.14, and within noise of that on 1.3.8, so the figure is not a one-version
+      accident. The median fits F5 outright, which would delete the speculative spawn, the
+      kill-on-dismiss and the whole process lifecycle from C4. Against it: p90 is 10 % over.
+      **Decided at T1.4**, which is where C4 gets built and where keeping T3 costs real code
+    - **Conflicts with F1**: while T3 stands, the spawn must happen *after* the panel is on screen,
+      never before it. `posix_spawn` ahead of the bar would eat F1's 50 ms budget to save time later
+      — exactly backwards, since the bar appearing is the part you can see. Dropping T3 dissolves
+      this conflict rather than resolving it
       - **Component**: C4 Runner
   - **F6** Gather only the declared **Context**
     - **How**: `NSWorkspace.runningApplications` filtered to `.activationPolicy == .regular`,
@@ -179,15 +186,15 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       future `DefaultKeyBinding.dict` for free
       - **Component**: C1 SummonPanel
 
-- **G7** Upgrading node or Gleam never breaks it _W:7_
+- **G7** Upgrading bun or Gleam never breaks it _W:7_
   - **F15** Follow the **Toolchain** the shell reports, and notice when it moves
-    - **How**: ask the login shell at each launch. Nothing is pinned, so a node or Gleam upgrade
-      is not an event. Measured: 15 ms, and it resolves `~/.vite-plus/bin/node` — the shim, which
-      is the version-agnostic entry point. Rejected: caching `process.execPath`, which is the
-      *most* fragile of the three available paths because it pins the node version
-      (`…/js_runtime/node/24.19.0/bin/node`); and a hardcoded `PATH` list, which would have missed
-      `.vite-plus` entirely. The shim costs ~10 ms per spawn over the real binary, hidden inside
-      the typing window
+    - **How**: ask the login shell at each launch. Nothing is pinned, so a bun or Gleam upgrade is
+      not an event — verified rather than assumed: 1.3.8 and 1.3.14 spawn within noise of each
+      other. Measured 16.4 ms min / 22.4 ms median, resolving `~/.bun/bin/bun`, which is the real
+      binary — bun has no version-manager shim, so unlike node there is no indirection to pay for
+      and no shim-versus-binary choice to get wrong. Rejected: caching the absolute path, which
+      pins a version `bun upgrade` will move underneath it; and a hardcoded `PATH` list, which
+      would have missed `~/.bun` entirely
       - **Component**: C12 Toolchain · C10 MenuBarStatus
 
 - **G5** I write Gleam, not glue _W:6_ · **G6** Almost nothing to remember _W:6_
@@ -202,7 +209,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
 | C1  | SummonPanel       | the bar: show/hide, filtering, key handling                 |          |
 | C2  | Catalogue         | read `manifests.json`, resolve **Keyword** → **Script**      |          |
 | C3  | HotKey            | register ⌃⌘K, report failure to hold it                     |          |
-| C4  | Runner            | spawn/kill `node`, feed a run, 5 s deadline, collect **Effects** and stderr | ADR-0001 |
+| C4  | Runner            | spawn/kill `bun`, feed a run, 5 s deadline, collect **Effects** and stderr | ADR-0001 |
 | C5  | Builder           | `gleam build`, per-**Script** **Stale** check by mtime        | ADR-0002 |
 | C6  | Watcher           | `FSEvents` → regenerate registry, build, rewrite **Manifests**   | ADR-0002 |
 | C7  | Effector          | perform **Open** / **Kill** / **Paste** / **Notify**, focus and clipboard |          |
@@ -210,7 +217,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
 | C9  | LoginItem         | `SMAppService` registration                                 |          |
 | C10 | MenuBarStatus     | normal / red, the only ambient signal Starkit emits          |          |
 | C11 | Scaffolder        | template a new **Script** from a **Keyword**                 |          |
-| C12 | Toolchain         | resolve `node` and `gleam` paths from `starkit.toml`         |          |
+| C12 | Toolchain         | resolve `bun` and `gleam` paths from `starkit.toml`          |          |
 
 **Where the effort goes.** C4 and C7 carry the most risk: C4 owns process lifecycle and the
 deadline, C7 owns the only permission-gated operation in the system. C6 is the quiet
@@ -223,7 +230,7 @@ everything still works but silently goes **Stale**.
 | ---- | -------- | ------ | ---------- | ------------- |
 | 1 | F1 bar on screen | ≤ 50 ms from ⌃⌘K | manual feel, then a signpost trace | panel is pre-built; if still slow, drop the blur/material before dropping correctness |
 | 2 | F8 hold the chord | 100 % | menu bar turns red on registration failure | fall through to no-op rather than swallowing the chord; never fail silently |
-| 3 | F5 execute | ≤ 20 ms warm | log per-run µs behind a debug flag | fall back to cold spawn (53 ms) if the resident-per-**Summon** process proves flaky |
+| 3 | F5 execute | ≤ 20 ms warm | log per-run µs behind a debug flag | fall back to cold spawn per run, which on bun is 17.6 ms median and inside budget — so this stopped being a degradation and became a candidate design (see F5, decided at T1.4) |
 | 4 | F4 build | ≤ 40 ms | time each `gleam build` | if it regresses, trust the watcher's build and skip the **Summon**-time re-check |
 | 5 | F9 ready after login | ≤ 3 s | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
 | 6 | F14 run deadline | 5 s | the deadline itself | none needed — this *is* the fallback |
@@ -235,14 +242,15 @@ everything still works but silently goes **Stale**.
 | --- | -------- | --- | ---- | --- |
 | T1 | JavaScript target over Erlang | 93 ms vs 450 ms end-to-end; `fetch` free | no BEAM, no OTP, no actors, no Erlang-only Hex | [0001](./docs/adr/0001-compile-gleam-to-javascript.md) |
 | T2 | One project over five | one dep tree, 2.8 MB vs ~14 MB, one-file **Script** creation | all **Scripts** share a build; needs the mtime **Stale** rule to stay isolated | [0002](./docs/adr/0002-one-project-with-per-script-staleness.md) |
-| T3 | Spawn `node` on **Summon** | 6.7 ms runs at 0 MB idle; fresh module cache each time | 46 ms of speculative work per **Summon**; a process lifecycle to get right | |
+| T3 | Spawn `bun` on **Summon** | 6.7 ms runs at 0 MB idle; fresh module cache each time | ~17 ms of speculative work per **Summon**; a process lifecycle to get right — and on bun the thing it buys is only 11 ms, so the trade may not be worth taking (T1.4) | |
 | T4 | **Effects** out, no bidirectional channel | no blocking stdin in Gleam; Accessibility lives in one signed binary; **Scripts** testable by reading stdout | no dynamic pick-lists — Clean stays all-or-nothing | |
 | T5 | Typed **Manifests** over comment headers | declarations are compile-checked; **Effect** and **Context** can't drift | ~80 lines of Gleam; the registry must be generated | |
 | T6 | Keep pasted text on the clipboard | paste the same result into several places by hand | re-**Summoning** a **Script** **Seeds** from its own output | |
 | T7 | **Kill** over quit | an empty screen, immediately | unsaved work is lost, deliberately | |
 | T8 | Local `install.sh` over Homebrew | no notarization, no quarantine, a stable signature that keeps the Accessibility grant | nobody else can install it in one line | |
 | T9 | Tree only, no importance matrix | no 72-cell grid to keep current | component priority is argued from goal weights, not computed | |
-| T10 | Borrow the **Toolchain**, resolve it every launch | node and Gleam upgrades are non-events; nothing to configure | 15 ms per launch, and a broken `.zshrc` breaks resolution — though it would break your terminal first | |
+| T10 | Borrow the **Toolchain**, resolve it every launch | bun and Gleam upgrades are non-events; nothing to configure | ~40 ms per launch for both, and a broken `.zshrc` breaks resolution — though it would break your terminal first | |
+| T12 | bun over node as the runtime | cold spawn 17.6 ms vs 54.9 ms, which puts a run inside F5's budget with no resident process; one self-contained binary, no version-manager shim | a faster-moving runtime under G7; bun ignores `NO_COLOR`, so C4 must strip ANSI from stderr before F12 shows it | |
 | T11 | `gleam_json` for the wire, over hand-rolled encoding | escaping is the library's problem on the two paths that carry arbitrary text — a page title into **Paste**, an error into **Notify** | one dependency in a **Shelf**-owned `gleam.toml`, resolved on first install; **Scripts** never import it | |
 
 ### Tensions being watched
@@ -296,6 +304,30 @@ everything still works but silently goes **Stale**.
   `entry.mjs` exporting a function, and a rename would break it loudly at import rather than
   silently. Confirmed that a plain `gleam build` never emits the private file at all, so nothing in
   the design touches `gleam run`.
+
+- **bun is the runtime, and T3 may not survive it** (T12). Measured over 60 cold spawns of
+  `run.mjs` against the real seed — 5 **Scripts**, `gleam_json` — with the benchmark harness's own
+  fork/exec subtracted, as min/median/p90: bun 16.0/17.6/21.9 ms, deno 23.6/26.9/29.5, node
+  41.0/54.9/59.1 through the `.vite-plus` shim. Output is byte-identical on all three and `run.mjs`
+  needs no edit, so the choice was one string in C12 rather than a migration. Deno was rejected
+  despite its permission sandbox looking like a fit for typed **Manifests**: the process is spawned
+  before a **Keyword** is known, so permissions would have to be the union of every **Script**,
+  which enforces nothing — and tailoring them per **Script** means spawning after Enter, at 27 ms
+  against F5's 20 ms. Its one differentiator is unreachable from this architecture.
+
+  A node fallback was considered and rejected. Node's cold-spawn-per-run is 54.9 ms, 2.7× over F5,
+  so falling back to it is not a slower version of the same design — it is a *different* one, which
+  means keeping all of T3's resident-process machinery alive for a path exercised approximately
+  never. That buys bun's speed and node's complexity at once, and hides the divergence until the
+  one day it fires. A missing runtime is what F15 and C10 are already for: red before it is needed,
+  the same treatment `gleam` gets.
+
+  **What is still open is T3 itself, not the runtime** — see F5. **Trigger:** T1.4, where C4 is
+  built. Two things to settle there: whether p90 (21.9 ms, 10 % over) matters at a threshold whose
+  entire purpose is imperceptibility, and whether 11 ms per run justifies a process lifecycle in
+  the component §7 already names as riskiest. Verified in passing: `gleam test` runs gleeunit under
+  `runtime = "bun"` with no extra configuration, and a throwing **Script** still exits 1 with stderr
+  intact, so F12 holds.
 
 ## 10. Inconsistencies spotted and fixed
 
