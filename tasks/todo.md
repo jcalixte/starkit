@@ -22,9 +22,13 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [x] **T1.3** C5 Builder + `Staleness` pure rule **+ its 4 tests**
 - [x] **T1.4** C4 Runner — spawn `bun`, feed a run, decode **Effects**, 5 s deadline
 - [x] **T1.5** C7 Effector — **Open** only
-- [ ] **T1.6** Isolation check — break `youtube.gleam`, confirm `work` still runs
+- [x] **T1.6** Isolation check — break `youtube.gleam`, confirm `work` still runs
 
-> **Checkpoint B** — the architecture is proven end to end. Everything after this is surface.
+> **Checkpoint B** — reached. `Starkit run work` opens four applications from a terminal, and with
+> `youtube.gleam` not compiling the other four **Scripts** are untouched while `youtube` alone
+> **Refuses**, carrying the Gleam error verbatim. Fixing it brings it back with no other step,
+> which is the content-hash rule from T1.4 doing what mtimes could not. The architecture is
+> proven end to end; everything after this is surface.
 
 ## Phase 3 — The bar
 

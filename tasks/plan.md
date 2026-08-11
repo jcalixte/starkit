@@ -113,8 +113,17 @@ requested later. Serialising launches to fix that would cost seconds and buy not
 so it is recorded rather than fixed, and `NSWorkspace.open` stays the synchronous call rather than
 `openApplication(at:configuration:)` with a completion handler and a queue to think about.
 
-**Checkpoint B** — one **Script** works end to end from a terminal, and the isolation guarantee is
-demonstrated rather than asserted. This is the architecture proven; everything after is surface.
+T1.6 needed no new code and found nothing to change, which is the outcome it was written to check.
+With `youtube.gleam` not compiling, `run work` opened its four applications and `personal`, `clean`
+and `link` all still decided; `run youtube` **Refused** with "it has changed since it was last
+built" above the Gleam diagnostic, box drawing intact. Two things worth having watched it do:
+repairing the file brought `youtube` back with no other step, and copying a byte-identical
+`starkit.gleam` over the vendored one — what `install.sh` does on every run — marked nothing
+**Stale**. Both are the T1.4 correction from mtimes to content hashes, seen rather than asserted.
+
+**Checkpoint B — reached.** One **Script** works end to end from a terminal, and the isolation
+guarantee is demonstrated rather than asserted. This is the architecture proven; everything after
+is surface.
 
 ## Phase 3 — The bar (slice 2)
 
