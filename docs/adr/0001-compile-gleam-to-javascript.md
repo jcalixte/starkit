@@ -25,5 +25,9 @@ any Erlang-only Hex package is unavailable. Every **Script** written against thi
 assumes a JavaScript runtime, so reversing it later means revisiting all of them — that is
 what makes this worth writing down rather than the ~350 ms.
 
-`node` becomes a hard runtime dependency of the **Shelf**. Accepted knowingly: it is already
+A JavaScript runtime becomes a hard dependency of the **Shelf**. Accepted knowingly: one is already
 on this machine, and the alternative dependency was Erlang/OTP, which is larger.
+
+> Superseded in part by [ADR 0003](./0003-run-artefacts-on-bun.md). This ADR named `node` as that
+> runtime without measuring the choice; 0003 measures it and replaces it with `bun`. The target
+> decided here — JavaScript over Erlang — is unaffected.
