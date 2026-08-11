@@ -116,4 +116,4 @@ if [ "$build_status" -ne 0 ]; then
 	exit 1
 fi
 
-echo "✓ Starkit is installed and running. ⌃⌘K summons it once slice 2 lands."
+echo "✓ Starkit is installed and running. ⌃⌘K summons the bar — type a Keyword and press ↩."
