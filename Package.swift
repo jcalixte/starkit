@@ -8,7 +8,9 @@ let package = Package(
         // Everything that has tests lives here. SwiftPM cannot cleanly link an executable target
         // into a test target, so the split is forced by the tooling rather than chosen — but it
         // lands in the right place anyway, because the rules worth testing are exactly the ones
-        // this design made pure. `Staleness` now; `Keyword` joins it at T2.3.
+        // this design made pure. `Staleness` and `Effect` now — reading a reply is separable from
+        // obtaining one, which is the same line C5 sits on — and `Keyword` joins them at T2.3.
+        // `Refusal` lives here because both of them throw it, not because it is tested.
         .target(
             name: "StarkitCore",
             path: "Sources/StarkitCore",

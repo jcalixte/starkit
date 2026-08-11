@@ -35,50 +35,24 @@ struct Runner {
     /// crashed or hung: a **Notify** is a **Script** reporting what it *decided*, and a run that
     /// died decided nothing. `entry.gleam` already takes the same view — an unknown **Keyword** and
     /// an undecodable payload come back as `refusal` from inside the child.
+    ///
+    /// Obtaining the reply is this component's job; reading it is `Effect.all(inReplyTo:…)`, which is
+    /// pure and tested. The split is where the line between "needs a machine" and "needs deciding"
+    /// falls, and it is the same line `Staleness` sits on.
     func run(keyword: String, input: String = "") throws(Refusal) -> [Effect] {
-        let (answer, diagnostics, status) = try execute(keyword: keyword, input: input)
-
-        // Nothing on stdout is F12's case: the **Script** threw, or `run.mjs` could not import the
-        // **Artefact** at all. Either way the child's own words are the only useful thing to say,
-        // and there is nothing Starkit could add to a stack trace by paraphrasing it.
-        guard !answer.isEmpty else {
-            throw Refusal(
-                "The Script \"\(keyword)\" failed while it was running.",
-                detail: diagnostics.isEmpty
-                    ? "bun exited \(status) without writing an answer." : diagnostics
-            )
-        }
-
-        let decoded: Answer
-        do {
-            decoded = try JSONDecoder().decode(Answer.self, from: answer)
-        } catch {
-            // An answer that cannot be read means the two halves of the **Vocabulary** have drifted,
-            // which is a different problem from a **Script** failing and has a different fix.
-            throw Refusal(
-                "Starkit could not read what \"\(keyword)\" answered.",
-                detail: "\(error)"
-            )
-        }
-
-        if let refusal = decoded.refusal { throw Refusal(refusal) }
-        // Absent rather than empty is not a case `entry.gleam` produces — every answer carries one
-        // key or the other — but a **Script** deciding on nothing at all is legitimate, and the
-        // seeded `work.gleam` is exactly that until you fill it in.
-        return decoded.effects ?? []
-    }
-
-    /// What `entry.gleam` answers with: **Effects**, or a **Refusal**, never both and never a bare
-    /// array. One object is what keeps this decode total.
-    private struct Answer: Decodable {
-        let effects: [Effect]?
-        let refusal: String?
+        let (reply, diagnostics, status) = try execute(keyword: keyword, input: input)
+        return try Effect.all(
+            inReplyTo: keyword,
+            reply: reply,
+            diagnostics: diagnostics,
+            exitStatus: status
+        )
     }
 
     private func execute(
         keyword: String,
         input: String
-    ) throws(Refusal) -> (answer: Data, diagnostics: String, status: Int32) {
+    ) throws(Refusal) -> (reply: Data, diagnostics: String?, status: Int32) {
         let process = Process()
         process.executableURL = toolchain.bun
         // `run.mjs`, never `gleam run` — the reasoning is in the shim itself. The payload travels as
@@ -89,10 +63,10 @@ struct Runner {
         process.currentDirectoryURL = home
 
         // Kept apart, unlike C5's single pipe: stdout is the protocol and stderr is F12's channel,
-        // and a warning bun printed on the way through must never be parsed as an answer.
-        let answer = Pipe()
+        // and a warning bun printed on the way through must never be parsed as a reply.
+        let reply = Pipe()
         let diagnostics = Pipe()
-        process.standardOutput = answer
+        process.standardOutput = reply
         process.standardError = diagnostics
 
         let exited = DispatchSemaphore(value: 0)
@@ -114,7 +88,7 @@ struct Runner {
         let collected = Collected()
         let drained = DispatchGroup()
         DispatchQueue.global().async(group: drained) {
-            collected.answer = answer.fileHandleForReading.readDataToEndOfFile()
+            collected.reply = reply.fileHandleForReading.readDataToEndOfFile()
         }
         DispatchQueue.global().async(group: drained) {
             collected.diagnostics = diagnostics.fileHandleForReading.readDataToEndOfFile()
@@ -133,8 +107,8 @@ struct Runner {
         drained.wait()
 
         return (
-            collected.answer,
-            collected.text(of: collected.diagnostics) ?? "",
+            collected.reply,
+            collected.text(of: collected.diagnostics),
             process.terminationStatus
         )
     }
@@ -143,7 +117,7 @@ struct Runner {
     /// is read until `drained.wait()` has returned, which is the ordering that makes a lock
     /// unnecessary rather than merely unlikely to be needed.
     private final class Collected {
-        var answer = Data()
+        var reply = Data()
         var diagnostics = Data()
 
         /// bun ignores `NO_COLOR` (ADR 0003), so the escapes come out here or a stack trace reaches

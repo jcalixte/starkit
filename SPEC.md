@@ -53,12 +53,8 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── SummonPanel.swift         # C1  the NSPanel, built once at launch
 │   ├── Bar.swift                 # C1  the SwiftUI view and its key handling
 │   ├── Catalogue.swift           # C2  manifests.json, Keyword resolution
-│   ├── Keyword.swift             # C2  parsing — pure, tested
-│   ├── Runner.swift              # C4  spawn bun per run, 5 s deadline, Effect decoding
-│   ├── Effect.swift              # C4  the Effect vocabulary, Swift side — decoded off the wire
-│   ├── Refusal.swift             #     Starkit declining, in its own voice
+│   ├── Runner.swift              # C4  spawn bun per run, 5 s deadline, two pipes
 │   ├── Builder.swift             # C5  gleam build, hashing what it built
-│   ├── Staleness.swift           # C5  the Stale rule — pure, tested
 │   ├── Effector.swift            # C7  Open / Kill / Paste / Notify
 │   ├── ContextGatherer.swift     # C8  Running Apps
 │   ├── LoginItem.swift           # C9  SMAppService — lift from cmd-tab verbatim
@@ -66,9 +62,19 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── Toolchain.swift           # C12 login-shell resolution
 │   ├── Watcher.swift             # C6  slice 6
 │   └── Scaffolder.swift          # C11 slice 6
+├── Sources/StarkitCore/          # everything with tests: SwiftPM cannot link an executable
+│   ├── Staleness.swift           # C5  the Stale rule — pure          into a test target, so
+│   ├── Effect.swift              # C4  the Effect vocabulary and       the split is forced by
+│   │                             #     reading a reply — pure          the tooling. It lands
+│   ├── Keyword.swift             # C2  parsing — pure                  where it belongs anyway:
+│   ├── Refusal.swift             #     Starkit declining, in its own   this design made the
+│   │                             #     voice                           risky decisions pure
+│   └── TerminalColour.swift      #     stripping ANSI from borrowed output
 └── Tests/StarkitTests/
     ├── StalenessTests.swift
-    └── KeywordTests.swift
+    ├── EffectTests.swift
+    ├── KeywordTests.swift
+    └── TerminalColourTests.swift
 ```
 
 ```
@@ -136,9 +142,17 @@ that this design made the risky decisions pure.
   source *touched* but not changed is **Current**.
 - `Keyword` — first token splits from **Input**; no match; a **Keyword** that is a prefix of
   another.
+- `Effect` — reading a reply from `entry.gleam`: the four words of the **Vocabulary** under the
+  field names it gave them, in order; awkward text through the **Paste** path; a **Refusal** the
+  child wrote itself, including the non-zero exit that accompanies it; a **Script** that crashed,
+  with and without stderr; and an **Effect** this Starkit does not know, which must be a loud
+  **Refusal** naming the word rather than one the **Effector** silently skips.
+- `TerminalColour` — a real `gleam` diagnostic comes out readable, with its box-drawing kept.
 
-**Not tested:** HotKey, Effector, SummonPanel, Watcher, LoginItem, ContextGatherer. Each is a thin
-call into a framework, and a mock would pass while the app was broken. Verified by running it.
+**Not tested:** HotKey, Effector, SummonPanel, Watcher, LoginItem, ContextGatherer, and C4's process
+half — spawning `bun`, the deadline, draining two pipes. Each is a thin call into a framework, and a
+mock would pass while the app was broken. Verified by running it: the deadline against a **Script**
+that spins, F12 against one that `panic`s.
 
 **Not tested — measured:** every target in [DESIGN.md](./DESIGN.md) §8, by hand, against a
 `--bench` flag on the debug CLI. Latency assertions in CI would be flaky and would not be trusted.

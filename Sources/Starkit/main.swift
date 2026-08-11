@@ -42,7 +42,9 @@ private func command(_ arguments: [String]) -> Int32 {
     // together here is what makes both paths hand a **Script** the same string.
     let input = words.dropFirst(2).joined(separator: " ")
 
-    do {
+    // Spelled out rather than inferred: everything in here throws a **Refusal** and nothing else, and
+    // saying so is what lets the `catch` read `reason` and `detail` off it.
+    do throws(Refusal) {
         let home = Toolchain.home
         let toolchain = try Toolchain.resolve(home: home)
         let builder = Builder(toolchain: toolchain, home: home)

@@ -59,10 +59,13 @@ and compile-checked, so it cannot drift from the **Script** it describes.
 _Avoid_: metadata, header, descriptor, frontmatter, config
 
 **Refusal**:
-Starkit declining to run a **Script** at all, in its own voice, naming which and why — a **Stale**
-**Artefact**, a **Keyword** that resolves to nothing, an absent **Toolchain**. Distinct from
-**Notify**, which is a **Script** that *did* run reporting what it decided: a **Refusal** means no
-**Script** ever got to decide anything.
+Starkit declining to run a **Script**, in its own voice, naming which and why — a **Stale**
+**Artefact**, a **Keyword** that resolves to nothing, an absent **Toolchain**, a **Script** that
+crashed, a **Script** killed at the deadline. Distinct from **Notify**, which is a **Script** that
+ran and reported what it decided: a **Refusal** means no **Script** ever got to decide anything.
+Crashing and being killed belong here for that reason rather than because nothing ran — dying is not
+deciding, and the words that follow a **Refusal** are Starkit's or the runtime's, never a
+**Script**'s.
 _Avoid_: error, failure, rejection
 
 **Vocabulary**:
@@ -160,6 +163,13 @@ _Avoid_: processes, open apps
   and Starkit declining to run one at all. Resolved — the second is a **Refusal**, the first is a
   **Notify**. The wire says `refusal` rather than `error` for that reason, and because `error`
   would collide with Swift's own in C4.
+
+  A third case turned up at T1.4 and looked like neither: a **Script** that ran and then crashed, or
+  one killed at the 5 s deadline. It ran, so **Notify** seemed to fit; nothing was decided, so
+  **Refusal** did too. Resolved as a **Refusal**, which sharpened the test from "did it run" to "did
+  a **Script** get to decide, and whose words are these". A **Notify** is a decision a **Script**
+  made. A stack trace is not; it is the runtime's. No new word was needed, and finding that out is
+  what the case was worth.
 - The reply to a run was briefly called an "envelope", a word from messaging that named the JSON
   shape rather than anything in the domain. Resolved — it carries **Effects** or a **Refusal**, and
   those two words are enough; the shape needs no name of its own.
