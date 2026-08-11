@@ -22,7 +22,13 @@ struct Runner {
     /// crashed or hung, since dying is not deciding. `entry.gleam` takes the same view from inside
     /// the child: an unknown **Keyword** and an undecodable payload both come back as `refusal`.
     func run(keyword: String, input: String = "") throws(Refusal) -> [Effect] {
-        let (reply, diagnostics, status) = try execute(keyword: keyword, input: input)
+        // The payload travels as one `argv` element with no shell between here and there, so a
+        // **Script** name or an **Input** containing quotes, spaces or a semicolon needs no escaping
+        // and cannot be read as anything but data.
+        let (reply, diagnostics, status) = try execute(
+            ["run.mjs", "run", keyword, try payload(input: input)],
+            called: "The Script \"\(keyword)\""
+        )
         return try Effect.all(
             inReplyTo: keyword,
             reply: reply,
@@ -31,17 +37,30 @@ struct Runner {
         )
     }
 
+    /// Every **Manifest**, which is the other verb `entry.gleam` answers and the only one that needs
+    /// no **Keyword**.
+    ///
+    /// Nothing is run by asking this. `describe` reads the registry, so it answers for **Scripts**
+    /// that would **Refuse** if they were reached for — which is what keeps a broken one listed (F2).
+    func describe() throws(Refusal) -> [Manifest] {
+        let (reply, diagnostics, status) = try execute(
+            ["run.mjs", "describe"],
+            called: "Listing your Scripts"
+        )
+        return try Manifest.all(reply: reply, diagnostics: diagnostics, exitStatus: status)
+    }
+
+    /// - Parameter called: how this invocation is named in a **Refusal** about it, already worded to
+    ///   start a sentence — the deadline is the same clock either way, but the sentence a person
+    ///   reads should say what did not finish.
     private func execute(
-        keyword: String,
-        input: String
+        _ arguments: [String],
+        called what: String
     ) throws(Refusal) -> (reply: Data, diagnostics: String?, status: Int32) {
         let process = Process()
         process.executableURL = toolchain.bun
-        // `run.mjs`, never `gleam run` — the reasoning is in the shim itself. The payload travels as
-        // one `argv` element with no shell between here and there, so a **Script** name or an
-        // **Input** containing quotes, spaces or a semicolon needs no escaping and cannot be read as
-        // anything but data.
-        process.arguments = ["run.mjs", "run", keyword, try payload(input: input)]
+        // `run.mjs`, never `gleam run` — the reasoning is in the shim itself.
+        process.arguments = arguments
         process.currentDirectoryURL = home
 
         // Kept apart, unlike C5's single pipe: stdout is the protocol and stderr is F12's channel,
@@ -82,7 +101,7 @@ struct Runner {
             // **Script** managed to say before it stopped is still worth showing.
             drained.wait()
             throw Refusal(
-                "The Script \"\(keyword)\" was killed after 5 seconds.",
+                "\(what) was killed after 5 seconds.",
                 detail: collected.text(of: collected.diagnostics)
             )
         }
