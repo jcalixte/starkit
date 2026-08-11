@@ -31,6 +31,13 @@ struct Builder {
         process.standardOutput = output
         process.standardError = output
 
+        // Not `waitUntilExit()`. Measured at T1.4: it costs 63–68 ms on this machine no matter how
+        // quickly the child exits, and it pays that even when the pipe has already reached EOF, so
+        // it is a polling loop rather than a wait. Against F4's 40 ms budget that overhead is larger
+        // than the build it was timing. `terminationHandler` fires on notification and is free.
+        let exited = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in exited.signal() }
+
         do {
             try process.run()
         } catch {
@@ -40,7 +47,7 @@ struct Builder {
             )
         }
         let data = output.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
+        exited.wait()
 
         guard process.terminationStatus == 0 else {
             throw Refusal(
