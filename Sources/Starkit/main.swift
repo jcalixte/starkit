@@ -52,13 +52,14 @@ private func command(_ arguments: [String]) -> Int32 {
 
         let effects = try Runner(toolchain: toolchain, home: home).run(keyword: keyword, input: input)
 
-        guard dryRun else {
-            // C7 is T1.5. Printing the **Effects** and claiming to have performed them would be the
-            // one failure mode `--dry-run` exists to rule out, so say so and stop.
-            report("Starkit cannot perform Effects yet. Run with --dry-run to see them.")
-            return 2
+        // `--dry-run` prints the decision and performs none of it. The two are exclusive on
+        // purpose: the flag exists to answer "what did this **Script** decide" without the machine
+        // changing underneath the answer.
+        if dryRun {
+            for effect in effects { print(effect) }
+        } else {
+            try Effector().perform(effects)
         }
-        for effect in effects { print(effect) }
         return 0
     } catch {
         report(error.reason)
