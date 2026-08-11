@@ -7,10 +7,9 @@ import StarkitCore
 ///
 /// The only component that acts, which is what the closed **Effect** vocabulary buys: a **Script**
 /// returns a decision and can touch nothing itself, so every permission the **Shelf** was granted
-/// is exercised from here and nowhere else. **Open**, **Paste** and **Notify** are what it does so
-/// far — **Kill** arrives at T4.3 — and until then an **Effect** this cannot perform is a
-/// **Refusal**, never a silent skip. Claiming to have done something is the one failure a person
-/// cannot see.
+/// is exercised from here and nowhere else. All four words of the **Vocabulary** are performed here
+/// as of T4.3, and an **Effect** this cannot perform is a **Refusal**, never a silent skip.
+/// Claiming to have done something is the one failure a person cannot see.
 struct Effector {
     /// The application the bar took the keyboard from, which is where a **Paste** hands it back
     /// (`Focus`).
@@ -45,12 +44,11 @@ struct Effector {
         for effect in effects {
             switch effect {
             case .open(let app): try open(app)
+            case .kill(let app): try kill(app)
             case .paste(let text): try paste(text)
             // In the order the **Script** decided it, like everything else here. A **Script** that
             // **Opens** and then explains itself says so after the launch, not before it.
             case .notify(let message): notify(message)
-            case .kill:
-                throw Refusal("Starkit cannot perform \(effect) yet.")
             }
         }
     }
@@ -86,6 +84,85 @@ struct Effector {
         guard NSWorkspace.shared.open(URL(fileURLWithPath: path)) else {
             throw Refusal("Starkit could not open \(app).", detail: "It is at \(path).")
         }
+    }
+
+    /// End an application without asking it, and without letting it ask you.
+    ///
+    /// `forceTerminate` is `SIGKILL` by another name: no save dialog, no "are you sure", no chance
+    /// for the application to refuse. That is the **Effect** as `CONTEXT.md` defines it and as T7
+    /// weighs it — an empty screen immediately, paid for with whatever was unsaved. The gentler call
+    /// is `terminate()`, which is a request, and a request is exactly what Clean exists not to make.
+    ///
+    /// It needs no permission and no Accessibility (`DESIGN.md` §4, F7): one process ending another
+    /// it can see is ordinary, which is why the guarantee below has to be Starkit's own.
+    ///
+    /// **Nothing running by that name is done, not refused.** A **Kill** says an application should
+    /// not be running, and one that quit on its own between the gather and here has satisfied it —
+    /// refusing would abort the rest of the list over a race in the machine, and Clean's whole list
+    /// is aimed at a **Context** sampled milliseconds earlier. The cost is that a **Script** with a
+    /// misspelt name is quiet where **Open** would be loud, and it is unavoidable: from here,
+    /// "already gone" and "never existed" are the same absence. It is said out loud in the log
+    /// instead.
+    ///
+    /// Matched without case, like every other name in this system — LaunchServices resolves an
+    /// **Open** that way, and `clean.gleam` compares its keep list that way. Loose matching kills
+    /// more rather than less, which is the wrong direction for this **Effect**, and it is safe only
+    /// because no two applications differ by case alone. Every instance answering to the name is
+    /// killed: two copies of the same application are the same answer to "that should not be
+    /// running".
+    ///
+    /// Matched **twice**, and the second way was not designed but found: `localizedName` is the name
+    /// in the machine's language, so on a French system Calculator is running under the name
+    /// Calculatrice and `Kill("Calculator")` quietly matched nothing at all. **Open** never had that
+    /// problem — LaunchServices resolves either spelling — so the same string could launch an
+    /// application and then fail to close it, which is a seam in the **Vocabulary** rather than a
+    /// quirk of one **Effect**. Asking LaunchServices the same question **Open** asks and comparing
+    /// bundles closes it. The name match stays because it is the one that needs nothing from disk,
+    /// and because a **Kill** arriving from a **Context** is already spelled exactly as C8 spelled
+    /// it.
+    private func kill(_ app: String) throws(Refusal) {
+        let bundle = NSWorkspace.shared.fullPath(forApplication: app)
+            .map { URL(fileURLWithPath: $0).standardizedFileURL }
+        let targets = NSWorkspace.shared.runningApplications.filter {
+            $0.localizedName?.caseInsensitiveCompare(app) == .orderedSame
+                || (bundle != nil && $0.bundleURL?.standardizedFileURL == bundle)
+        }
+
+        // The third lock, and the only one that holds for every **Script** rather than for Clean.
+        // `clean.gleam` keeps Starkit off its own list and C8 never gathers it, but both of those
+        // are about a name arriving from a **Context**, and any **Script** can write the word
+        // itself. Starkit ending here would end the run partway down a list it is still performing,
+        // so every **Effect** after it becomes a decision nobody carried out. Loud, so the person
+        // who wrote it finds out; a silent skip would leave them believing it worked.
+        //
+        // By name rather than by process, and by both of the names Starkit goes by: the application's
+        // when it is the bundle in the menu bar, and the process's on the terminal path, where the
+        // binary has no bundle and the Starkit being aimed at is the *other* one holding ⌃⌘K.
+        // Neither name is written down here — a guard that hard-codes "Starkit" is a guard that stops
+        // being true the day the product is renamed.
+        let names = [NSRunningApplication.current.localizedName, ProcessInfo.processInfo.processName]
+        guard !names.contains(where: { $0?.caseInsensitiveCompare(app) == .orderedSame }) else {
+            throw Refusal(
+                "A Script cannot Kill Starkit.",
+                detail: "Starkit is what performs the Effects; the run would stop halfway down its "
+                    + "own list."
+            )
+        }
+
+        guard !targets.isEmpty else {
+            report("   Kill — nothing called \"\(app)\" is running.")
+            return
+        }
+
+        for target in targets {
+            guard target.forceTerminate() else {
+                throw Refusal(
+                    "Starkit could not kill \(app).",
+                    detail: "It is process \(target.processIdentifier) and it is still running."
+                )
+            }
+        }
+        report("   Kill — \(app)\(targets.count > 1 ? " (\(targets.count) of them)" : "")")
     }
 
     /// Put the text on the clipboard, give the keyboard back, and press ⌘V for the person.
