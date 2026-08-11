@@ -176,10 +176,11 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       in-process. Replaces a 463 ms `osascript` call that also needed Automation permission
       - **Component**: C8 ContextGatherer
   - **F7** Perform each **Effect** in order, restoring focus before **Paste** _(also G5)_
-    - **How**: `openApplication` / `forceTerminate` need no permission; **Paste** activates the
-      previously frontmost app then synthesises ⌘V via `CGEvent`, which is the one thing needing
-      Accessibility. Pasted text stays on the clipboard by design. Measured at T0.5: 23.1 ms for
-      the whole **Paste**, of which 19.4 ms is waiting for the previously frontmost app to report
+    - **How**: `NSWorkspace.open` / `forceTerminate` need no permission — **Open** measured at
+      T1.5 at ~35 ms warm and seconds cold, since it returns only once the launch is under way.
+      **Paste** activates the previously frontmost app then synthesises ⌘V via `CGEvent`, which is
+      the one thing needing Accessibility. Pasted text stays on the clipboard by design. Measured
+      at T0.5: 23.1 ms for the whole **Paste**, of which 19.4 ms is waiting for the app to report
       itself active again. Awaited via `didActivateApplicationNotification` rather than polled,
       because polling would block the run loop that notification has to arrive on; the deadline
       behind it exists for the case where it never fires. Multi-byte text arrives intact, so it is

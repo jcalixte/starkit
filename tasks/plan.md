@@ -104,6 +104,15 @@ its tests and the ADR all moved to hashes and C5 now writes `~/.starkit/built.js
 successful build. **T1.6 is unaffected and still needs no new code** — the isolation it checks was
 verified as part of this task.
 
+T1.5 hands two things forward, both about **Open** costing more than a function call. **It blocks
+until the launch is under way** — ~35 ms per application warm, 4.9 s for three cold Electron ones —
+so T2.4 must perform **Effects** off the main thread, or the bar freezes for as long as the slowest
+cold launch takes. And **which application ends up in front is not the last one asked for**: macOS
+activates an application when its launch *finishes*, so a cold Slack arrives after a warm terminal
+requested later. Serialising launches to fix that would cost seconds and buy nothing worth having,
+so it is recorded rather than fixed, and `NSWorkspace.open` stays the synchronous call rather than
+`openApplication(at:configuration:)` with a completion handler and a queue to think about.
+
 **Checkpoint B** — one **Script** works end to end from a terminal, and the isolation guarantee is
 demonstrated rather than asserted. This is the architecture proven; everything after is surface.
 

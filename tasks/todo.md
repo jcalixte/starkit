@@ -21,7 +21,7 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [x] **T1.2** C12 Toolchain — login-shell resolution, `starkit.toml` override, named error
 - [x] **T1.3** C5 Builder + `Staleness` pure rule **+ its 4 tests**
 - [x] **T1.4** C4 Runner — spawn `bun`, feed a run, decode **Effects**, 5 s deadline
-- [ ] **T1.5** C7 Effector — **Open** only
+- [x] **T1.5** C7 Effector — **Open** only
 - [ ] **T1.6** Isolation check — break `youtube.gleam`, confirm `work` still runs
 
 > **Checkpoint B** — the architecture is proven end to end. Everything after this is surface.
