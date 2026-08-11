@@ -49,8 +49,13 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// column you are typing into.
     private static let leading: CGFloat = margin + chip + 14
 
+    /// The gap between the **Keyword** chip and the **Input** typed after it.
+    private static let gap: CGFloat = 10
+
     private let panel: KeyablePanel
     private let field: NSTextField
+    /// The **Keyword** once it has been chosen, shown only in the **Input** stage.
+    private let keywordChip = KeywordChip()
     /// The mark and the field, kept together so the panel growing downwards moves neither.
     private let head: NSView
     private let list: ListView
@@ -71,6 +76,27 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     var catalogue: [Manifest] = [] {
         didSet { narrow() }
     }
+
+    /// Which of the two things the bar is asking for.
+    ///
+    /// The **Keyword** stage lists **Scripts** and narrows as you type. The **Input** stage has one
+    /// **Script** chosen and asks the question it declared — no list, because there is nothing left
+    /// to choose, and no narrowing, because what is being typed is an answer.
+    ///
+    /// A **Script** that `Decides` never reaches the second stage, which is what makes the field a
+    /// **Keyword** and not a prompt: Work and Clean run on one ↩ exactly as they did before it
+    /// existed.
+    private enum Stage {
+        case keyword
+        case input(Manifest)
+    }
+
+    private var stage = Stage.keyword
+
+    /// What was typed in the **Keyword** stage, held while the **Input** stage is up so Escape can
+    /// put it back. Escape going one stage back rather than all the way out is what makes ↩ on the
+    /// wrong **Script** cost one keystroke instead of a re-**Summon**.
+    private var typed = ""
 
     /// What the **Keyword** typed so far selects, in the order it will be listed.
     private var matches: [Manifest] = []
@@ -158,29 +184,16 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         head.addSubview(mark)
 
         field = NSTextField(string: "")
-        // The placeholder in the accent rather than the system's grey: it is the one piece of text
-        // here that is Starkit talking rather than the person, and colouring it says so without a
-        // second element on screen to say it with. Taken towards the background it sits on, because
-        // periwinkle at full strength on cream is a colour rather than a word.
-        field.placeholderAttributedString = NSAttributedString(
-            string: "Keyword",
-            attributes: [
-                .font: NSFont.systemFont(ofSize: 21),
-                .foregroundColor: Palette.placeholder,
-            ]
-        )
+        field.placeholderAttributedString = Self.placeholder("Keyword")
         field.font = .systemFont(ofSize: 21, weight: .regular)
         field.textColor = .labelColor
         field.isBezeled = false
         field.drawsBackground = false
         field.focusRingType = .none
-        centre(
-            field,
-            x: Self.leading,
-            width: Self.width - Self.leading - Self.margin,
-            in: Self.header
-        )
         head.addSubview(field)
+
+        keywordChip.isHidden = true
+        head.addSubview(keywordChip)
         background.addSubview(head)
 
         list = ListView(
@@ -198,7 +211,13 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         // Everything typed reaches C1 through the field: `controlTextDidChange` narrows, and
         // `doCommandBy` is where ↩ arrives as a selector rather than as a key (F13).
         field.delegate = self
-        panel.cancel = { [weak self] in self?.dismiss() }
+        // Escape is one stage back before it is a **Dismissal**, which is the only key in the bar
+        // whose meaning depends on which stage is up.
+        panel.cancel = { [weak self] in
+            guard let self else { return }
+            if case .input = self.stage { self.stopAsking() } else { self.dismiss() }
+        }
+        placeField()
         layOut()
         warm()
 
@@ -280,6 +299,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         stopWatchingForClicksElsewhere()
         panel.orderOut(nil)
         NSApp.hide(nil)
+        stopAsking()
         field.stringValue = ""
         narrow()
     }
@@ -330,13 +350,85 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     ///
     /// The **Keyword** run is the **Manifest**'s and not what was typed: `wo` selects Work and Work
     /// is what runs.
+    ///
+    /// In the **Input** stage ↩ is the second one — the **Script** is already chosen and this is its
+    /// answer.
     private func accept() {
-        guard matches.indices.contains(selected) else { return }
-        let manifest = matches[selected]
-        // Read before hiding, which clears the field.
-        let input = Keyword.split(field.stringValue).input
-        dismiss()
-        run?(manifest, input)
+        switch stage {
+        case .keyword:
+            guard matches.indices.contains(selected) else { return }
+            let manifest = matches[selected]
+            // Read before hiding, which clears the field.
+            let input = Keyword.split(field.stringValue).input
+            // A question already answered is not asked. Typing the **Input** on the same line as
+            // the **Keyword** is the shortcut for someone who already knows the answer, and it is
+            // what ↩ did before the stage existed — the stage is for the case where nothing was
+            // typed after the **Keyword**, which is the case the **Seed** is for.
+            if let question = manifest.asks, input.isEmpty {
+                ask(manifest, question: question)
+                return
+            }
+            dismiss()
+            run?(manifest, input)
+
+        case .input(let manifest):
+            // Whole and verbatim. The field holds the **Input** alone here, so splitting it again
+            // would read the first word of an answer as a **Keyword**.
+            let input = field.stringValue
+            dismiss()
+            run?(manifest, input)
+        }
+    }
+
+    /// Put the **Script**'s question up, **Seeded** from the clipboard.
+    ///
+    /// The list goes rather than being replaced by the chosen **Script**'s name: the bar is a list
+    /// of what you are choosing from, and there is nothing left to choose. What remains is the head
+    /// — the **Keyword** you typed, now a chip in the same column it was typed in, and the question
+    /// where the **Keyword** used to be.
+    ///
+    /// The **Seed** arrives selected, which is what makes accepting it one keystroke and replacing
+    /// it none (`CONTEXT.md`). An empty clipboard **Seeds** with nothing and the stage arrives
+    /// anyway — the **Seed** is what the **Input** starts out holding, not whether it is asked for.
+    private func ask(_ manifest: Manifest, question: String) {
+        typed = field.stringValue
+        stage = .input(manifest)
+
+        let seed = NSPasteboard.general.string(forType: .string) ?? ""
+        keywordChip.show(manifest.keyword)
+        field.placeholderAttributedString = Self.placeholder(question)
+        field.stringValue = seed
+        field.currentEditor()?.selectAll(nil)
+        placeField()
+
+        // Nothing matches in this stage, which is what takes the list away and shrinks the panel
+        // back to the head.
+        matches = []
+        selected = 0
+        list.present([], selected: 0)
+        fit()
+
+        report("   \(manifest.keyword) asks for \(question) — Seeded with \(seed.count) characters")
+    }
+
+    /// Back to the **Keyword** stage, with what was typed still in the field.
+    ///
+    /// Escape's first meaning, and also what a **Dismissal** does on its way out, so the bar is
+    /// never **Summoned** back into the middle of a question nobody remembers being asked.
+    ///
+    /// The caret goes to the end rather than selecting what comes back: this text is being returned
+    /// to, not offered, and a **Keyword** that vanishes on the next keystroke is not what the person
+    /// left there.
+    private func stopAsking() {
+        guard case .input = stage else { return }
+        stage = .keyword
+        keywordChip.isHidden = true
+        field.placeholderAttributedString = Self.placeholder("Keyword")
+        field.stringValue = typed
+        typed = ""
+        field.currentEditor()?.moveToEndOfDocument(nil)
+        placeField()
+        narrow()
     }
 
     /// Move the selection one row, in whichever direction Cocoa was asked for.
@@ -405,6 +497,37 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         )
     }
 
+    /// Where the field starts, which is after the **Keyword** chip when there is one.
+    ///
+    /// The chip takes the column the typed text was in, so the **Keyword** does not move when it
+    /// stops being editable — it is the same word in the same place, no longer being typed.
+    private func placeField() {
+        var x = Self.leading
+        if case .input = stage {
+            keywordChip.setFrameOrigin(
+                NSPoint(x: x, y: (Self.header - keywordChip.frame.height) / 2)
+            )
+            x += keywordChip.frame.width + Self.gap
+        }
+        centre(field, x: x, width: Self.width - x - Self.margin, in: Self.header)
+    }
+
+    /// The one piece of text in the bar that is Starkit talking rather than the person — "Keyword"
+    /// in the first stage, and an asking **Script**'s question in the second.
+    ///
+    /// In the accent rather than the system's grey, which is what says whose voice it is without a
+    /// second element on screen to say it with. Taken towards the background it sits on, because
+    /// periwinkle at full strength on cream is a colour rather than a word.
+    private static func placeholder(_ text: String) -> NSAttributedString {
+        NSAttributedString(
+            string: text,
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 21),
+                .foregroundColor: Palette.placeholder,
+            ]
+        )
+    }
+
     /// Centred, a fifth of the way down, on the screen being looked at.
     ///
     /// Placed at every **Summon** rather than once, because the answer changes: screens come and
@@ -432,6 +555,9 @@ extension SummonPanel {
     /// The only place F3 is on the clock — one keystroke to a narrowed list, budget one frame.
     /// Narrowing also happens at launch and on hide, and neither is anybody waiting.
     func controlTextDidChange(_ notification: Notification) {
+        // Nothing narrows in the **Input** stage. The **Script** is chosen and what is being typed
+        // is its answer, so there is no **Keyword** in the field to match against.
+        guard case .keyword = stage else { return }
         let start = CFAbsoluteTimeGetCurrent()
         narrow()
         report("   \(matches.count) of \(catalogue.count) Scripts in \(milliseconds(since: start))")
@@ -459,6 +585,46 @@ extension SummonPanel {
         default: return false
         }
         return true
+    }
+}
+
+/// The **Keyword**, once it has been chosen: what you typed, become the thing you chose.
+///
+/// Monospaced and on the accent band, which are the two things the rows already say about a
+/// **Keyword** — it is a thing to be typed, and this one is the selected one. The stage change is
+/// the same selection carried up into the head rather than a new idea about colour.
+///
+/// It sizes itself to the word, because a fixed width would either clip `personal` or leave a gap
+/// after `work`, and the field starts where the chip ends.
+private final class KeywordChip: NSView {
+    private static let height: CGFloat = 28
+    /// Either side of the word, inside the band.
+    private static let padding: CGFloat = 10
+
+    private let label = NSTextField(labelWithString: "")
+
+    init() {
+        super.init(frame: NSRect(x: 0, y: 0, width: 0, height: Self.height))
+        label.font = .monospacedSystemFont(ofSize: 15, weight: .medium)
+        label.textColor = .labelColor
+        addSubview(label)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("Starkit builds its views in code.") }
+
+    func show(_ keyword: String) {
+        label.stringValue = keyword
+        label.sizeToFit()
+        centre(label, x: Self.padding, width: label.frame.width, in: Self.height)
+        setFrameSize(NSSize(width: label.frame.width + Self.padding * 2, height: Self.height))
+        isHidden = false
+        needsDisplay = true
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        Palette.selection.setFill()
+        NSBezierPath(roundedRect: bounds, xRadius: 8, yRadius: 8).fill()
     }
 }
 

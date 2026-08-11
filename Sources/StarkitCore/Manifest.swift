@@ -17,10 +17,23 @@ public struct Manifest: Equatable, Sendable, Codable {
     /// them a type here would be deciding how, three tasks before anything exercises the decision.
     public let needs: [String]
 
-    public init(keyword: String, name: String, needs: [String] = []) {
+    /// The question this **Script** asks, or nothing if it decides on its own.
+    ///
+    /// The **Asking** half of `starkit.gleam`, flattened: `Decides` arrives as `null` and
+    /// `Asks(for:)` as its label, because Swift needs one bit — is there an **Input** stage — and
+    /// the label is the only other thing carried. A `String?` rather than an enum for that reason,
+    /// and because it is what a placeholder wants to be by the time C1 has it.
+    ///
+    /// Optional in the decoding sense too, which is F2 at work: `manifests.json` written before
+    /// this field existed has no `asks` key, and a cache that fails to decode is a bar with no
+    /// **Scripts** in it on the one launch after an upgrade.
+    public let asks: String?
+
+    public init(keyword: String, name: String, needs: [String] = [], asks: String? = nil) {
         self.keyword = keyword
         self.name = name
         self.needs = needs
+        self.asks = asks
     }
 }
 
