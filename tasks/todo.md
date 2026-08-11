@@ -78,7 +78,10 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [x] **T5.3** C7 **Paste** — restore focus, ⌘V, leave the pasted text on the clipboard; and the
       held-modifier hazard `DESIGN.md` §9 has carried since T0.5, closed with `.privateState`
       before it was ever seen
-- [ ] **T5.4** **Notify** in the bar, spinner, 5 s kill
+- [x] **T5.4** **Notify** in the bar, spinner, 5 s kill — and the answer to what T5.3 handed it: the
+      bar goes when the run has nothing left to say. A **Refusal** shows there too, because a run
+      killed at 5 s is a spinner stopping and a bar vanishing with the reason in a tooltip; C10 keeps
+      it for after the bar has gone, which is the half F12 names
 - [ ] **T5.5** Accessibility grant survives a rebuild
 
 > **Checkpoint E** — 4 of 5, and the only permission-gated path is stable across rebuilds.

@@ -143,11 +143,23 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F12** Report a run that failed at runtime
     - **How**: capture the child's stderr; the bar is still on screen, because only a **Paste**
       closes it — so a crash needs no notification channel of its own
-      - **Component**: C4 Runner
+      - **It stopped being true at T2.4 and is true again after T5.4.** ↩ hid the bar before the
+        run started, which left a **Refusal** nowhere to land, and C10 grew a `run` **Concern** to
+        catch it. With the bar now staying for the run, the sentence goes to both: the bar answers
+        "what just happened" while the person is standing in front of it, and the menu bar answers
+        "what is still wrong" after it has gone, which is the half this criterion names
+      - **Component**: C4 Runner · C1 SummonPanel · C10 MenuBarStatus
   - **F14** Bound how long a run may hold the bar
     - **How**: kill at 5 s with a spinner while running. Rejected: dismiss-and-orphan, which
       would land **Effects** minutes later in whatever app you had since switched to
-      - **Component**: C4 Runner
+      - **Both halves measured at T5.4** against a **Script** that loops forever: five seconds of
+        spinner, then `SIGKILL` and the sentence in the bar. The spinner is the mark at the head
+        of the bar rather than a second element — a run is Starkit working, and the mark is the
+        one thing on screen that is already Starkit
+      - **Dismiss-and-orphan is what Escape does**, deliberately and only when asked. The run
+        carries on — a `bun` already spawned is not something a keystroke can unspawn — but it
+        loses the bar it was going to speak into, so nothing arrives on screen minutes later
+      - **Component**: C4 Runner · C1 SummonPanel
 
 - **G1** The automation fires before I notice waiting _W:9_
   - **F1** Put the bar on screen
@@ -319,6 +331,14 @@ everything still works but silently goes **Stale**.
   and cannot be driven; with it, 23.1 ms and it works. **Trigger to revisit:** anything that
   changes how C1 shows the panel changes what C7 has to undo — they are one decision in two
   components, and the 19.4 ms is the price of the split.
+
+  **Fired at T5.4, and the split held.** The bar now stays on screen for the run, so C1 no longer
+  hides before a **Paste** and C7's hand-back went from a wait that was usually already over to the
+  only thing returning the keyboard at all — Starkit is active, with a key panel, at the moment it
+  asks another application to come forward. Measured rather than assumed, because a `previous.activate()`
+  that macOS declined would have put the note into the bar's own text field: **124 characters into
+  Zed in 18.9 ms**, with the bar up throughout. So the hand-back is C7's alone and does not depend on
+  a **Dismissal** having happened first, which is what the trigger existed to check.
 - ~~**A synthesised ⌘V inherits the modifiers physically held down.**~~ **Closed at T5.3.**
   `.privateState` rather than `.combinedSessionState`, so the event's flags are the only ones it
   carries and ⌃⌘K being held cannot turn a **Paste** into ⌃⌘V. One word, taken before the failure

@@ -465,6 +465,60 @@ turns C7's hand-back from the second of two into the only one, and makes the wai
 that is actually paid rather than the thing that is skipped. The wait is written for that already;
 what T5.4 has to decide is when the bar goes, not whether the paste can find its way home.
 
+**T5.4 answered that with: when the run has nothing left to say.** ↩ has hidden the bar since T2.4,
+and it now stays with the mark turned spinner until the last **Effect** is performed — then goes on
+its own if the run was silent, and stays holding one sentence if it was not. What it decided:
+
+- **The spinner is the mark, not a new element.** A run is Starkit working and the mark is the one
+  thing in the bar that is already Starkit, so the carambola chip becomes a spinner in place. A
+  spinner anywhere else would be a second thing to look at, and the head would have to make room for
+  it in a layout whose whole discipline is that the field does not move.
+- **A **Refusal** shows in the bar as well as in the menu bar, and the deadline is what forced it.**
+  F12 asks that the message survive the bar closing, which C10 answers and still does — but a run
+  killed at 5 s would otherwise be a spinner that stops, a bar that vanishes, and the reason left in
+  a tooltip nobody has cause to open. So both, one per question: the bar says what just happened,
+  C10 says what is still wrong. Whose voice it is cannot be read off the words — "there is no
+  network" from a **Script** and "killed after 5 seconds" from Starkit are the same sentence at a
+  glance — so it is marked instead, with C10's own symbol, in the mark's column.
+- **A run that said nothing takes the bar with it.** Watched by accident rather than by design:
+  `↩ clean — 0 Effects in 79.2 ms` and the bar was gone, which is ↩ still reading as finished for
+  every **Script** that has nothing to report. Only a **Notify** or a **Refusal** keeps it.
+- **Escape abandons a run rather than cancelling one.** The `bun` already spawned is not something a
+  keystroke can unspawn, so it runs to its own end and reaches its deadline — it simply loses the bar
+  it was going to speak into. Each run carries the number of the bar it was started from, and a
+  **Notify** or **Refusal** arriving for a bar that has gone is reported and dropped. Without that,
+  a **Script** hung against its 5 s deadline could speak into a bar **Summoned** afterwards for
+  something else.
+
+Measured across the four paths, driven by hand with the log open. `link` **Notifies** in **238.6 ms**
+cold and **74–86 ms** after, which is the spinner's whole life on a **Script** that does no work.
+`spin` — a scratch **Script** that loops forever, in a scratch `STARKIT_HOME` so nothing of the
+person's was touched — spun for five seconds and was killed, with the sentence landing in the bar and
+the menu bar going red. Escaping the same run left the bar away and the deadline unheard. **Summons**
+stayed inside F1 throughout, 4.5–14.4 ms on screen and 9.1–18.6 ms to key, with one outlier at
+33.3/44.1 recorded rather than explained.
+
+**The paste is the number that mattered**, because it is the one T5.4 could have broken: `Paste — 124
+characters into Zed in 18.9 ms`, with the bar on screen for the whole run. C7 asks another
+application to come forward while Starkit is active and holding a key panel, which no earlier task
+had ever done — a `previous.activate()` macOS declined would have put the note in the bar's own text
+field. It did not, so the hand-back is C7's alone and does not lean on a **Dismissal** having
+happened first (`DESIGN.md` §9).
+
+Two things worth having watched, neither of them asked for. **The Accessibility **Refusal** arrived
+in the bar unprompted** — the test rig runs the executable directly rather than the bundle, so TCC
+treated it as a different process and asked again — and being able to read *"System Settings →
+Privacy & Security → Accessibility"* on screen and press ↩ again, with no relaunch, is the argument
+for **Refusals** in the bar arriving before anyone made it. **T5.5 is untouched by that**: a grant
+re-asked because a raw executable was launched from a shell says nothing about whether the grant
+survives a rebuild, which is what that task has to check against a bundle.
+
+Two costs, both taken deliberately. The field is **locked while a run is in flight** — narrowing
+under a spinner would be the bar answering a question nobody asked — and a locked field beeps at a
+keystroke, which is macOS saying "not now" in the only voice it has. And a second ↩ during a run is
+ignored rather than queued, because there is one spinner and one line for a message, and a bar that
+can hold two runs would need to be able to show two.
+
 **Checkpoint E** — 4 of 5, and the only permission-gated path is working and stable across
 rebuilds.
 
