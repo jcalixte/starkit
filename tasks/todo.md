@@ -68,7 +68,10 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 5 — Youtube
 
-- [ ] **T5.1** **Input** stage + **Seed** from clipboard, arriving selected
+- [x] **T5.1** **Input** stage + **Seed** from clipboard, arriving selected — and the declaration
+      `CONTEXT.md` had described since before slice 0 with nothing in the types to express it: a
+      **Script** **Asks** or **Decides**, which is a field on the constructor and therefore the one
+      upgrade this design cannot migrate for you
 - [x] **T5.2** `youtube` **Script** + tests (6 URL shapes) + `gleam_fetch` — taken before T5.1,
       because it needs no UI and proves the slice from a terminal; and it is where the **Vocabulary**
       grew **Fetching**, which `DESIGN.md` §9 left for the first fetching **Script** to decide

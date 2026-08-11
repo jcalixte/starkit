@@ -339,6 +339,39 @@ rewrites what they built: ↩ dismisses before running today, and a spinner is a
 moving it spends is Checkpoint D's "nothing needs Accessibility yet", so T5.5 starts mattering to
 every rebuild in Phases 4, 6 and 7 rather than only to the last of them.
 
+**T5.1 spent its decision before its code too, and it was a word the design already used.**
+`CONTEXT.md` has said since before slice 0 that a **Script** which declares an **Input** has it
+**Seeded** and one that declares none never is — and nothing declared anything: `starkit.gleam`
+handed every **Script** a `String` whether it wanted one or not. An **Input** stage that *appears*
+cannot be decided by a return value, so the bar needed the answer before the **Script** ran, which
+is what made T5.1 the task where the sentence had to become a type. **Asks** / **Decides**, as a
+field on both constructors, over the cheaper `Need` variant: a **Need** is a slice of the machine
+the **Shelf** gathers into a **Context**, and C8 arrives at T4.2 to read exactly that list.
+Recorded as T13.
+
+Adding a field is the one change to this type that every **Script** already written must be edited
+for, so **the gap below stopped being hypothetical at T5.1** and its trigger fired exactly as
+written: four of the five **Scripts** in `~/.starkit` were still byte-identical to their stubs and
+were replaced wholesale, and `work.gleam` — the one with a real app list in it — took one line by
+hand. So the answer is not "one `cp`" after all; it is *per file, and you have to know which*. That
+is cheap at five and would not be at fifty. `~/.starkit/test/youtube_test.gleam` was stale from
+before T5.2 as well and failed the build until the install vendored the current one, which is the
+same lesson from the other side: the **Shelf**-owned half upgrades itself, and only the half that is
+yours cannot.
+
+**The stage is second, not always.** ↩ on a **Script** that **Asks** with nothing typed after the
+**Keyword** puts its question up, **Seeded** from the clipboard and selected; ↩ again runs it. But
+`youtube <url>` typed on one line still runs on the first ↩ — a question already answered is not
+asked, and that path is what ↩ did before the stage existed, so the stage removes nothing. Escape is
+one stage back before it is a **Dismissal**, which is what makes ↩ on the wrong **Script** cost a
+keystroke instead of a re-**Summon**.
+
+Measured over six **Summons** with the stage in place: **on screen in 9.2–15.8 ms, ready to type in
+14.8–21.5 ms**, both unchanged against T2.2's numbers and inside F1 — the second stage is a chip and
+a placeholder on a panel that was already built. Narrowing stayed 0.0–3.4 ms. Three full round trips
+each **Seeded** with 43 characters and each decided the same correct `Paste`, which is the whole path
+from clipboard to **Script** proven before C7 can perform the last step of it.
+
 **T5.2 was taken before T5.1**, which the plan had the other way round. It needs no UI and it makes
 `Starkit run youtube <url> --dry-run` print a **Paste** from a terminal, so the slice is proven on the
 spine before any surface — Checkpoint B's own argument. T5.1 blocks nothing.
@@ -391,9 +424,13 @@ video **Notifies**. Three things came out of running it that reading it did not 
 this repo, and it also means every stub shipped is frozen on the machine it landed on. So `youtube`
 working in `seed/` does not make it work in `~/.starkit`, whose copy is still the T5.2 stub. It is not
 a bug in the rule and the rule should not change; it is a gap with no answer yet, and it will arrive
-again for `clean` at T4.1 and `link` at T6.1. **Trigger:** the first stub a person has actually edited,
-where replacing it is no longer obviously safe. Until then the answer is one `cp` and knowing it is
-needed.
+again for `clean` at T4.1 and `link` at T6.1. ~~**Trigger:** the first stub a person has actually
+edited, where replacing it is no longer obviously safe.~~ **Fired at T5.1**, and by the harder
+version of itself: not a **Script** wanting a better implementation but the **Vocabulary** gaining a
+field, which every **Script** on the machine must be edited for at once. `work.gleam` was the edited
+one and took a hand-written line while the other four were replaced from `seed/`. The answer is
+per-file surgery and knowing which file is whose — tolerable at five **Scripts**, and the reason to
+have taken the field now rather than at fifty.
 
 **Checkpoint E** — 4 of 5, and the only permission-gated path is working and stable across
 rebuilds.
