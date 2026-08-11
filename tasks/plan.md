@@ -155,6 +155,28 @@ C10 grew a **Concern** in the process. C3 and C12 fail independently and at the 
 `bun` on a machine where Script Kit also holds the chord — and a single `reason` meant whichever
 was written second erased the first, which is the silence F8 exists to prevent.
 
+T2.2 met F1 twice over and found that the criterion under it was the wrong shape. "The first ⌃⌘K is
+no slower than the tenth" was written to force the panel to be built at launch, and building it at
+launch does not achieve it: the first **Summon** cost 25.3 ms on screen and 60.9 ms to become key
+against medians of 7.4 and 13.6, because the window server, the material and the first activation
+charge once each and none of them are construction. A transparent off-screen `orderFront` at launch
+pays all three where nothing is waiting, and the first **Summon** then lands on its own median. The
+second number is the one that mattered: 60.9 ms is long enough to type into, and keys pressed before
+the panel is key go to the application you came from.
+
+The bar was designed here rather than at T2.4, because the panel had to hold something to be shown
+at all: 680 × 64, radius 16, the carambola on a periwinkle chip leading the field, and a hairline
+that will separate the header from T2.4's list. Colours are one four-colour palette
+(`colorhunt.co/palette/fff2c6fff8deaac4f58ca9ff`), resolved per appearance rather than fixed —
+a `CALayer` resolves its colours once, and this window is built at launch and never rebuilt, which
+is precisely the case that keeps the wrong appearance's cream after the machine switches. Two
+alignment defects were found by looking: an unbezeled `NSTextField` draws its text at the top of its
+frame, and Tabler's fruit does not sit centred in the box it was authored in, so both are now
+centred on their own ink.
+
+Focus hand-back on hide rides on `NSApp.hide`, which is the same debt C7 pays before a **Paste** —
+it gets its real test at T5.3, where something depends on it landing in the right application.
+
 **Checkpoint C** — ⌃⌘K runs Work. Starkit is usable for 2 of 5 **Scripts** (Work, Personal).
 
 ## Phase 4 — Clean (slice 3)

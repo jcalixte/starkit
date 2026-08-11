@@ -153,6 +153,18 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F1** Put the bar on screen
     - **How**: one `NSPanel` built at launch, then shown and hidden — so the first ⌃⌘K of a
       session costs what the hundredth does (`cmd-tab`'s precedent)
+      - **Building it at launch was not enough for that.** Measured at T2.2 over 24 **Summons**:
+        with the window pre-built but never shown, the first ⌃⌘K still cost **25.3 ms** to appear
+        and **60.9 ms** to become key, against medians of 7.4 and 13.6. The window server, the
+        material and the first activation each charge once, and building the window pays none of
+        them. A silent pass through `orderFront` at launch — transparent and off screen — moves the
+        charge to where nothing is waiting: first **Summon** 10.5–12.0 ms and 19.7–23.6 ms across
+        three runs, in line with their own medians
+      - **"On screen" and "ready to type" are two numbers**, which is what T0.5 handed forward:
+        activation travels through the window server, so `isKeyWindow` is false on the run-loop turn
+        that shows the panel. Both are inside the 50 ms now; before the warm pass the second was
+        not, and the gap is not cosmetic — keys pressed before the panel is key go to the
+        application the person came from
       - **Component**: C1 SummonPanel
   - **F2** Know the catalogue without building
     - **How**: `manifests.json`, rewritten by the watcher after each successful build. Reading a
