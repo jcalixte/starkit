@@ -36,7 +36,8 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       withdrawn, because macOS reports no such failure ([plan.md](./plan.md), `DESIGN.md` §4 F8)
 - [x] **T2.2** C1 SummonPanel — built once at launch, activates, shown/hidden, Escape — and shown
       once invisibly there too, which is what building it at launch does not pay for
-- [ ] **T2.3** C2 Catalogue + `Keyword` pure parsing **+ its 3 tests**
+- [x] **T2.3** C2 Catalogue + `Keyword` pure parsing **+ its 3 tests** — and writing
+      `manifests.json`, since C6 is the thing that would have and it is slice 6
 - [ ] **T2.4** Bar view — list, filter, selection, ↩ runs
 - [ ] **T2.5** F13 — Cocoa action selectors, not keycodes (⌃N/⌃P come free)
 

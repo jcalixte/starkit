@@ -29,7 +29,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, launches. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app **Refusing** one **Script** beats no app at all. |
 | `./scripts/gen-registry.sh` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do. Graduates into the Watcher in slice 6. |
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
-| `swift test` | The two pure Swift test suites. |
+| `swift test` | The pure Swift test suites. |
 | `cd ~/.starkit && gleam test` | The **Script** test suites. |
 
 ## Project structure
@@ -67,8 +67,9 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── Effect.swift              # C4  the Effect vocabulary and       the split is forced by
 │   │                             #     reading a reply — pure          the tooling. It lands
 │   ├── Keyword.swift             # C2  parsing — pure                  where it belongs anyway:
-│   ├── Refusal.swift             #     Starkit declining, in its own   this design made the
-│   │                             #     voice                           risky decisions pure
+│   ├── Manifest.swift            #     what a Script declares — pure   this design made the
+│   ├── Refusal.swift             #     Starkit declining, in its own   risky decisions pure
+│   │                             #     voice
 │   └── TerminalColour.swift      #     stripping ANSI from borrowed output
 └── Tests/StarkitTests/
     ├── StalenessTests.swift

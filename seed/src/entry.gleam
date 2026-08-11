@@ -13,11 +13,15 @@
 //// building or running anything (F2). Splitting it also means a Script can be broken without
 //// the bar losing its name.
 ////
-//// Both verbs answer with a JSON object, never a bare array, because `run` can answer with a
+//// `run` answers with a JSON object rather than a bare array, because it can answer with a
 //// Refusal instead of Effects — an unknown Keyword means the cached Manifests have gone stale,
 //// and an undecodable payload means the Shelf sent something it promised not to. Neither is a
 //// Script failing: no Script got to decide anything, which is exactly what makes it a Refusal
 //// rather than a Notify. Carrying both in one object is also what keeps the Shelf's decode total.
+////
+//// `describe` answers with the array itself, because it has no second shape to arrive in: it reads
+//// the registry and cannot Refuse. A Script that does not compile is not its problem either — the
+//// registry is what broke or it isn't, and either way one Manifest cannot be missing on its own.
 ////
 //// This file is Shelf-owned: vendored into ~/.starkit and overwritten on every install.
 

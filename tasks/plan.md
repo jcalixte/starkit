@@ -177,6 +177,24 @@ centred on their own ink.
 Focus hand-back on hide rides on `NSApp.hide`, which is the same debt C7 pays before a **Paste** —
 it gets its real test at T5.3, where something depends on it landing in the right application.
 
+T2.3 had to write `manifests.json` as well as read it. SPEC has it "generated after each successful
+build" and C6 is the thing that generates it — but C6 is slice 6, so until then launch is the only
+moment anything is known, and a **Catalogue** that only reads would have read a file nothing writes.
+`describe` is the verb `entry.gleam` already answered for exactly this and C4 grew a second call
+alongside `run`.
+
+The cache is read *before* the **Toolchain** is resolved and replaced only if the build and the
+`describe` both work, which is F2 rather than defensiveness. Watched rather than asserted: with
+`youtube.gleam` not compiling, the menu bar carried the Gleam error and all five **Scripts** stayed
+listed — including the broken one, which is the case F2 exists for. Repairing the file put the
+list back with no other step.
+
+Two things settled in passing. `describe` answers a bare array while `run` answers an object, and
+`entry.gleam` claimed both were objects — the code was right and the comment was wrong, because
+listing cannot **Refuse**. And **Needs** cross as the strings `entry.gleam` names them rather than
+as a Swift mirror of the `Need` type: nothing reads them until C8 gathers **Context** at T4.2, and
+that is where a name that does not match has to be caught.
+
 **Checkpoint C** — ⌃⌘K runs Work. Starkit is usable for 2 of 5 **Scripts** (Work, Personal).
 
 ## Phase 4 — Clean (slice 3)
