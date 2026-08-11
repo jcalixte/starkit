@@ -227,6 +227,14 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       when the **Shelf** activates, because at **Paste** time the answer is Starkit; where the event
       source became `.privateState`; and where the grant is asked for at the first **Paste** rather
       than at launch, a **Paste** without it being a **Refusal** naming System Settings
+      - **The grant survives the install path**, checked at T5.5 against a bundle that genuinely
+        differs — a rebuild of unchanged source is byte-identical, so only a changed one tests
+        anything. `designated => identifier "dev.apoena.starkit" and certificate leaf = H"e2c66dd6…"`
+        names neither the code hash nor the path, which is why a new binary and a deleted-and-recopied
+        `/Applications/Starkit.app` both go unnoticed. The certificate is the fragile term
+      - **TCC attributes to the responsible process**, so the same binary run from a shell rather
+        than launched as a bundle is a different subject and prompts again. That bounds the debug
+        CLI: `Starkit run youtube <url>` can paste only if the *terminal* holds the grant
       - **Component**: C7 Effector
 
 - **G3** A new automation is one file and one minute _W:7_
@@ -307,7 +315,7 @@ everything still works but silently goes **Stale**.
 | T5 | Typed **Manifests** over comment headers | declarations are compile-checked; **Effect** and **Context** can't drift | ~80 lines of Gleam; the registry must be generated | |
 | T6 | Keep pasted text on the clipboard | paste the same result into several places by hand | re-**Summoning** a **Script** **Seeds** from its own output | |
 | T7 | **Kill** over quit | an empty screen, immediately | unsaved work is lost, deliberately | |
-| T8 | Local `install.sh` over Homebrew | no notarization, no quarantine, a stable signature that keeps the Accessibility grant | nobody else can install it in one line | |
+| T8 | Local `install.sh` over Homebrew | no notarization, no quarantine, a stable signature that keeps the Accessibility grant — confirmed at T5.5 across a changed binary and a deleted-and-recopied bundle | nobody else can install it in one line; the grant lasts exactly as long as the certificate does | |
 | T9 | Tree only, no importance matrix | no 72-cell grid to keep current | component priority is argued from goal weights, not computed | |
 | T10 | Borrow the **Toolchain**, resolve it every launch | bun and Gleam upgrades are non-events; nothing to configure | ~40 ms per launch for both, and a broken `.zshrc` breaks resolution — though it would break your terminal first | |
 | T12 | bun over node as the runtime | cold spawn 17.6 ms vs 54.9 ms, which puts a run inside F5's budget with no resident process; one self-contained binary, no version-manager shim | a faster-moving runtime under G7; bun ignores `NO_COLOR`, so C4 must strip ANSI from stderr before F12 shows it | |

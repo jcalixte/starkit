@@ -519,8 +519,42 @@ keystroke, which is macOS saying "not now" in the only voice it has. And a secon
 ignored rather than queued, because there is one spinner and one line for a message, and a bar that
 can hold two runs would need to be able to show two.
 
-**Checkpoint E** — 4 of 5, and the only permission-gated path is working and stable across
-rebuilds.
+**T5.5 had to be made into a test before it could be run.** "Rebuild, reinstall, paste still works
+with no new prompt" passes trivially, because **a rebuild of unchanged source is byte-identical** —
+`CDHash=f23cc16b…` before and after `build.sh`, Swift's build being reproducible here. A grant keyed
+to the code hash would have survived that too, so the criterion as written was checking nothing. The
+test needs a bundle that genuinely differs, and `install.sh debug` is one that costs no invented
+edit: the same source and the same certificate through a documented path of the script.
+
+Run that way it is the real thing, and it held. `CDHash` moved `f23cc16b…` → `00c46078…`, the bundle
+at `/Applications` was deleted and re-`ditto`'d rather than copied over, and **no dialog appeared**:
+`Paste — 124 characters into Zed in 14.5 ms`. The mechanism is visible rather than inferred —
+
+```
+designated => identifier "dev.apoena.starkit" and certificate leaf = H"e2c66dd6…"
+```
+
+— and what it *omits* is the whole of T0.2's argument arriving four slices later. No code hash and no
+path, so the two things every install changes are both outside what TCC matches on. The fragile term
+is the leaf: a second certificate would end the grant, which is why `setup-signing.sh` refuses to
+regenerate one that exists, and why `build.sh`'s ad-hoc fallback prints a warning rather than
+signing quietly. Neither was written for this task; both are what it was checking.
+
+**The false alarm at T5.4 is worth keeping**, because it will happen again. Running
+`/Applications/Starkit.app/Contents/MacOS/Starkit` from a shell re-prompted for Accessibility on a
+machine that had already granted it: TCC attributes to the *responsible* process, and a binary
+launched from a terminal is the terminal's responsibility rather than its own. So a rig that runs the
+executable directly is not testing the installed application, which is why this task was run through
+`open` with the parent process checked (PID 1) before anything was concluded. The same fact bounds
+the debug CLI permanently: `Starkit run youtube <url>` from a terminal can only ever paste if the
+*terminal* holds the grant, and that is a property of the path rather than a bug in it.
+
+One measurement fell out of the debug bundle, and it is for T8.1 rather than for here: **25.7 ms on
+screen and 36.4 ms to key**, against release's 10.8 and 16.4 in the same session. Inside F1 either
+way, and the reason F1's numbers are quoted from release builds.
+
+**Checkpoint E — reached.** 4 of 5 **Scripts**, and the only permission-gated path in the system
+works and stays working across a rebuild, a re-signing and a delete-and-reinstall of the bundle.
 
 ## Phase 6 — Link from url (slice 5)
 

@@ -82,9 +82,14 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       bar goes when the run has nothing left to say. A **Refusal** shows there too, because a run
       killed at 5 s is a spinner stopping and a bar vanishing with the reason in a tooltip; C10 keeps
       it for after the bar has gone, which is the half F12 names
-- [ ] **T5.5** Accessibility grant survives a rebuild
+- [x] **T5.5** Accessibility grant survives a rebuild — after making the criterion into a test, since
+      a rebuild of unchanged source is byte-identical and would have passed whatever TCC keyed on.
+      Against a bundle that genuinely differs it holds: the designated requirement names the
+      identifier and the certificate leaf, and neither the code hash nor the path is in it
 
-> **Checkpoint E** — 4 of 5, and the only permission-gated path is stable across rebuilds.
+> **Checkpoint E** — reached. 4 of 5, and the only permission-gated path in the system works and
+> keeps working across a rebuild, a re-signing and a delete-and-reinstall of the bundle. What ends
+> the grant is a second certificate, which is the one thing `setup-signing.sh` refuses to make.
 
 ## Phase 6 — Link from url
 
