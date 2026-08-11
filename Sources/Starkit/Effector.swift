@@ -7,8 +7,8 @@ import StarkitCore
 ///
 /// The only component that acts, which is what the closed **Effect** vocabulary buys: a **Script**
 /// returns a decision and can touch nothing itself, so every permission the **Shelf** was granted
-/// is exercised from here and nowhere else. **Open** and **Paste** are what it does so far — **Kill**
-/// arrives at T4.3 and **Notify** at T5.4 — and until then an **Effect** this cannot perform is a
+/// is exercised from here and nowhere else. **Open**, **Paste** and **Notify** are what it does so
+/// far — **Kill** arrives at T4.3 — and until then an **Effect** this cannot perform is a
 /// **Refusal**, never a silent skip. Claiming to have done something is the one failure a person
 /// cannot see.
 struct Effector {
@@ -20,8 +20,21 @@ struct Effector {
     /// and there is no focus to restore before it.
     private let previous: NSRunningApplication?
 
-    init(handingFocusBackTo previous: NSRunningApplication? = nil) {
+    /// Where a **Notify** is shown.
+    ///
+    /// A closure rather than a panel, for the reason C1 holds a closure and not a **Runner**: the
+    /// bar and the **Effector** run on different threads at opposite ends of the same run, and the
+    /// only thing they need to agree on is a sentence. It also keeps the terminal path honest —
+    /// `Starkit run youtube <url>` has no bar, so a **Notify** there is a line like every other, and
+    /// no branch here has to know which of the two it is in.
+    private let notify: (String) -> Void
+
+    init(
+        handingFocusBackTo previous: NSRunningApplication? = nil,
+        notifying notify: @escaping (String) -> Void = { report($0) }
+    ) {
         self.previous = previous
+        self.notify = notify
     }
 
     /// Stops at the first **Effect** it cannot perform, leaving the ones before it done.
@@ -33,7 +46,10 @@ struct Effector {
             switch effect {
             case .open(let app): try open(app)
             case .paste(let text): try paste(text)
-            case .kill, .notify:
+            // In the order the **Script** decided it, like everything else here. A **Script** that
+            // **Opens** and then explains itself says so after the launch, not before it.
+            case .notify(let message): notify(message)
+            case .kill:
                 throw Refusal("Starkit cannot perform \(effect) yet.")
             }
         }

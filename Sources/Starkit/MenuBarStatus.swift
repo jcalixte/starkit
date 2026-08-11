@@ -24,10 +24,12 @@ final class MenuBarStatus {
         /// A **Script** the person ran **Refused** — **Stale**, crashed, killed at the deadline, or
         /// an **Effect** C7 could not perform.
         ///
-        /// Here rather than in the bar because the bar is gone by then: ↩ hides it before the run
-        /// starts (T2.4), and F12 asks that the message survive that. It is the transient
-        /// **Concern** — cleared by the next run that works — and T5.4 is what takes it back into
-        /// the bar, where a spinner gives the bar a reason to still be on screen.
+        /// Here *as well as* in the bar since T5.4, which is F12 read as the two questions it
+        /// actually asks. The bar holds the sentence while the person is still in front of it,
+        /// having watched the spinner stop; this holds it after the bar has gone, which is the half
+        /// F12 names — "the message survives the bar closing". It is the transient **Concern**,
+        /// cleared by the next run that works, because it is about the last run and not about the
+        /// machine.
         case run
     }
 

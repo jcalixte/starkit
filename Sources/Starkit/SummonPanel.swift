@@ -56,9 +56,19 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     private let field: NSTextField
     /// The **Keyword** once it has been chosen, shown only in the **Input** stage.
     private let keywordChip = KeywordChip()
+    /// Starkit's own glyph at the head of the bar, and the spinner it becomes while a run is in
+    /// flight.
+    private let mark = Mark(box: SummonPanel.chip)
     /// The mark and the field, kept together so the panel growing downwards moves neither.
     private let head: NSView
     private let list: ListView
+    /// What the last run had to say, in the space the list would otherwise be using.
+    private let messages = MessageView(
+        width: SummonPanel.width,
+        leading: SummonPanel.leading,
+        margin: SummonPanel.margin,
+        chip: SummonPanel.chip
+    )
 
     /// What ↩ does with the **Manifest** it selected and the **Input** typed after the **Keyword**.
     ///
@@ -67,7 +77,11 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// work in that order.
     /// Giving the panel a **Toolchain** would put the whole spine behind the one component whose job
     /// is to be on screen in 50 ms.
-    var run: ((Manifest, String) -> Void)?
+    ///
+    /// The third argument is the run being started. Whoever performs it hands it back to `notify`
+    /// and `settled`, which is how a run the person walked away from is stopped from speaking into
+    /// the bar that came after it.
+    var run: ((Manifest, String, Int) -> Void)?
 
     /// Every **Script** Starkit knows about, which is not the same as every **Script** it can run
     /// (F2). Assigned by the delegate at launch — from the cache first, then from `describe` — and
@@ -104,6 +118,26 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// Which of them ↩ runs. Moved by `move`, and never off the rows on screen.
     private var selected = 0
 
+    /// How many runs the bar has started. The current one is the only one allowed to speak.
+    ///
+    /// A **Dismissal** abandons whatever was in flight — the run itself carries on, because a
+    /// `bun` already spawned is not something a keystroke should be able to unspawn, but it has
+    /// nothing to say here any more. Without this, a **Script** hung against its 5 s deadline could
+    /// **Notify** into a bar **Summoned** afterwards for something else entirely.
+    private var runs = 0
+
+    /// Whether a run is in flight, which is the spinner and the locked field.
+    private var working = false
+
+    /// Whether the run in flight has already put something on screen, so a run that said its piece
+    /// leaves the bar up rather than **Dismissing** it out from under the sentence.
+    private var spoke = false
+
+    /// What is on screen instead of the list — a **Notify** from a **Script**, or a **Refusal** in
+    /// Starkit's own voice. The list and a message never share the bar: the list is what you could
+    /// choose and the message is what happened, and only one of those is the answer to ↩.
+    private var message: String?
+
     /// When the **Summon** being measured started, or 0 between them.
     private var summonedAt: CFAbsoluteTime = 0
 
@@ -128,10 +162,11 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         panel.level = .floating
         panel.isFloatingPanel = true
         // Not hidden when Starkit stops being active. The spike set this the same way for its own
-        // reasons, and the design needs it: at T5.4 a **Script** runs with the bar still up, and
-        // an **Open** it performs activates another application. Auto-hiding would take the bar
-        // away mid-run, spinner and all. A **Dismissal** stays something asked for — ⌃⌘K, Escape, or
-        // a click outside (`watchForClicksElsewhere`), none of which a launch can be mistaken for.
+        // reasons, and since T5.4 the design needs it: a **Script** runs with the bar still up, and
+        // both an **Open** it performs and the hand-back before a **Paste** activate another
+        // application. Auto-hiding would take the bar away mid-run, spinner and all. A **Dismissal**
+        // stays something asked for — ⌃⌘K, Escape, or a click outside (`watchForClicksElsewhere`),
+        // none of which a launch can be mistaken for.
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = false
         panel.isOpaque = false
@@ -162,25 +197,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
 
         head = NSView(frame: NSRect(x: 0, y: 0, width: Self.width, height: Self.header))
 
-        let mark = NSView(
-            frame: NSRect(
-                x: Self.margin,
-                y: (Self.header - Self.chip) / 2,
-                width: Self.chip,
-                height: Self.chip
-            )
-        )
-        mark.wantsLayer = true
-        mark.layer?.backgroundColor = Palette.accent.cgColor
-        mark.layer?.cornerCurve = .continuous
-        mark.layer?.cornerRadius = 9
-        // Cream on periwinkle rather than the fruit's own yellow on the blur: at 20pt over a
-        // material that could be anything, the palette's creams have no contrast to spend. The chip
-        // is what gives the glyph a background it can be light against, and it is the same mark as
-        // the menu bar's, which is the point of them matching.
-        let glyph = NSImageView(image: Carambola.image(box: 20, colour: Palette.fruit))
-        glyph.frame = NSRect(x: (Self.chip - 20) / 2, y: (Self.chip - 20) / 2, width: 20, height: 20)
-        mark.addSubview(glyph)
+        mark.setFrameOrigin(NSPoint(x: Self.margin, y: (Self.header - Self.chip) / 2))
         head.addSubview(mark)
 
         field = NSTextField(string: "")
@@ -204,6 +221,13 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
             margin: Self.margin
         )
         background.addSubview(list)
+
+        // Placed once and never again: the sentence sits a footer above the bottom edge, and it is
+        // the panel that grows to hold it rather than the view that moves. Keeping it out of
+        // `layOut` is what keeps F3's budget about narrowing.
+        messages.setFrameOrigin(NSPoint(x: 0, y: Self.footer))
+        messages.isHidden = true
+        background.addSubview(messages)
 
         panel.contentView = background
         super.init()
@@ -294,16 +318,27 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// The field is emptied *after* the panel is off screen: clearing it narrows back to the whole
     /// **Catalogue**, which shrinks the panel, and doing that first would be a bar collapsing on its
     /// way out.
+    ///
+    /// `NSApp.hide` only while Starkit still has the activation to give back. Since T5.4 the bar is
+    /// on screen while a run performs its **Effects**, and C7 hands focus back itself before a
+    /// **Paste** — so by the time this runs the person is usually already back in the application
+    /// that was pasted into, and hiding an application that is not active is a message to the window
+    /// server about nothing.
     func dismiss() {
         summonedAt = 0
         stopWatchingForClicksElsewhere()
         panel.orderOut(nil)
-        NSApp.hide(nil)
+        if NSApp.isActive { NSApp.hide(nil) }
+        // Whatever was in flight loses the bar it was going to speak into. The run itself carries
+        // on — a `bun` already spawned is not something a keystroke can unspawn, and its **Effects**
+        // are still performed — but it stops being this bar's business.
+        stopWorking()
         // Dropped before the stage is left, so a **Dismissal** in the middle of a question does not
         // restore the **Keyword** that asked it into a field about to be emptied anyway.
         typed = ""
         stopAsking()
         field.stringValue = ""
+        message = nil
         narrow()
     }
 
@@ -314,11 +349,12 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// the window server rather than by hit-testing a frame, and it means the menu bar item is inside
     /// too, because the item is Starkit's as much as the panel is.
     ///
-    /// Not `hidesOnDeactivate`, which is the one-line version and answers the wrong question. At T5.4
-    /// a **Script** runs with the bar still up and an **Open** it performs activates another
+    /// Not `hidesOnDeactivate`, which is the one-line version and answers the wrong question. Since
+    /// T5.4 a **Script** runs with the bar still up and an **Open** it performs activates another
     /// application: the same lost focus as a click, and it must not put the bar away. A mouse-down
-    /// answers the *person*, so a launch can never be mistaken for a **Dismissal** and T5.4 needs no
-    /// "is a run in flight" flag to protect the difference.
+    /// answers the *person*, so a launch can never be mistaken for a **Dismissal**, and T5.4 needed
+    /// no "is a run in flight" flag to protect the difference — the mechanism chosen two tasks
+    /// earlier for a hazard that had not arrived yet turned out to need nothing added to it.
     ///
     /// Only while the bar is up. A monitor left installed forever would have Starkit in the path of
     /// every click on the machine for the ~99% of the time it has nothing on screen, and G4 is a
@@ -342,14 +378,17 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         self.clicksElsewhere = nil
     }
 
-    /// ↩ — run what is selected, and get out of the way first.
+    /// ↩ — run what is selected, and stay to see what happens.
     ///
-    /// The bar leaves before the run starts. That is what makes ↩ read as finished: T1.5 measured a
-    /// single **Open** blocking for up to 4.9 s on a cold Electron application, and a bar still on
-    /// screen for four seconds after ↩ is a hang, whichever thread it is waiting on. Hiding is also
-    /// what hands the keyboard back (T2.2), which is what **Paste** needs to have already happened
-    /// when it fires at T5.3. T5.4 is what changes this order, because a spinner is a reason to
-    /// stay.
+    /// **The bar no longer leaves first.** Until T5.4 it hid before the run started, because a bar
+    /// sitting there through four seconds of a cold Electron **Open** (T1.5) is indistinguishable
+    /// from a hang. A spinner is what makes the difference visible, and once the difference is
+    /// visible the bar is the right place for what the run has to say — F14 asks for the spinner and
+    /// the **Vocabulary** asks for a **Notify** to be shown "in the **Shelf** itself, while it is
+    /// still on screen".
+    ///
+    /// What that costs is the hand-back that hiding used to do for free: C7 now performs it itself
+    /// before every **Paste**, which is the wait T5.3 wrote and did not have to pay.
     ///
     /// The **Keyword** run is the **Manifest**'s and not what was typed: `wo` selects Work and Work
     /// is what runs.
@@ -357,11 +396,14 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// In the **Input** stage ↩ is the second one — the **Script** is already chosen and this is its
     /// answer.
     private func accept() {
+        // A second ↩ while the first is still running would start a run the bar cannot show, since
+        // there is one spinner and one message. The field is locked for the same reason.
+        guard !working else { return }
+
         switch stage {
         case .keyword:
             guard matches.indices.contains(selected) else { return }
             let manifest = matches[selected]
-            // Read before hiding, which clears the field.
             let input = Keyword.split(field.stringValue).input
             // A question already answered is not asked. Typing the **Input** on the same line as
             // the **Keyword** is the shortcut for someone who already knows the answer, and it is
@@ -371,16 +413,103 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
                 ask(manifest, question: question)
                 return
             }
-            dismiss()
-            run?(manifest, input)
+            run?(manifest, input, began())
 
         case .input(let manifest):
             // Whole and verbatim. The field holds the **Input** alone here, so splitting it again
             // would read the first word of an answer as a **Keyword**.
-            let input = field.stringValue
-            dismiss()
-            run?(manifest, input)
+            run?(manifest, field.stringValue, began())
         }
+    }
+
+    /// The bar, working: the mark becomes a spinner and the field stops taking keys.
+    ///
+    /// Locked rather than merely ignored, because a **Keyword** narrowing under a spinner would be
+    /// the bar answering a question nobody asked — the run in flight is already the answer to the
+    /// last one. Escape still arrives, because it reaches the window rather than the field.
+    ///
+    /// - Returns: the run started, which is what may speak into this bar until it is **Dismissed**.
+    private func began() -> Int {
+        runs += 1
+        working = true
+        spoke = false
+        message = nil
+        mark.working(true)
+        field.isEditable = false
+        fit()
+        return runs
+    }
+
+    /// A **Script** saying why it did nothing — C7 performing a **Notify**, arrived on the main
+    /// thread.
+    ///
+    /// Dropped rather than shown if the bar it was meant for has gone. A **Notify** belongs in the
+    /// **Shelf** *while it is still on screen*; a bar that came back on its own to deliver a
+    /// sentence would be the window SPEC says never appears, and it would be delivering it to
+    /// someone who has moved on.
+    func notify(_ message: String, for run: Int) {
+        guard run == runs, working else {
+            report("   Notify — \(message) — dropped, the bar it was for has gone.")
+            return
+        }
+        report("   Notify — \(message)")
+        say(message, inStarkitsVoice: false)
+    }
+
+    /// The run is over: stop the spinner, and either say what went wrong or get out of the way.
+    ///
+    /// A **Refusal** lands here as well as in the menu bar. F12 asks that the message survive the
+    /// bar closing, which C10 is what answers — but the bar is now the thing in front of the person
+    /// at the moment it happens, and the deadline is the case that proves it: a run killed at 5 s
+    /// with the sentence only in a tooltip would be a spinner that stopped and a bar that vanished.
+    /// Two places, one for each question — what happened, and what is still wrong.
+    ///
+    /// Nothing said and nothing wrong means the run did what was asked, and the bar has no further
+    /// business being on screen.
+    func settled(_ refusal: String?, for run: Int) {
+        guard run == runs, working else {
+            // Said out loud for the same reason a dropped **Notify** is, and it is the louder of
+            // the two: a run abandoned at Escape still reaches its deadline, and "the bar stayed
+            // away" and "the bar never heard" are the same picture from the outside.
+            if let refusal { report("   \(refusal) — the bar it was for has gone.") }
+            return
+        }
+        stopWorking()
+
+        if let refusal {
+            say(refusal, inStarkitsVoice: true)
+        } else if !spoke {
+            dismiss()
+            return
+        }
+
+        // Back to a field that can be typed into: after a **Notify** the answer is usually one edit
+        // away from being right, and ↩ from there is the whole repair. The caret is coloured after
+        // the field editor exists again, for the reason `summon` does it there — it belongs to the
+        // editor and not to the field, and locking the field is what took the editor away.
+        panel.makeFirstResponder(field)
+        (panel.fieldEditor(false, for: field) as? NSTextView)?.insertionPointColor = Palette.accent
+    }
+
+    /// Put a sentence where the list was, and grow the bar to hold it.
+    ///
+    /// - Parameter inStarkitsVoice: a **Refusal** rather than a **Notify**. Who is talking is the
+    ///   one thing a person cannot work out from the words — "no network" from a **Script** and
+    ///   "killed after 5 seconds" from Starkit read the same at a glance — so it is marked rather
+    ///   than worded, in the same column and with the same symbol C10 uses.
+    private func say(_ sentence: String, inStarkitsVoice: Bool) {
+        spoke = true
+        message = sentence
+        messages.show(sentence, inStarkitsVoice: inStarkitsVoice)
+        fit()
+    }
+
+    /// The spinner off and the field back, whether the run ended or was walked away from.
+    private func stopWorking() {
+        guard working else { return }
+        working = false
+        mark.working(false)
+        field.isEditable = true
     }
 
     /// Put the **Script**'s question up, **Seeded** from the clipboard.
@@ -405,7 +534,9 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         placeField()
 
         // Nothing matches in this stage, which is what takes the list away and shrinks the panel
-        // back to the head.
+        // back to the head. A message from an earlier run goes with it: the question being put up
+        // is a new one.
+        message = nil
         matches = []
         selected = 0
         list.present([], selected: 0)
@@ -453,21 +584,29 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     }
 
     /// Narrow the list to what has been typed, and grow or shrink the panel to hold the result (F3).
+    ///
+    /// Narrowing puts a message away, because narrowing is choosing a different **Script** and the
+    /// message was about the last one. Typing an **Input** does not narrow and does not clear it: at
+    /// that point the sentence on screen is what the edit is answering, and it should still be there
+    /// while it is being answered.
     private func narrow() {
+        message = nil
         matches = Keyword.matches(Keyword.split(field.stringValue).keyword, in: catalogue)
         selected = 0
         list.present(Array(matches.prefix(Self.mostRows)), selected: selected)
         fit()
     }
 
-    /// Grow the panel downwards to hold the rows, keeping its top edge where it was.
+    /// Grow the panel downwards to hold whatever is under the head, keeping its top edge where it
+    /// was.
     ///
     /// The field must not move while someone is typing into it, so the height changes at the bottom
     /// and the origin moves to compensate — an `NSWindow` frame is measured from its bottom-left,
     /// which is the corner that has to give.
     private func fit() {
-        let shown = min(matches.count, Self.mostRows)
-        let height = Self.header + (shown == 0 ? 0 : CGFloat(shown) * Self.row + Self.footer)
+        let height = Self.header + under()
+        list.isHidden = message != nil
+        messages.isHidden = message == nil
         guard height != panel.frame.height else { return }
 
         var frame = panel.frame
@@ -477,7 +616,17 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         layOut()
     }
 
-    /// The head at the top, the list under it, filling whatever is left.
+    /// How much bar there is below the head: a message, or the rows, or neither.
+    ///
+    /// Never both. A list is what you could still choose and a message is what already happened, and
+    /// a bar showing both would be offering ↩ two meanings at once.
+    private func under() -> CGFloat {
+        if message != nil { return messages.frame.height + Self.footer }
+        let shown = min(matches.count, Self.mostRows)
+        return shown == 0 ? 0 : CGFloat(shown) * Self.row + Self.footer
+    }
+
+    /// The head at the top, whatever the bar is showing under it, filling what is left.
     ///
     /// Explicit rather than by `autoresizingMask`, because both would have to be flexible in the
     /// same direction — the head keeping its distance from the top and the list absorbing the
@@ -588,6 +737,145 @@ extension SummonPanel {
         default: return false
         }
         return true
+    }
+}
+
+/// Starkit's mark at the head of the bar, and the spinner it turns into while a run is in flight.
+///
+/// The same square in the same place rather than a second element appearing beside it: the mark is
+/// the one thing in the bar that is Starkit rather than the person, and a run is Starkit working.
+/// A spinner somewhere else would be a new thing to look at; this is the thing you were already
+/// looking at, doing something.
+///
+/// Cream on periwinkle rather than the fruit's own yellow on the blur: at 20pt over a material that
+/// could be anything, the palette's creams have no contrast to spend. The chip is what gives the
+/// glyph a background it can be light against, and it is the same mark as the menu bar's, which is
+/// the point of them matching.
+private final class Mark: NSView {
+    private let glyph: NSImageView
+    private let spinner = NSProgressIndicator()
+
+    init(box: CGFloat) {
+        let fruit: CGFloat = 20
+        glyph = NSImageView(image: Carambola.image(box: fruit, colour: Palette.fruit))
+        glyph.frame = NSRect(x: (box - fruit) / 2, y: (box - fruit) / 2, width: fruit, height: fruit)
+
+        super.init(frame: NSRect(x: 0, y: 0, width: box, height: box))
+        wantsLayer = true
+        layer?.backgroundColor = Palette.accent.cgColor
+        layer?.cornerCurve = .continuous
+        layer?.cornerRadius = 9
+        addSubview(glyph)
+
+        let wheel: CGFloat = 16
+        spinner.style = .spinning
+        spinner.controlSize = .small
+        spinner.frame = NSRect(x: (box - wheel) / 2, y: (box - wheel) / 2, width: wheel, height: wheel)
+        // Forced light in both appearances, because what it sits on is the periwinkle chip and not
+        // the window — the same reason the glyph it replaces is cream rather than `labelColor`.
+        spinner.appearance = NSAppearance(named: .darkAqua)
+        // Not drawn at all between runs, so the chip is the mark and nothing else while the bar is
+        // idle — and no animation is left turning where nobody asked for one (G4).
+        spinner.isDisplayedWhenStopped = false
+        addSubview(spinner)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("Starkit builds its views in code.") }
+
+    func working(_ working: Bool) {
+        glyph.isHidden = working
+        if working { spinner.startAnimation(nil) } else { spinner.stopAnimation(nil) }
+    }
+}
+
+/// What the last run had to say, in the space the list would otherwise be using.
+///
+/// One sentence, wrapped, in the column the names and the typed text are in — so it reads as the
+/// answer to what was typed above it rather than as a new element. `detail` never reaches here: a
+/// Gleam diagnostic or a stack trace is many lines and belongs on stderr, which is where C4 already
+/// puts it.
+///
+/// A **Refusal** carries C10's symbol in the mark's column, and a **Notify** carries nothing. That
+/// is the whole of whose-voice-is-this, and it is marked rather than worded because the words
+/// themselves cannot say it — "there is no network" from a **Script** and "killed after 5 seconds"
+/// from Starkit read identically, and only one of them is something a **Script** author wrote.
+private final class MessageView: NSView {
+    /// Above and below the sentence, inside the bar.
+    private static let padding: CGFloat = 14
+
+    private let sentence = NSTextField(labelWithString: "")
+    private let symbol = NSImageView()
+    private let leading: CGFloat
+    private let margin: CGFloat
+    /// The mark's column at the head of the bar, which is the column a **Refusal**'s symbol sits in.
+    private let chip: CGFloat
+
+    init(width: CGFloat, leading: CGFloat, margin: CGFloat, chip: CGFloat) {
+        self.leading = leading
+        self.margin = margin
+        self.chip = chip
+        super.init(frame: NSRect(x: 0, y: 0, width: width, height: 0))
+
+        sentence.font = .systemFont(ofSize: 15)
+        sentence.textColor = .labelColor
+        // Wrapped rather than truncated, unlike every other label in the bar. A **Keyword** that
+        // does not fit can be recognised from its first half; a sentence saying what went wrong
+        // cannot, and it is the only text here a person has to read all of.
+        sentence.usesSingleLineMode = false
+        sentence.lineBreakMode = .byWordWrapping
+        sentence.maximumNumberOfLines = 0
+        addSubview(sentence)
+
+        symbol.image = NSImage(
+            systemSymbolName: "exclamationmark.triangle.fill",
+            accessibilityDescription: "Starkit refused"
+        )
+        symbol.contentTintColor = Palette.aside
+        addSubview(symbol)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("Starkit builds its views in code.") }
+
+    /// Flipped, like the list it stands in for, so the hairline is drawn at the edge nearest the
+    /// field in both.
+    override var isFlipped: Bool { true }
+
+    func show(_ text: String, inStarkitsVoice: Bool) {
+        sentence.stringValue = text
+        let room = frame.width - leading - margin
+        // The cell asked how tall it needs to be at this width, which is the only measurement that
+        // accounts for the wrapping — a label's intrinsic size is a single line unless something
+        // tells it what width it has.
+        let space = NSRect(x: 0, y: 0, width: room, height: .greatestFiniteMagnitude)
+        let height = (sentence.cell?.cellSize(forBounds: space).height ?? Self.padding).rounded(.up)
+        sentence.frame = NSRect(x: leading, y: Self.padding, width: room, height: height)
+        setFrameSize(NSSize(width: frame.width, height: (height + Self.padding * 2).rounded(.up)))
+
+        symbol.isHidden = !inStarkitsVoice
+        // Centred on the *first line* rather than on the block, so a sentence that wraps to two
+        // lines still starts where the symbol says it does — and in the mark's own column, which is
+        // the column Starkit speaks from at the head of the bar.
+        let glyph: CGFloat = 16
+        let line = (sentence.font?.ascender ?? glyph) - (sentence.font?.descender ?? 0)
+        symbol.frame = NSRect(
+            x: margin + (chip - glyph) / 2,
+            y: Self.padding + ((line - glyph) / 2).rounded(),
+            width: glyph,
+            height: glyph
+        )
+    }
+
+    /// The hairline between the field and what is under it — the same line `ListView` draws, because
+    /// it is the same edge seen from whichever of the two is on screen.
+    override func draw(_ dirtyRect: NSRect) {
+        let hairline = NSBezierPath()
+        hairline.move(to: NSPoint(x: 0, y: 0.5))
+        hairline.line(to: NSPoint(x: bounds.width, y: 0.5))
+        hairline.lineWidth = 1
+        Palette.edge.setStroke()
+        hairline.stroke()
     }
 }
 

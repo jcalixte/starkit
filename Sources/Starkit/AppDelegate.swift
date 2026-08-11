@@ -28,7 +28,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status = MenuBarStatus()
         listen()
         panel = SummonPanel()
-        panel.run = { [weak self] manifest, input in self?.perform(manifest, input: input) }
+        panel.run = { [weak self] manifest, input, run in
+            self?.perform(manifest, input: input, started: run)
+        }
         prepare()
     }
 
@@ -109,17 +111,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// **Open** blocks until the launch is under way — 35 ms warm, 4.9 s for three cold Electron
     /// applications — and `gleam build` and the `bun` spawn are both blocking calls of their own.
     /// On the main thread that is the whole application frozen, menu bar included, for as long as
-    /// the slowest cold launch takes.
+    /// the slowest cold launch takes. Since T5.4 the bar is on screen throughout, which makes that
+    /// requirement visible rather than merely true: a spinner that stops turning is a frozen
+    /// application in one glance.
     ///
-    /// Nothing here touches the panel, which C1 has already **Dismissed** before handing over,
-    /// so the only thing that comes back to the main thread is the sentence C10 shows.
+    /// Everything that comes back to the main thread does so through the run this was started for,
+    /// which is C1's licence to speak: a **Notify** as C7 performs it, and the outcome once the last
+    /// **Effect** is done. A bar **Dismissed** in the meantime takes that licence back, and the run
+    /// finishes unheard rather than following the person around.
     ///
-    /// A run when the **Toolchain** never resolved says so on stderr and no more: the menu bar is
-    /// already red with the reason from launch, and a second, vaguer sentence beside it would be
-    /// noise where the accurate one already is.
-    private func perform(_ manifest: Manifest, input: String) {
+    /// A run when the **Toolchain** never resolved says so in the bar and on stderr, and not in the
+    /// menu bar: the menu bar is already red with the accurate reason from launch, and a second,
+    /// vaguer sentence beside it would be noise where that one already is. The bar still has to be
+    /// told, because it is holding a spinner for a run that is not going to happen.
+    private func perform(_ manifest: Manifest, input: String, started run: Int) {
         guard let toolchain, let builder else {
-            report("Cannot run \"\(manifest.keyword)\": the Toolchain never resolved.")
+            let reason = "Cannot run \"\(manifest.keyword)\": the Toolchain never resolved."
+            report(reason)
+            panel.settled(reason, for: run)
             return
         }
 
@@ -135,7 +144,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try builder.ensureCurrent(manifest.keyword)
                 let effects = try Runner(toolchain: toolchain, home: Toolchain.home)
                     .run(keyword: manifest.keyword, input: input)
-                try Effector(handingFocusBackTo: previous).perform(effects)
+                try Effector(
+                    handingFocusBackTo: previous,
+                    notifying: { message in
+                        // Shown as it is performed rather than collected and shown at the end,
+                        // because the order **Effects** are performed in is the **Script**'s
+                        // decision and a sentence explaining a launch belongs after the launch.
+                        DispatchQueue.main.async {
+                            MainActor.assumeIsolated { self?.panel.notify(message, for: run) }
+                        }
+                    }
+                ).perform(effects)
                 // The one line a run that worked writes. Every other component reports what it did,
                 // and without this a **Script** running and ↩ doing nothing at all look identical
                 // from outside — which is the difference this task had to verify. It is also the
@@ -156,6 +175,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // Cleared by a run that worked, because this **Concern** is about the last one
                     // and not about the machine.
                     self?.status.set(refusal?.reason, for: .run)
+                    // The same sentence twice, answering two questions. F12 asks that it survive
+                    // the bar closing, which is the menu bar's line above; the bar is where it is
+                    // read while the person is still standing in front of it.
+                    self?.panel.settled(refusal?.reason, for: run)
                 }
             }
         }
