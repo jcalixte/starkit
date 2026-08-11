@@ -149,6 +149,10 @@ that this design made the risky decisions pure.
   with and without stderr; and an **Effect** this Starkit does not know, which must be a loud
   **Refusal** naming the word rather than one the **Effector** silently skips.
 - `TerminalColour` — a real `gleam` diagnostic comes out readable, with its box-drawing kept.
+- `Manifest` — reading `manifests.json`, which is the one file that outlives the version of Starkit
+  that wrote it: a cache written before `asks` existed still lists every **Script**, and an empty
+  question is a question rather than the absence of one. A decode that throws here is a bar with no
+  **Scripts** in it, which looks exactly like the machine F2 exists to keep working.
 
 **Not tested:** HotKey, Effector, SummonPanel, Watcher, LoginItem, ContextGatherer, and C4's process
 half — spawning `bun`, the deadline, draining two pipes. Each is a thin call into a framework, and a
@@ -246,6 +250,11 @@ is the boundary working, not a gap in it.
 - A clipboard holding something that is not a URL **Seeds** anyway, and that is not a defect: it
   arrives selected, so replacing it costs no keystrokes. Deciding what looks like a YouTube URL is
   the **Script**'s job, and it is what **Notify** is for when the answer is no.
+- Typing the **Input** on the **Keyword**'s own line — `youtube <url>` — runs on one ↩ and no stage
+  appears. A question already answered is not asked, and this is what ↩ did before the stage
+  existed. The stage is what the **Seed** is for: the case where nothing was typed.
+- Escape in the **Input** stage goes back to the **Keyword** stage with what was typed still there,
+  and only **Dismisses** from the first stage. ↩ on the wrong **Script** costs one keystroke.
 - After the paste, the clipboard holds the markdown, so ⌘V again repeats it.
 - An unreachable network produces a **Notify** in the bar and no paste.
 - A hung request is killed at 5 s, with a spinner until then.

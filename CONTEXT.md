@@ -43,7 +43,8 @@ the keyboard is handed back, and that is one of the things a **Dismissal** does 
 thing itself.
 
 **Input**:
-The text a person types into the **Shelf** before a **Script** runs.
+The text a person types into the **Shelf** before a **Script** runs. A **Script** either **Asks**
+for one — declared, so the **Shelf** knows before it runs — or **Decides** without.
 _Avoid_: argument, query, prompt, parameter
 
 **Context**:
@@ -59,9 +60,16 @@ key binding in Starkit summons the **Shelf**.
 
 **Seed**:
 The clipboard text a **Script**'s **Input** starts out holding, selected, so that accepting it
-takes one keystroke and replacing it takes none. Only a **Script** that declares an **Input**
-is **Seeded**.
+takes one keystroke and replacing it takes none. Only a **Script** that **Asks** is **Seeded**.
 _Avoid_: default, prefill, autofill
+
+**Asks** / **Decides**:
+What a **Script** declares about the **Input**. One that **Asks** carries the question it asks —
+"YouTube URL" — and gets a stage in the bar to ask it in, **Seeded** and selected. One that
+**Decides** works from its **Context** alone and runs on the first ↩. Declared rather than
+discovered, because the bar has to know before the **Script** runs.
+_Avoid_: prompt, ask for input, interactive — and _do not_ call it a **Need**, which is a slice of
+the machine the **Shelf** gathers; an **Input** comes from the person.
 
 **Effect**:
 One thing a **Script** asks the **Shelf** to do to the machine. A **Script** cannot act; it
@@ -147,7 +155,7 @@ _Avoid_: processes, open apps
 - The person **Summons** and **Dismisses** the **Shelf**; a **Script** does neither
 - The **Shelf** runs many **Scripts**; a **Script** never runs another **Script**
 - A **Script** declares zero or more **Context** slices and consumes at most one **Input**
-- A **Script** that declares an **Input** has it **Seeded**; one that declares none never is
+- A **Script** that **Asks** has its **Input** **Seeded**; one that **Decides** never is
 - Every **Script** has exactly one **Keyword**, and no **Keyword** contains a space
 - A **Script** emits zero or more **Effects**, in order
 - Every **Effect** is performed by the **Shelf**; a **Script** performs none of them

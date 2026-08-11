@@ -295,6 +295,7 @@ everything still works but silently goes **Stale**.
 | T9 | Tree only, no importance matrix | no 72-cell grid to keep current | component priority is argued from goal weights, not computed | |
 | T10 | Borrow the **Toolchain**, resolve it every launch | bun and Gleam upgrades are non-events; nothing to configure | ~40 ms per launch for both, and a broken `.zshrc` breaks resolution — though it would break your terminal first | |
 | T12 | bun over node as the runtime | cold spawn 17.6 ms vs 54.9 ms, which puts a run inside F5's budget with no resident process; one self-contained binary, no version-manager shim | a faster-moving runtime under G7; bun ignores `NO_COLOR`, so C4 must strip ANSI from stderr before F12 shows it | |
+| T13 | A **Script** declares its **Input** in a field, over a `Need` variant | the **Vocabulary** keeps **Context** and **Input** apart — a **Need** is a slice of the machine the **Shelf** gathers, and C8 never has to know one word in that list is not for it | a constructor gained a field, so every **Script** already written on every machine has to be edited once, and `install.sh` cannot do it — the one upgrade this design has no migration for. Taken at T5.1 because five stubs is the cheapest it will ever be | |
 | T11 | `gleam_json` for the wire, over hand-rolled encoding | escaping is the library's problem on the two paths that carry arbitrary text — a page title into **Paste**, an error into **Notify** | one dependency in a **Shelf**-owned `gleam.toml`, resolved on first install; **Scripts** never import it | |
 
 ### Tensions being watched
@@ -429,6 +430,13 @@ everything still works but silently goes **Stale**.
   **Paste** hands activation back. Corrected where it was written down rather than only here.
 - **"Restore the clipboard" was ambiguous** between the **Seed** and the pasted text. Resolved:
   keep the pasted text.
+- **Nothing declared an **Input**, though `CONTEXT.md` had said so since before slice 0.** "A
+  **Script** that declares an **Input** has it **Seeded**; one that declares none never is" was in
+  the relationships all along, and `starkit.gleam` gave every **Script** a `String` whether it
+  wanted one or not — so the sentence described a rule the types could not express and the bar could
+  not read. Found at T5.1, which is the first task that needed the answer: an **Input** stage that
+  appears is not something a return value can decide. The **Vocabulary** was right and the type was
+  short of it, which is the same shape as the **Stale** correction at T1.4.
 - **"Closed **Vocabulary**" read as frozen.** Corrected to closed-but-not-frozen.
 - **Comment headers were recommended, then reversed.** The argument was that a broken **Script**
   must stay listed — but measurement showed a broken module fails the whole build either way, so
