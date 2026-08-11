@@ -99,7 +99,7 @@ _Avoid_: warn, alert, toast, notification
 ### Around the edges
 
 **Toolchain**:
-The `gleam` and `node` that Starkit borrows from the machine rather than shipping. Starkit never
+The `gleam` and `bun` that Starkit borrows from the machine rather than shipping. Starkit never
 chooses a version: it uses whatever the login shell reports, so upgrading one is not an event.
 _Avoid_: runtime, dependencies, environment
 

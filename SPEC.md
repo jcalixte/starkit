@@ -54,7 +54,7 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── Bar.swift                 # C1  the SwiftUI view and its key handling
 │   ├── Catalogue.swift           # C2  manifests.json, Keyword resolution
 │   ├── Keyword.swift             # C2  parsing — pure, tested
-│   ├── Runner.swift              # C4  node lifecycle, 5 s deadline, Effect decoding
+│   ├── Runner.swift              # C4  bun lifecycle, 5 s deadline, Effect decoding
 │   ├── Builder.swift             # C5  gleam build
 │   ├── Staleness.swift           # C5  the Stale rule — pure, tested
 │   ├── Effector.swift            # C7  Open / Kill / Paste / Notify
@@ -86,7 +86,7 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 Only `src/scripts/` is yours; everything else is vendored from `seed/` and replaced on every
 install, so the **Vocabulary** can be upgraded without asking you to merge it by hand.
 
-The **Shelf** runs `node run.mjs`, never `gleam run`. Gleam's `entry.mjs` exports `main` without
+The **Shelf** runs `bun run.mjs`, never `gleam run`. Gleam's `entry.mjs` exports `main` without
 calling it, and the file that does the calling is named `gleam@@private_main_v<version>.mjs` — it is
 private and it is renamed by every Gleam upgrade, which G7 rules out depending on. `run.mjs` is
 ours, so the only assumption left is that `entry.mjs` exports a function, and it fails at import
@@ -189,7 +189,7 @@ is the boundary working, not a gap in it.
 - `Starkit run work --dry-run` prints four `Open` **Effects** and opens nothing.
 - Breaking `youtube.gleam` and running `Starkit run work` still works; running
   `Starkit run youtube` **Refuses** and prints the compile error. This is [ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md) working.
-- Deleting `node` from the shell's `PATH` makes `Starkit run work` fail with a message naming
+- Deleting `bun` from the shell's `PATH` makes `Starkit run work` fail with a message naming
   the **Toolchain**, not a crash.
 
 ### Slice 2 — the bar
