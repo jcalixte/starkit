@@ -134,6 +134,7 @@ is surface.
 | T2.3 | C2 Catalogue — read `manifests.json`; `Keyword` parsing as a pure, tested rule | T1.1 | `swift test` — first token splits from **Input**; no match; **Keyword** that prefixes another |
 | T2.4 | Bar view — list, filter, selection, ↩ runs | T2.2, T2.3 | `wo` selects Work, ↩ runs it, bar disappears |
 | T2.5 | F13 — handle `moveUp:`/`moveDown:`/`insertNewline:`/`cancelOperation:` rather than keycodes | T2.4 | ⌃N/⌃P **and** ↑/↓ both move the selection |
+| T2.6 | A click outside **Dismisses** the bar | T2.4 | click another window and the bar goes; a **Script**'s **Open** with the bar still up and it stays |
 
 T2.1 removed half of its own function rather than implementing it. The chord registers and fires,
 and it registers *before* the **Toolchain** resolution that costs 510 ms, which is visible in the
@@ -235,6 +236,23 @@ has contradicted that since T1.5 measured **Open** at ~35 ms warm and seconds co
 **Opens** at ~440 ms of the 498 confirm it a second way. Moving a budget is a design decision rather
 than bookkeeping, so it is recorded here for T8.1 to settle — either the target moves or the row
 admits that **Open** is not a function call.
+
+T2.6 was added after T2.4 rather than designed with it, because using the bar is what showed the
+gap: click into another window and it stays on top of your work — `.floating`, on every space —
+until you come back and press Escape. G2 asks for it to be there every time you reach for it, not
+for it to be there when you did not.
+
+The mechanism is the whole task. `hidesOnDeactivate` is the one-line version and it is wrong: at
+T5.4 a **Script** runs with the bar up and an **Open** it performs activates another application,
+which is the same loss of focus as a click and must not put the bar away. A mouse-down monitor
+responds to the person instead, so a launch cannot be mistaken for a **Dismissal** and T5.4 needs no
+"is a run in flight" flag. What has to be measured rather than assumed is the permission: a global
+`NSEvent` monitor needs Accessibility for *keyboard* events and is believed not to for mouse-down,
+and "one grant" is a SPEC boundary rather than a preference — if it does need one, the task is
+withdrawn, not worked around.
+
+No new function in `DESIGN.md` §2. Escape and ⌃⌘K put the bar away without one, and a third way to
+do the same thing is not a fourteenth thing the design does.
 
 **Checkpoint C** — ⌃⌘K runs Work. Starkit is usable for 2 of 5 **Scripts** (Work, Personal).
 

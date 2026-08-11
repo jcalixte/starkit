@@ -213,7 +213,11 @@ is the boundary working, not a gap in it.
 
 ### Slice 2 — the bar
 
-- ⌃⌘K shows the bar in ≤ 50 ms; ⌃⌘K again hides it; Escape hides it.
+- ⌃⌘K **Summons** the bar in ≤ 50 ms; ⌃⌘K again **Dismisses** it, and so does Escape.
+- A click outside the bar **Dismisses** it too, including while a **Script** is still running: the
+  run finishes and performs its **Effects** either way, because it was asked for before the click.
+  A **Script**'s own **Open** activating another application is *not* a **Dismissal** — that is the
+  case `hidesOnDeactivate = false` exists for, and the one a focus-based implementation gets wrong.
 - Typing `wo` selects Work; ↩ runs it and the bar disappears.
 - ⌃N and ⌃P move the selection, as do ↓ and ↑.
 - With Script Kit running, ⌃⌘K reaches Script Kit and Starkit stays quiet — the chord is never
@@ -234,6 +238,12 @@ is the boundary working, not a gap in it.
 - With a YouTube URL on the clipboard, ⌃⌘K → `yt` → ↩ → ↩ pastes the markdown into the app that
   was frontmost before the bar appeared.
 - The **Input** arrives **Seeded** and selected: typing replaces it without clearing first.
+- With an empty clipboard the **Input** stage still arrives — empty, not absent — and a URL or a
+  bare 11-character ID typed into it works the same way. The **Seed** is what the **Input** starts
+  out *holding*, so there is nothing conditional about the stage itself.
+- A clipboard holding something that is not a URL **Seeds** anyway, and that is not a defect: it
+  arrives selected, so replacing it costs no keystrokes. Deciding what looks like a YouTube URL is
+  the **Script**'s job, and it is what **Notify** is for when the answer is no.
 - After the paste, the clipboard holds the markdown, so ⌘V again repeats it.
 - An unreachable network produces a **Notify** in the bar and no paste.
 - A hung request is killed at 5 s, with a spinner until then.
