@@ -155,33 +155,3 @@ pub fn the_title_is_normalised_and_the_channel_is_not_test() {
     )
     == "@[youtube](dQw4w9WgXcQ)\n\n- Don't Stop | Bob\u{2019}s Channel"
 }
-
-// Normalisation, character for character as the Script Kit lib had it. A title pasted with curly
-// quotes is a title you later fail to find by typing the straight ones.
-
-pub fn curly_single_quotes_become_straight_test() {
-  assert youtube.normalise("\u{2018}quoted\u{2019}") == "'quoted'"
-}
-
-pub fn curly_double_quotes_become_straight_test() {
-  assert youtube.normalise("\u{201C}quoted\u{201D}") == "\"quoted\""
-}
-
-pub fn an_en_dash_becomes_one_hyphen_test() {
-  assert youtube.normalise("a \u{2013} b") == "a - b"
-}
-
-/// Two hyphens, not one. That is what the existing notes contain, and a normaliser that disagreed
-/// with them would split the set it exists to unify.
-pub fn an_em_dash_becomes_two_hyphens_test() {
-  assert youtube.normalise("a \u{2014} b") == "a -- b"
-}
-
-pub fn an_ellipsis_becomes_three_dots_test() {
-  assert youtube.normalise("wait\u{2026}") == "wait..."
-}
-
-pub fn a_plain_title_is_untouched_test() {
-  assert youtube.normalise("Rick Astley - Never Gonna Give You Up (4K)")
-    == "Rick Astley - Never Gonna Give You Up (4K)"
-}

@@ -11,7 +11,7 @@
 //// oEmbed rather than scraping the watch page. It is a documented endpoint that answers with JSON
 //// and needs no key, so the title arrives decoded instead of extracted from HTML — which is the
 //// thing `link` has to do at T6.1, and the reason that Script gets a test suite full of pages its
-//// regex gets wrong. This one has no such tests because it has no such guess.
+//// scan gets wrong. This one has no such tests because it has no such guess.
 
 import gleam/dynamic/decode
 import gleam/fetch
@@ -23,6 +23,7 @@ import gleam/list
 import gleam/result
 import gleam/string
 import starkit.{type Effect, type Script, Asks, Fetching, Notify, Paste}
+import text
 
 pub fn script() -> Script {
   Fetching(
@@ -90,28 +91,7 @@ pub fn video_id(input: String) -> Result(String, Nil) {
 ///
 /// The title is normalised and the channel is not, which is also carried over rather than decided.
 pub fn markdown(title: String, channel: String, id: String) -> String {
-  "@[youtube](" <> id <> ")\n\n- " <> normalise(title) <> " | " <> channel
-}
-
-/// Typographic punctuation, flattened to what a keyboard types.
-///
-/// A title arrives however YouTube spells it, and one pasted with curly quotes is a title you later
-/// fail to find by typing the straight ones. The mapping is the Script Kit lib's, character for
-/// character, including an em dash becoming two hyphens rather than one — that is what the existing
-/// notes contain, and a normaliser that disagreed with them would split the set it exists to unify.
-///
-/// `link` wants this too at T6.1, where SPEC already asks for quotes and dashes normalised. Sharing
-/// it means a module outside `src/scripts/`, which is Shelf-owned ground and a decision worth making
-/// with the second caller in hand rather than the first.
-pub fn normalise(title: String) -> String {
-  title
-  |> string.replace("\u{2018}", "'")
-  |> string.replace("\u{2019}", "'")
-  |> string.replace("\u{201C}", "\"")
-  |> string.replace("\u{201D}", "\"")
-  |> string.replace("\u{2013}", "-")
-  |> string.replace("\u{2014}", "--")
-  |> string.replace("\u{2026}", "...")
+  "@[youtube](" <> id <> ")\n\n- " <> text.normalise(title) <> " | " <> channel
 }
 
 fn from_url(url: String) -> Result(String, Nil) {
