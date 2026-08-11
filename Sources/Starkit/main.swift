@@ -70,10 +70,9 @@ private func command(_ arguments: [String]) -> Int32 {
 /// Bring the **Artefact** up to date, or **Refuse** — and **Refuse** only when it is *this*
 /// **Script**'s problem.
 ///
-/// The whole of [ADR 0002](../../docs/adr/0002-one-project-with-per-script-staleness.md), and the
-/// reason T1.6 is an executable reading of it rather than a task with code in it. All five
-/// **Scripts** share one Gleam project, so a broken `youtube.gleam` fails the build that `work` also
-/// needs; the mtime comparison is what turns that into one **Refusal** instead of five.
+/// All five **Scripts** share one Gleam project, so a broken `youtube.gleam` fails the build that
+/// `work` also needs. `Staleness` is what turns that into one **Refusal** instead of five — see
+/// [ADR 0002](../../docs/adr/0002-one-project-with-per-script-staleness.md).
 private func ensureCurrent(_ keyword: String, _ builder: Builder) throws(Refusal) {
     // The build's own **Refusal** is held rather than thrown. A project that does not compile is only
     // *this* **Script**'s problem if this **Script** changed since the project last compiled, and
