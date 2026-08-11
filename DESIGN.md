@@ -35,7 +35,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F1  | Put the bar on screen                   |  ↓  | ≤ 50 ms from ⌃⌘K                 |
-| F2  | Know the catalogue without building     |  ↓  | ≤ 5 ms, from cached manifests    |
+| F2  | Know the catalogue without building     |  ↓  | ≤ 5 ms, from cached **Manifests**    |
 | F3  | Narrow to a **Script** as you type      |  ↓  | ≤ 16 ms — one frame              |
 | F13 | Drive the whole bar from the home row   |  ↑  | 0 mouse, 0 arrow-key-only paths; ⌃N/⌃P work |
 
@@ -43,7 +43,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
-| F4  | Bring the **Artefact** up to date, or refuse | ↓ | ≤ 40 ms — measured 26–33 ms   |
+| F4  | Bring the **Artefact** up to date, or **Refuse** | ↓ | ≤ 40 ms — measured 26–33 ms   |
 | F5  | Execute the **Artefact**                |  ↓  | ≤ 20 ms — measured 6.7 ms warm   |
 | F6  | Gather only the declared **Context**    |  ↓  | ≤ 5 ms — vs 463 ms via `osascript` |
 
@@ -112,7 +112,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F10** Surface breakage at save time, not **Summon** time
     - **How**: `FSEventStream` on `~/.starkit/src` → build, then set the menu bar state
       - **Component**: C6 Watcher · C10 MenuBarStatus
-  - **F4** Bring the **Artefact** up to date, or refuse _(also G1)_
+  - **F4** Bring the **Artefact** up to date, or **Refuse** _(also G1)_
     - **How**: watcher builds on save, so **Summon** usually finds the work already done; the
       shelf re-checks as a safety net. Per-**Script** mtime decides **Stale**
       ([ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md))
@@ -204,7 +204,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
 | C3  | HotKey            | register ⌃⌘K, report failure to hold it                     |          |
 | C4  | Runner            | spawn/kill `node`, feed a run, 5 s deadline, collect **Effects** and stderr | ADR-0001 |
 | C5  | Builder           | `gleam build`, per-**Script** **Stale** check by mtime        | ADR-0002 |
-| C6  | Watcher           | `FSEvents` → regenerate registry, build, rewrite manifests   | ADR-0002 |
+| C6  | Watcher           | `FSEvents` → regenerate registry, build, rewrite **Manifests**   | ADR-0002 |
 | C7  | Effector          | perform **Open** / **Kill** / **Paste** / **Notify**, focus and clipboard |          |
 | C8  | ContextGatherer   | gather declared **Context** slices in-process                |          |
 | C9  | LoginItem         | `SMAppService` registration                                 |          |
@@ -237,7 +237,7 @@ everything still works but silently goes **Stale**.
 | T2 | One project over five | one dep tree, 2.8 MB vs ~14 MB, one-file **Script** creation | all **Scripts** share a build; needs the mtime **Stale** rule to stay isolated | [0002](./docs/adr/0002-one-project-with-per-script-staleness.md) |
 | T3 | Spawn `node` on **Summon** | 6.7 ms runs at 0 MB idle; fresh module cache each time | 46 ms of speculative work per **Summon**; a process lifecycle to get right | |
 | T4 | **Effects** out, no bidirectional channel | no blocking stdin in Gleam; Accessibility lives in one signed binary; **Scripts** testable by reading stdout | no dynamic pick-lists — Clean stays all-or-nothing | |
-| T5 | Typed manifests over comment headers | declarations are compile-checked; **Effect** and **Context** can't drift | ~80 lines of Gleam; the registry must be generated | |
+| T5 | Typed **Manifests** over comment headers | declarations are compile-checked; **Effect** and **Context** can't drift | ~80 lines of Gleam; the registry must be generated | |
 | T6 | Keep pasted text on the clipboard | paste the same result into several places by hand | re-**Summoning** a **Script** **Seeds** from its own output | |
 | T7 | **Kill** over quit | an empty screen, immediately | unsaved work is lost, deliberately | |
 | T8 | Local `install.sh` over Homebrew | no notarization, no quarantine, a stable signature that keeps the Accessibility grant | nobody else can install it in one line | |
@@ -299,7 +299,7 @@ everything still works but silently goes **Stale**.
 
 ## 10. Inconsistencies spotted and fixed
 
-- **`CONTEXT.md` claimed a **Script** is pure.** Writing the manifest type showed it can't be —
+- **`CONTEXT.md` claimed a **Script** is pure.** Writing the **Manifest** type showed it can't be —
   Youtube's fetch decides its **Effects**. The boundary is not purity: a **Script** owns the
   network, the **Shelf** owns the machine.
 - **"Footprint" meant three things.** Split into G4 (idle cost), G2 (ready at login) and G6
@@ -316,7 +316,7 @@ everything still works but silently goes **Stale**.
 - **"Closed **Vocabulary**" read as frozen.** Corrected to closed-but-not-frozen.
 - **Comment headers were recommended, then reversed.** The argument was that a broken **Script**
   must stay listed — but measurement showed a broken module fails the whole build either way, so
-  the fallback was needed regardless and typed manifests became free.
+  the fallback was needed regardless and typed **Manifests** became free.
 - **F5's first target (≤ 60 ms) was unambitious.** Measuring H3 tightened it to ≤ 20 ms; a
   target set before the spike would have shipped 8× slower than necessary and looked green.
 - **F13 was missing entirely** from the first pass at functions, and F12 and F14 nearly were.
