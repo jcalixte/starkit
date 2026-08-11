@@ -118,7 +118,14 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       rumour, and one of them is real — `blog.rust-lang.org` serves no `h1` at all. `normalise` also
       moved out to a vendored `text.gleam` here, which is the decision T5.2 left to the second
       caller: one mapping both notes share, paid for with the isolation a **Script** used to have
-- [ ] **T6.2** Non-`https` **Input** → **Notify**
+- [x] **T6.2** Non-`https` **Input** → **Notify** — named back where there is a scheme (`http`,
+      `ftp`, `file`), because "no" without the reason is a bar you argue with, and where there is
+      none the message names the fix instead, since a bare host is the common case. The reason it
+      is refused at all: this **Script**'s output is a page's heading written into a note verbatim,
+      and over cleartext that heading is whoever is in the middle's to choose
+
+> **Five of five.** Every **Script** the MVP specifies now works, and what is left is boot and
+> numbers — no new **Vocabulary**, no new permission, nothing a **Script** has not already done.
 
 ## Phase 7 — Boot
 

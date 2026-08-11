@@ -719,6 +719,29 @@ renders its heading in the browser rather than in the response.
 
 `http://example.com` still pastes, which is T6.2's job and not a gap here.
 
+**T6.2 is a refusal with a reason, and the reason is worth writing down.** This **Script**'s entire
+output is a page's own heading, written into a note verbatim and trusted from then on; over
+cleartext that heading is whatever anything between you and the server decided it should be, and
+nothing downstream can tell the difference, because nobody re-reads a note against its source. So
+the check has to be here or nowhere.
+
+Where there is a scheme it is named back — `http`, `ftp`, `file` each get a sentence saying what
+they are, since "no" without the reason is a bar you argue with. Where there is none, the message
+names the fix instead, because a bare `example.com` is the common case and the answer is almost
+always the missing `https://`. That branch is also what catches `data:` and `javascript:`, which
+have no `://` at all: refused, and by the message that reads oddly for them and correctly for the
+hundred bare hosts. Measured through `--dry-run` across all eight shapes.
+
+Two details are deliberate. `HTTPS://example.com` is fetched, because schemes are case-insensitive,
+and it pastes with its uppercase scheme intact — a URL is not tidied on its way into a note, and
+what was copied is what gets written down. And a scheme has to be *spelled* like one, so
+`hello world://x` has none rather than one named after the sentence, which is a refusal quoting the
+wrong problem back.
+
+**Slice 5 lands the fifth Script, and the MVP's Script set is complete.** What is left is Phase 7's
+boot and Phase 8's numbers — no new **Vocabulary**, no new permission, nothing a **Script** has not
+already done.
+
 ## Phase 7 — Boot (slice 7)
 
 | ID | Task | Depends | Verify with |
