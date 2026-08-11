@@ -95,6 +95,20 @@ from an assumed ~40 ms, because the login shell has to be interactive to see `~/
 before resolving**, not after — otherwise ⌃⌘K is dead for half a second after every login, which is
 the one moment F9 exists to protect.
 
+**Measured again at T5.2, from the other end.** `zsh -ilc` is **240–300 ms** on this machine against
+the 510 ms recorded above, so the ordering decision stands on a number half its original size and
+does not depend on it. What the second measurement added is where that cost falls: the **Shelf** pays
+it once at launch, and `Starkit run` pays it *per invocation*, because every command is a fresh
+process that has to ask the shell again. A `youtube` run from a terminal is ~470 ms of which ~50 ms is
+YouTube, ~20 ms is `gleam build` on an up-to-date project and ~20 ms is `bun` — the rest is `~/.zshrc`.
+The bar never pays any of it, which is why F5's budget and this row measure different things and both
+are right.
+
+Naming both paths in `starkit.toml` takes that run to **120–140 ms**, because `resolve` skips the
+spawn when nothing is left to ask about. Worth knowing and *not* worth making the default: the file
+holds hard-coded paths, so it trades a version manager's shim — the version-agnostic entry point F9
+exists to resolve *to* — for speed on a debugging path. Recorded for T8.1, which owns the actuals.
+
 T1.4 hands three things forward. **T3 is dropped**, so C1 has nothing to sequence a speculative
 spawn against and F5's conflict with F1 no longer exists. **`Process.waitUntilExit()` is banned** —
 63–68 ms of polling regardless of the child, which C5 was already paying against a 40 ms budget;
