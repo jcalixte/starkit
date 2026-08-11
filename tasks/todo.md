@@ -5,7 +5,7 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 1 — Foundations
 
-- [ ] **T0.1** `Package.swift`, `Info.plist` (`LSUIElement`), `main.swift` with a menu bar item
+- [x] **T0.1** `Package.swift`, `Info.plist` (`LSUIElement`), `main.swift` with a menu bar item
 - [ ] **T0.2** `setup-signing.sh` + signing in `build.sh` — adapt from `cmd-tab`
 - [ ] **T0.3** `~/.starkit` skeleton: `gleam.toml`, `starkit.gleam`, `entry.gleam`, 5 stubs, `gen-registry.sh`
 - [ ] **T0.4** `install.sh` — `/Applications`, idempotent seed, first `gleam build`
