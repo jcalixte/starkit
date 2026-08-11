@@ -8,9 +8,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: SummonPanel!
     private var toolchain: Toolchain?
     private var builder: Builder?
-    /// The catalogue as the bar will read it at T2.4 — cached at launch, replaced by a `describe`
-    /// when there was one to be had.
-    private var scripts: [Manifest] = []
 
     /// The chord and the bar first, then everything they will eventually need.
     ///
@@ -27,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status = MenuBarStatus()
         listen()
         panel = SummonPanel()
+        panel.run = { [weak self] manifest, input in self?.perform(manifest, input: input) }
         prepare()
     }
 
@@ -69,7 +67,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// failure — Starkit cannot run your **Scripts**, and here is which part gave way.
     private func prepare() {
         let catalogue = Catalogue(home: Toolchain.home)
-        scripts = catalogue.cached()
+        // Handed to the bar before anything here can fail, and again if a `describe` improves on it.
+        // The panel narrows on both, so its height is settled before the first **Summon** rather
+        // than in front of someone.
+        var scripts = catalogue.cached()
+        panel.catalogue = scripts
 
         do {
             let toolchain = try Toolchain.resolve()
@@ -84,6 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             let runner = Runner(toolchain: toolchain, home: Toolchain.home)
             scripts = try catalogue.refresh(using: runner)
+            panel.catalogue = scripts
             report("\(scripts.count) Scripts: \(scripts.map(\.keyword).joined(separator: ", "))")
         } catch {
             status.set(error.reason, for: .scripts)
@@ -97,4 +100,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// ↩ in the bar: bring the **Artefact** up to date, run it, and perform what it decided.
+    ///
+    /// Off the main thread, which T1.5 made a requirement rather than a preference: a single
+    /// **Open** blocks until the launch is under way — 35 ms warm, 4.9 s for three cold Electron
+    /// applications — and `gleam build` and the `bun` spawn are both blocking calls of their own.
+    /// On the main thread that is the whole application frozen, menu bar included, for as long as
+    /// the slowest cold launch takes.
+    ///
+    /// Nothing here touches the panel, which is already off screen (C1 hides before it hands over),
+    /// so the only thing that comes back to the main thread is the sentence C10 shows.
+    ///
+    /// A run when the **Toolchain** never resolved says so on stderr and no more: the menu bar is
+    /// already red with the reason from launch, and a second, vaguer sentence beside it would be
+    /// noise where the accurate one already is.
+    private func perform(_ manifest: Manifest, input: String) {
+        guard let toolchain, let builder else {
+            report("Cannot run \"\(manifest.keyword)\": the Toolchain never resolved.")
+            return
+        }
+
+        DispatchQueue.global().async { [weak self] in
+            let start = CFAbsoluteTimeGetCurrent()
+            let refusal: Refusal?
+            do throws(Refusal) {
+                try builder.ensureCurrent(manifest.keyword)
+                let effects = try Runner(toolchain: toolchain, home: Toolchain.home)
+                    .run(keyword: manifest.keyword, input: input)
+                try Effector().perform(effects)
+                // The one line a run that worked writes. Every other component reports what it did,
+                // and without this a **Script** running and ↩ doing nothing at all look identical
+                // from outside — which is the difference this task had to verify. It is also the
+                // whole ↩ path on one clock, which is what T8.1 will want a `--bench` number for.
+                refusal = nil
+                report(
+                    "↩ \(manifest.keyword) — \(effects.count) Effects in "
+                        + String(format: "%.1f ms", (CFAbsoluteTimeGetCurrent() - start) * 1000)
+                )
+            } catch {
+                report(error.reason)
+                if let detail = error.detail { report(detail) }
+                refusal = error
+            }
+
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    // Cleared by a run that worked, because this **Concern** is about the last one
+                    // and not about the machine.
+                    self?.status.set(refusal?.reason, for: .run)
+                }
+            }
+        }
+    }
 }

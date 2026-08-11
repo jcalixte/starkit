@@ -21,6 +21,14 @@ final class MenuBarStatus {
         case hotKey
         /// C12 or C5 gave way, so a **Script** will fail when it is reached for.
         case scripts
+        /// A **Script** the person ran **Refused** — **Stale**, crashed, killed at the deadline, or
+        /// an **Effect** C7 could not perform.
+        ///
+        /// Here rather than in the bar because the bar is gone by then: ↩ hides it before the run
+        /// starts (T2.4), and F12 asks that the message survive that. It is the transient
+        /// **Concern** — cleared by the next run that works — and T5.4 is what takes it back into
+        /// the bar, where a spinner gives the bar a reason to still be on screen.
+        case run
     }
 
     private let item: NSStatusItem
