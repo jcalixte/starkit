@@ -126,8 +126,11 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       - **Component**: C6 Watcher · C10 MenuBarStatus
   - **F4** Bring the **Artefact** up to date, or **Refuse** _(also G1)_
     - **How**: watcher builds on save, so **Summon** usually finds the work already done; the
-      shelf re-checks as a safety net. Per-**Script** mtime decides **Stale**
-      ([ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md))
+      shelf re-checks as a safety net. Per-**Script** content hashing against what the last
+      successful build compiled decides **Stale**
+      ([ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md)). Was mtime until T1.4,
+      which measured it wrong — Gleam compares content, so a touched file could never be made
+      **Current** again
       - **Component**: C5 Builder
   - **F12** Report a run that failed at runtime
     - **How**: capture the child's stderr; the bar is still on screen, because only a **Paste**
@@ -151,21 +154,22 @@ Each function sits under the goal it serves most; secondary goals are noted inli
     - **How**: prefix match on **Keyword** over ~5 entries; no index worth building
       - **Component**: C2 Catalogue · C1 SummonPanel
   - **F5** Execute the **Artefact**
-    - **How**: spawn `bun` when the bar appears, kill it once idle and dismissed (T3). Ready in
-      ~17 ms of the 400–800 ms you spend typing, then 6.7 ms per run, at 0 MB idle. Rejected:
-      resident `bun` (sub-ms but holds memory and needs mtime cache-busting). A fresh process per
-      **Summon** also means a fresh module cache, so an edited **Script** is always the one that runs
-    - **Open — T3 may no longer be needed.** Its whole justification was that a cold spawn per run
-      cost 54.9 ms on node, 2.7× over budget. On bun a cold spawn of the *real* seed — 5 **Scripts**,
-      `gleam_json`, harness overhead subtracted — measures 16.0 ms min / 17.6 ms median / 21.9 ms
-      p90 on bun 1.3.14, and within noise of that on 1.3.8, so the figure is not a one-version
-      accident. The median fits F5 outright, which would delete the speculative spawn, the
-      kill-on-dismiss and the whole process lifecycle from C4. Against it: p90 is 10 % over.
-      **Decided at T1.4**, which is where C4 gets built and where keeping T3 costs real code
-    - **Conflicts with F1**: while T3 stands, the spawn must happen *after* the panel is on screen,
-      never before it. `posix_spawn` ahead of the bar would eat F1's 50 ms budget to save time later
-      — exactly backwards, since the bar appearing is the part you can see. Dropping T3 dissolves
-      this conflict rather than resolving it
+    - **How**: spawn `bun` per run and keep nothing between runs. Measured at T1.4 through
+      `Process`, against the installed `~/.starkit`: **19.8 ms min / 22.7 median / 24.2 p90**, of
+      which about 5 ms is `Process`'s own fork and exec. A fresh process per run also means a fresh
+      module cache, so an edited **Script** is always the one that runs, at 0 MB idle. Rejected:
+      resident `bun` (sub-ms but holds memory and needs cache-busting)
+    - **T3 dropped at T1.4.** Its whole justification was that a cold spawn cost 54.9 ms on node,
+      2.7× over budget; on bun it is 22.7 ms median, 3 ms over a threshold whose entire purpose is
+      imperceptibility — under two frames at 60 Hz, next to **Effects** that launch applications.
+      What it would have bought is ~16 ms. What it would have cost was not only the process
+      lifecycle: a process spawned before a **Keyword** is known cannot be handed one on `argv`, so
+      feeding it a run means replacing `run.mjs`'s argument reading with a stdin protocol — framing
+      and a read loop, in a **Shelf**-owned file vendored into `~/.starkit` — on top of dismissal
+      mid-run, a second **Summon**, a child that died while waiting, and a build that landed
+      underneath it. §7 named C4 the riskiest component; this is the version with no lifecycle in it
+    - **Its conflict with F1 is dissolved rather than resolved.** There is no speculative spawn to
+      sequence after the panel, so nothing competes with F1's 50 ms
       - **Component**: C4 Runner
   - **F6** Gather only the declared **Context**
     - **How**: `NSWorkspace.runningApplications` filtered to `.activationPolicy == .regular`,
@@ -244,7 +248,7 @@ everything still works but silently goes **Stale**.
 | ---- | -------- | ------ | ---------- | ------------- |
 | 1 | F1 bar on screen | ≤ 50 ms from ⌃⌘K | manual feel, then a signpost trace | panel is pre-built; if still slow, drop the blur/material before dropping correctness |
 | 2 | F8 hold the chord | 100 % | menu bar turns red on registration failure | fall through to no-op rather than swallowing the chord; never fail silently |
-| 3 | F5 execute | ≤ 20 ms warm | log per-run µs behind a debug flag | fall back to cold spawn per run, which on bun is 17.6 ms median and inside budget — so this stopped being a degradation and became a candidate design (see F5, decided at T1.4) |
+| 3 | F5 execute | ≤ 20 ms → **22.7 ms measured** (T1.4) | log per-run µs behind a debug flag | nothing to fall back to: cold spawn *is* the design now (T3 dropped). 3 ms over on a threshold about imperceptibility was judged not worth a process lifecycle. If it ever matters, T3 is written down and can be built |
 | 4 | F4 build | ≤ 40 ms | time each `gleam build` | if it regresses, trust the watcher's build and skip the **Summon**-time re-check |
 | 5 | F9 ready after login | ≤ 3 s | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
 | 6 | F14 run deadline | 5 s | the deadline itself | none needed — this *is* the fallback |
@@ -255,8 +259,8 @@ everything still works but silently goes **Stale**.
 | ID  | Tradeoff | Got | Paid | ADR |
 | --- | -------- | --- | ---- | --- |
 | T1 | JavaScript target over Erlang | 93 ms vs 450 ms end-to-end; `fetch` free | no BEAM, no OTP, no actors, no Erlang-only Hex | [0001](./docs/adr/0001-compile-gleam-to-javascript.md) |
-| T2 | One project over five | one dep tree, 2.8 MB vs ~14 MB, one-file **Script** creation | all **Scripts** share a build; needs the mtime **Stale** rule to stay isolated | [0002](./docs/adr/0002-one-project-with-per-script-staleness.md) |
-| T3 | Spawn `bun` on **Summon** | 6.7 ms runs at 0 MB idle; fresh module cache each time | ~17 ms of speculative work per **Summon**; a process lifecycle to get right — and on bun the thing it buys is only 11 ms, so the trade may not be worth taking (T1.4) | |
+| T2 | One project over five | one dep tree, 2.8 MB vs ~14 MB, one-file **Script** creation | all **Scripts** share a build; needs the content-hash **Stale** rule to stay isolated, and one file of bookkeeping to hold the hashes | [0002](./docs/adr/0002-one-project-with-per-script-staleness.md) |
+| T3 | ~~Spawn `bun` on **Summon**~~ — **dropped at T1.4** | would have bought ~16 ms per run | a stdin protocol in the vendored `run.mjs` replacing `argv`, plus a process lifecycle in the riskiest component, to save 3 ms against a 20 ms target about imperceptibility. Kept on record in case F5 ever bites | |
 | T4 | **Effects** out, no bidirectional channel | no blocking stdin in Gleam; Accessibility lives in one signed binary; **Scripts** testable by reading stdout | no dynamic pick-lists — Clean stays all-or-nothing | |
 | T5 | Typed **Manifests** over comment headers | declarations are compile-checked; **Effect** and **Context** can't drift | ~80 lines of Gleam; the registry must be generated | |
 | T6 | Keep pasted text on the clipboard | paste the same result into several places by hand | re-**Summoning** a **Script** **Seeds** from its own output | |
@@ -336,12 +340,19 @@ everything still works but silently goes **Stale**.
   one day it fires. A missing runtime is what F15 and C10 are already for: red before it is needed,
   the same treatment `gleam` gets.
 
-  **What is still open is T3 itself, not the runtime** — see F5. **Trigger:** T1.4, where C4 is
-  built. Two things to settle there: whether p90 (21.9 ms, 10 % over) matters at a threshold whose
-  entire purpose is imperceptibility, and whether 11 ms per run justifies a process lifecycle in
-  the component §7 already names as riskiest. Verified in passing: `gleam test` runs gleeunit under
-  `runtime = "bun"` with no extra configuration, and a throwing **Script** still exits 1 with stderr
-  intact, so F12 holds.
+  **T3 was settled at T1.4 and dropped** — see F5 and the T3 row. Verified in passing: `gleam test`
+  runs gleeunit under `runtime = "bun"` with no extra configuration, and a throwing **Script** still
+  exits 1 with stderr intact, so F12 holds. Confirmed again at T1.4 against a **Script** that
+  `panic`s: bun's stack trace reaches the **Refusal**'s `detail` with the **Script**'s own message at
+  the top of it.
+
+- **`Process.waitUntilExit()` may not be used anywhere.** Measured at T1.4: 63–68 ms for
+  `/usr/bin/true`, and it pays that even after the pipe has already reached EOF, so it is a polling
+  loop rather than a wait — larger than three of the seven budget rows on its own. `posix_spawn` +
+  `waitpid` is 5.9 ms and `terminationHandler` is free. C5 was written with it and was silently
+  spending 65 ms of F4's 40 ms budget on nothing. Both C4 and C5 now wait on `terminationHandler`.
+  **Trigger to revisit:** none — this is a fact about Foundation, not a decision. Worth knowing
+  before adding a fourth process anywhere.
 
 ## 10. Inconsistencies spotted and fixed
 
@@ -350,6 +361,20 @@ everything still works but silently goes **Stale**.
   network, the **Shelf** owns the machine.
 - **"Footprint" meant three things.** Split into G4 (idle cost), G2 (ready at login) and G6
   (**Vocabulary** size). Only after splitting did the 356-vs-10 number become the headline.
+- **The **Stale** rule compared mtimes, and Gleam compares content.** Found at T1.4 by the first
+  real `Starkit run work`, which **Refused** a **Script** that was perfectly current: `touch` a
+  source and Gleam rightly recompiles nothing, leaving the **Artefact**'s mtime behind the source's
+  forever, so nothing could ever clear the **Refusal**. `CONTEXT.md` already defined **Stale** as
+  "built from source that has since changed" — the definition was right and the implementation was
+  an approximation of it, which is why the fix needed no new vocabulary. Now hashes, in
+  [ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md). The generalisation is the
+  part to remember: where the **Shelf** and Gleam disagree about what "changed" means, Gleam wins,
+  because Gleam decides what gets compiled.
+- **`install.sh` compares before it copies for a reason that has since evaporated.** It exists so
+  that vendoring a byte-identical **Vocabulary** does not move its mtime and mark all five
+  **Scripts** **Stale**. Under content hashing that cannot happen at all. The comparison is still
+  worth keeping — it keeps the mtimes honest for anything else reading them — but it is no longer
+  load-bearing, and C5's doc comment no longer claims it is.
 - **"Shortcut" meant two mechanisms.** Resolved to **Keyword** only; the sole key chord
   **Summons** the **Shelf**.
 - **The **Shelf** was assumed able to hold the keyboard without activating.** `main.swift` said so

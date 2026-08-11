@@ -46,9 +46,12 @@ pulled forward:
    **Shelf** activates, so C1 must take activation and C7 must hand it back. Found in slice 0 for
    the cost of one throwaway bundle; found in slice 4 it would have arrived on top of T2.2, T2.4
    and T5.1, all of which assume how the panel takes focus.
-2. **Spawn-on-Summon** (T1.4). The 6.7 ms figure was measured with a hand-rolled harness, not
-   inside an app under `SMAppService`. Fallback is cold spawn at 53 ms, which still meets the
-   original F5 target, so this is a budget risk rather than a design risk.
+2. ~~**Spawn-on-Summon** (T1.4).~~ **Retired — T3 dropped.** Measured through `Process` against the
+   real `~/.starkit`, a cold spawn per run is 22.7 ms median (19.8 min, 24.2 p90), 3 ms over F5 on a
+   threshold whose purpose is imperceptibility. The 6.7 ms alternative would have cost a stdin
+   protocol in the vendored `run.mjs` as well as the lifecycle, since a process spawned before a
+   **Keyword** is known cannot be handed one on `argv` — a cost `DESIGN.md` had not recorded. C4
+   ships with no process lifecycle in it at all.
 
 Everything else has either a working precedent in `cmd-tab` or a measurement behind it.
 
@@ -81,7 +84,7 @@ Two things it hands to later tasks:
 | -- | ---- | ------- | ----------- |
 | T1.1 | **Vocabulary** types + `work` **Script** + `entry.gleam` answering `describe` / `run` | T0.3 | `bun run.mjs describe` prints 5 **Manifests**; `bun run.mjs run work '{}'` prints the `work` **Open** **Effects**. Not `entry.mjs` directly — it exports `main` without calling it (T0.3) |
 | T1.2 | C12 Toolchain — login-shell resolution, `starkit.toml` override, named error when absent | T0.1 | with `PATH` stripped, the error names the **Toolchain**; no crash |
-| T1.3 | C5 Builder + `Staleness` as a pure, tested rule. **Introduces a `StarkitCore` library target**: SwiftPM cannot cleanly link an executable into a test target, so everything tested lives outside the executable — `Staleness` and `Keyword` both move there | T1.2 | `swift test` — 4 cases: source newer, artefact newer, shared module newer, artefact missing |
+| T1.3 | C5 Builder + `Staleness` as a pure, tested rule. **Introduces a `StarkitCore` library target**: SwiftPM cannot cleanly link an executable into a test target, so everything tested lives outside the executable — `Staleness` and `Keyword` both move there | T1.2 | `swift test` — 4 cases: source changed, source unchanged, shared module changed, artefact missing |
 | T1.4 | C4 Runner — spawn `bun`, feed a run, decode **Effects**, 5 s deadline | T1.1, T1.3 | `Starkit run work --dry-run` prints 4 **Open** **Effects**, opens nothing |
 | T1.5 | C7 Effector — **Open** only | T1.4 | `Starkit run work` opens ghostty, Slack, Notion, Zen |
 | T1.6 | Isolation check — no new code, an executable reading of [ADR 0002](../docs/adr/0002-one-project-with-per-script-staleness.md) | T1.5 | break `youtube.gleam`: `run work` still works, `run youtube` **Refuses** and prints the compile error |
@@ -91,6 +94,15 @@ from an assumed ~40 ms, because the login shell has to be interactive to see `~/
 `PATH` is set (`DESIGN.md` §4, F9). Inside F9's 3 s, but it means **T2.1 should register the chord
 before resolving**, not after — otherwise ⌃⌘K is dead for half a second after every login, which is
 the one moment F9 exists to protect.
+
+T1.4 hands three things forward. **T3 is dropped**, so C1 has nothing to sequence a speculative
+spawn against and F5's conflict with F1 no longer exists. **`Process.waitUntilExit()` is banned** —
+63–68 ms of polling regardless of the child, which C5 was already paying against a 40 ms budget;
+wait on `terminationHandler`. And **`Staleness` compares content, not mtimes** (ADR 0002, corrected):
+the mtime rule refused a **Script** that no rebuild could ever make **Current** again, so the rule,
+its tests and the ADR all moved to hashes and C5 now writes `~/.starkit/built.json` after every
+successful build. **T1.6 is unaffected and still needs no new code** — the isolation it checks was
+verified as part of this task.
 
 **Checkpoint B** — one **Script** works end to end from a terminal, and the isolation guarantee is
 demonstrated rather than asserted. This is the architecture proven; everything after is surface.

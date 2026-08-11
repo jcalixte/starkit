@@ -54,8 +54,10 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── Bar.swift                 # C1  the SwiftUI view and its key handling
 │   ├── Catalogue.swift           # C2  manifests.json, Keyword resolution
 │   ├── Keyword.swift             # C2  parsing — pure, tested
-│   ├── Runner.swift              # C4  bun lifecycle, 5 s deadline, Effect decoding
-│   ├── Builder.swift             # C5  gleam build
+│   ├── Runner.swift              # C4  spawn bun per run, 5 s deadline, Effect decoding
+│   ├── Effect.swift              # C4  the Effect vocabulary, Swift side — decoded off the wire
+│   ├── Refusal.swift             #     Starkit declining, in its own voice
+│   ├── Builder.swift             # C5  gleam build, hashing what it built
 │   ├── Staleness.swift           # C5  the Stale rule — pure, tested
 │   ├── Effector.swift            # C7  Open / Kill / Paste / Notify
 │   ├── ContextGatherer.swift     # C8  Running Apps
@@ -75,6 +77,7 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 ├── starkit.toml                  # optional Toolchain override; absent by default
 ├── run.mjs                       # the shim the Shelf executes — see below
 ├── manifests.json                # generated after each successful build
+├── built.json                    # what that build compiled, by hash — ADR 0002's isolation record
 ├── src/
 │   ├── starkit.gleam             # the vendored Vocabulary — `import starkit`
 │   ├── entry.gleam               # answers `describe` and `run <name>`
@@ -128,8 +131,9 @@ that this design made the risky decisions pure.
 
 **Tested — Swift, via `swift test`:**
 
-- `Staleness` — source newer than **Artefact**, **Artefact** newer than source, shared module
-  newer than everything, **Artefact** missing entirely.
+- `Staleness` — source changed since the last successful build, source unchanged, a shared module
+  changed, **Artefact** missing entirely. Plus the case that caught the mtime version out at T1.4: a
+  source *touched* but not changed is **Current**.
 - `Keyword` — first token splits from **Input**; no match; a **Keyword** that is a prefix of
   another.
 
