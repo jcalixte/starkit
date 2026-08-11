@@ -1,0 +1,144 @@
+# Starkit
+
+A keyboard-summoned launcher for a handful of personal automations, written in Gleam. Starkit
+exists to replace the parts of Script Kit that get used, and nothing else.
+
+## Language
+
+### The two halves
+
+**Shelf**:
+The always-running macOS application: the summoning key, the bar, and the only thing in the
+system permitted to touch macOS.
+_Avoid_: launcher, palette, app, host
+
+**Script**:
+One Gleam module, addressed by name, that turns an **Input** and a **Context** into
+**Effects**. A **Script** may reach the network on its own; it may never touch the machine.
+_Avoid_: command, action, task, automation
+
+### What crosses the boundary
+
+**Summon**:
+To bring the **Shelf** on screen with its one key binding. The **Shelf** is never summoned by
+clicking, and never appears unasked.
+_Avoid_: open, show, invoke, trigger
+
+**Input**:
+The text a person types into the **Shelf** before a **Script** runs.
+_Avoid_: argument, query, prompt, parameter
+
+**Context**:
+The slices of the world a **Script** declares it needs; the **Shelf** gathers exactly those
+and no others.
+_Avoid_: environment, state, world, ambient data
+
+**Keyword**:
+The single space-free word that selects a **Script** in the **Shelf**. Everything typed after
+the first space is the **Input**.
+_Avoid_: alias, trigger, shortcut, hotkey — there are no per-**Script** key bindings; the only
+key binding in Starkit summons the **Shelf**.
+
+**Seed**:
+The clipboard text a **Script**'s **Input** starts out holding, selected, so that accepting it
+takes one keystroke and replacing it takes none. Only a **Script** that declares an **Input**
+is **Seeded**.
+_Avoid_: default, prefill, autofill
+
+**Effect**:
+One thing a **Script** asks the **Shelf** to do to the machine. A **Script** cannot act; it
+can only ask.
+_Avoid_: command, action, side effect, intent
+
+**Vocabulary**:
+Every name a **Script** author must learn from Starkit and could not have guessed from Gleam
+itself — the **Effects**, the **Context** slices, and the `script` contract. Standard Gleam does
+not count against it. The **Vocabulary** is closed but not frozen — it may grow, and each
+addition is a decision rather than a convenience. What matters is the baseline it grows from.
+_Avoid_: API, surface, framework, helpers, globals
+
+### The Effect vocabulary
+
+Deliberately closed and small. Adding a word here is a design decision, not a convenience.
+
+**Open**:
+Bring an application to the foreground, launching it if needed.
+
+**Kill**:
+Terminate an application immediately, discarding unsaved work.
+_Avoid_: quit, close, terminate — those imply the application is asked and may refuse or
+prompt. **Kill** never asks. This is chosen, not accidental: speed is worth the risk.
+
+**Paste**:
+Replace the selection in whatever application was frontmost before the **Shelf** appeared, and
+leave the pasted text on the clipboard afterwards so it can be pasted again by hand. The
+clipboard is deliberately **not** restored: pasting the same result into several places is the
+common case, re-running the **Script** on the same subject is not.
+_Avoid_: type, insert, set selected text
+
+**Notify**:
+Tell the person why a **Script** did nothing, in the **Shelf** itself, while it is still on
+screen. Not a system notification: nothing Starkit says is worth keeping.
+_Avoid_: warn, alert, toast, notification
+
+### Around the edges
+
+**Toolchain**:
+The `gleam` and `node` that Starkit borrows from the machine rather than shipping. Starkit never
+chooses a version: it uses whatever the login shell reports, so upgrading one is not an event.
+_Avoid_: runtime, dependencies, environment
+
+### Freshness
+
+**Artefact**:
+The compiled JavaScript a **Script** actually runs as. One per **Script**.
+
+**Stale**:
+Said of an **Artefact** built from source that has since changed. A **Stale** **Script**
+refuses to run; a **Script** whose **Artefact** is not **Stale** always runs, even while the
+project as a whole fails to build.
+_Avoid_: dirty, outdated, out of sync
+
+### The Context vocabulary
+
+**Running Apps**:
+The applications a person can see and switch to — those with windows and a Dock presence,
+excluding background and helper processes.
+_Avoid_: processes, open apps
+
+## Relationships
+
+- The **Shelf** runs many **Scripts**; a **Script** never runs another **Script**
+- A **Script** declares zero or more **Context** slices and consumes at most one **Input**
+- A **Script** that declares an **Input** has it **Seeded**; one that declares none never is
+- Every **Script** has exactly one **Keyword**, and no **Keyword** contains a space
+- A **Script** emits zero or more **Effects**, in order
+- Every **Effect** is performed by the **Shelf**; a **Script** performs none of them
+
+## Example dialogue
+
+> **Dev:** "Clean needs the list of apps to close. Does it shell out and ask the system?"
+> **Julien:** "No — it declares **Running Apps** as its **Context**, and the **Shelf** hands
+> them over. Asking the system myself costs 463 ms; the **Shelf** already knows for free."
+>
+> **Dev:** "And then Clean closes them?"
+> **Julien:** "Clean decides *which*. It emits a **Kill** per app and the **Shelf** does it.
+> **Kill**, not quit — I don't want a save dialog standing between me and an empty screen."
+
+## Flagged ambiguities
+
+- "script" meant both the Gleam source file and the thing that runs — resolved: a **Script**
+  is the module. Its compiled form is an **Artefact**; there is no third word for a single
+  execution, because nothing in Starkit outlives one.
+- "context" is overloaded against `CONTEXT.md` itself, which is a glossary, not a **Context**.
+  Kept anyway: **Context** is the right domain word, and the collision is only in file naming.
+- "shortcut" was used for both a typed alias and a per-**Script** global key chord — resolved:
+  only the typed alias exists, and it is called a **Keyword**. There is exactly one key chord in
+  Starkit and it **Summons** the **Shelf**.
+- **Paste** and **Seed** both touch the clipboard, so "restore the clipboard" was ambiguous
+  between putting back the **Seed** and keeping the pasted text — resolved: keep the pasted
+  text. The cost is that **Summoning** the same **Script** again **Seeds** from its own output,
+  which is cosmetic, since the **Seed** arrives selected.
+- A **Script** was briefly called pure — wrong. Youtube and Link from URL fetch over HTTP, and
+  the response decides the **Effects**, so the network cannot be a **Context** slice. The line
+  is not purity: a **Script** owns the network, the **Shelf** owns the machine.
