@@ -111,7 +111,13 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 6 — Link from url
 
-- [ ] **T6.1** `link` **Script** + tests, including the pages the `h1` regex gets wrong
+- [x] **T6.1** `link` **Script** + tests, including the pages the `h1` scan gets wrong — a scan and
+      not a regex, because Gleam's stdlib has none and a sixth dependency buys nothing: the pages
+      that come out wrong are the same either way, since the limit is *not a DOM parser*. Two thirds
+      of the 26 cases assert a wrong answer on purpose, so the limit is a shape rather than a
+      rumour, and one of them is real — `blog.rust-lang.org` serves no `h1` at all. `normalise` also
+      moved out to a vendored `text.gleam` here, which is the decision T5.2 left to the second
+      caller: one mapping both notes share, paid for with the isolation a **Script** used to have
 - [ ] **T6.2** Non-`https` **Input** → **Notify**
 
 ## Phase 7 — Boot

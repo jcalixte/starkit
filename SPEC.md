@@ -87,6 +87,7 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 ├── built.json                    # what that build compiled, by hash — ADR 0002's isolation record
 ├── src/
 │   ├── starkit.gleam             # the vendored Vocabulary — `import starkit`
+│   ├── text.gleam                # vendored helpers a Script may call — not the Vocabulary
 │   ├── entry.gleam               # answers `describe` and `run <name>`
 │   ├── registry.gleam            # generated from src/scripts/
 │   └── scripts/{work,personal,clean,youtube,link}.gleam
@@ -133,8 +134,10 @@ that this design made the risky decisions pure.
 - `clean` — which apps it **Kills**, given a **Running Apps** list. The only destructive path in
   the system, and **Kill** never asks. Written before Clean runs for real, not after.
 - `youtube` — ID extraction across all six URL shapes, plus a bare 11-character ID.
-- `link` — `h1` extraction, including the pages where the regex standing in for a DOM selector
-  gives the wrong answer. Those cases are recorded as the known limit, not fixed.
+- `link` — `h1` extraction, including the pages where the scan standing in for a DOM selector gives
+  the wrong answer. Those cases are recorded as the known limit, not fixed. A scan rather than a
+  regexp because Gleam's stdlib has none and the wrong answers are the same either way (T6.1).
+- `text` — the normalisation every note shares, tested once for both **Scripts** that paste one.
 
 **Tested — Swift, via `swift test`:**
 

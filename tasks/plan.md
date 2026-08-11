@@ -670,11 +670,54 @@ works and stays working across a rebuild, a re-signing and a delete-and-reinstal
 
 | ID | Task | Depends | Verify with |
 | -- | ---- | ------- | ----------- |
-| T6.1 | `link` **Script** + tests, including pages where the `h1` regex is wrong | T5.3 | `gleam test`; a real URL pastes `[Title](url)` with quotes and dashes normalised |
+| T6.1 | `link` **Script** + tests, including pages where the `h1` scan is wrong | T5.3 | `gleam test`; a real URL pastes `[Title](url)` with quotes and dashes normalised |
 | T6.2 | Non-`https` **Input** → **Notify** | T6.1 | typing a non-URL produces a **Notify** and no paste |
 
-The known-wrong pages are recorded as the limit of a regex standing in for a DOM selector, not
+The known-wrong pages are recorded as the limit of a scan standing in for a DOM selector, not
 fixed. Fixing them means an HTML parser, which is a **Vocabulary** decision (`Ask first`).
+
+**T6.1 spent two decisions the earlier slices left it, and neither was the one the table names.**
+
+The first was `normalise`. T5.2 wrote it into `youtube.gleam` with a comment saying the decision
+belonged to the second caller rather than the first, and `link` is that caller — SPEC asks for
+quotes and dashes normalised there in the same words. It moved to `seed/src/text.gleam`, vendored
+and overwritten on install exactly like `starkit.gleam` and deliberately not part of it: that module
+is the interface between a **Script** and the **Shelf**, and `normalise` crosses no boundary and
+touches no machine. The alternative was a copy in each **Script**, which keeps isolation total and
+puts two versions of a mapping whose entire purpose is that every note agrees — an em dash becoming
+two hyphens in one file and one hyphen in the other is the exact split it exists to prevent, and
+nothing would have caught it. What it costs is the isolation itself, and that is a real loss:
+T1.6's property was that a **Script** which does not compile takes only itself down, and every
+**Script** importing `text.gleam` now shares its fate. Affordable for a module nobody edits and the
+installer replaces wholesale; recorded as T14 so the next shared module has to argue for itself.
+
+The second was the regexp, which SPEC, this plan and `todo.md` all named three times. Gleam's
+stdlib has none, so the word was a sixth dependency resolved on every install in exchange for three
+calls to `string.split_once` — and the pages that come out wrong are identical either way, because
+the limit is *not a DOM parser* rather than *not a regexp*. Scanned instead, the same technique
+`youtube` already uses to read six URL shapes, and the docs corrected to say so.
+
+**The suite is 26 cases and two thirds of it is the limit.** Sixteen say what a browser would say —
+tags inside the heading dropped and their text kept, whitespace collapsed, six entities decoded, and
+`&amp;` decoded last because doing it first turns `&amp;lt;` into a literal `<` and quietly makes
+markup out of a page's escaped text. Six assert the wrong answer on purpose: the first `h1` wins
+even when the masthead got there first, a heading left in an HTML comment is read as the title, an
+`h1` inside a script template is read as the title, an uppercase `<H1>` is not seen at all, and a
+`>` inside an attribute value ends the tag early. A test there starting to fail means the scan
+changed and the change had better be deliberate.
+
+**Verified against the real web** through `--dry-run`, which is the debug path answering "what did
+this **Script** decide" without a **Paste** touching anything. `gleam.run` and `example.com` come
+back as `[Title](url)`; a 404 is a **Notify** naming it; text that is not a URL is a **Notify**
+saying so. Two real pages are worth keeping. MDN's `h1` is
+`<code>&lt;h1&gt;–&lt;h6&gt;</code> HTML section heading elements` and pastes as
+`[<h1>-<h6> HTML section heading elements](…)` — the tag stripped, the entities decoded, the en dash
+normalised, which is the whole pipeline proved on one page nobody wrote a fixture for. And
+`blog.rust-lang.org` serves no `h1` at all, so a real, current, popular page lands on the
+**Notify** — the known limit is not hypothetical, and the one place it will be felt is a site that
+renders its heading in the browser rather than in the response.
+
+`http://example.com` still pastes, which is T6.2's job and not a gap here.
 
 ## Phase 7 — Boot (slice 7)
 

@@ -337,6 +337,7 @@ everything still works but silently goes **Stale**.
 | T10 | Borrow the **Toolchain**, resolve it every launch | bun and Gleam upgrades are non-events; nothing to configure | ~40 ms per launch for both, and a broken `.zshrc` breaks resolution — though it would break your terminal first | |
 | T12 | bun over node as the runtime | cold spawn 17.6 ms vs 54.9 ms, which puts a run inside F5's budget with no resident process; one self-contained binary, no version-manager shim | a faster-moving runtime under G7; bun ignores `NO_COLOR`, so C4 must strip ANSI from stderr before F12 shows it | |
 | T13 | A **Script** declares its **Input** in a field, over a `Need` variant | the **Vocabulary** keeps **Context** and **Input** apart — a **Need** is a slice of the machine the **Shelf** gathers, and C8 never has to know one word in that list is not for it | a constructor gained a field, so every **Script** already written on every machine has to be edited once, and `install.sh` cannot do it — the one upgrade this design has no migration for. Taken at T5.1 because five stubs is the cheapest it will ever be | |
+| T14 | One vendored `text.gleam` both pasting **Scripts** import, over a copy in each | every note agrees on how a title is spelled, and the mapping is tested once rather than twice — the split it exists to prevent cannot open up between two files | T1.6's isolation, partly: a **Script** importing it shares its fate, where until now a **Script** that did not compile took only itself down. Bounded by the module being the **Shelf**'s, replaced wholesale on install, and seven string replacements with no dependencies. Taken at T6.1 with the second caller in hand, as T5.2 said to | |
 | T11 | `gleam_json` for the wire, over hand-rolled encoding | escaping is the library's problem on the two paths that carry arbitrary text — a page title into **Paste**, an error into **Notify** | one dependency in a **Shelf**-owned `gleam.toml`, resolved on first install; **Scripts** never import it | |
 
 ### Tensions being watched
@@ -346,6 +347,19 @@ everything still works but silently goes **Stale**.
   outbound channel becomes bidirectional rather than being replaced.
 - **Editing a **Script** while another is broken blocks it** (T2). **Trigger:** it actually
   costs you a morning; the fix is per-**Script** projects, and it is not free.
+- **`link` reads HTML with a scan rather than a parser** (T6.1). It takes the first `h1`, which is
+  the masthead on some sites, is in a comment or a script template on others, and is spelled `<H1>`
+  on a few. Every one of those is in `link_test.gleam` asserting the wrong answer, so the limit is a
+  known shape. A real one was measured on the way in: `blog.rust-lang.org` serves no `h1` at all and
+  gets a **Notify**, because the heading is rendered in the browser rather than in the response, and
+  that is the shape this will keep meeting. **Trigger to revisit:** a page you actually wanted to
+  save coming out wrong — at which point the answer is an HTML parser, which is a dependency and an
+  *Ask first*, not a longer list of special cases.
+- **The **Scripts** now share a module, and therefore a fate** (T14). `text.gleam` is one file of
+  string replacements the **Shelf** owns and replaces on install, which is what makes the shared
+  fate affordable. **Trigger to revisit:** the second function wanting in. A module that accumulates
+  helpers stops being a mapping and becomes a library every **Script** depends on, and the isolation
+  T1.6 measured is spent one import at a time.
 - **The **Vocabulary** will want to grow.** G6 is weight 6, not a cap. **Trigger:** a third
   **Script** wanting the same missing **Effect** — two is coincidence.
 - **C1 and C7 are coupled through activation** (T0.5). The bar has to be typed into, and macOS
