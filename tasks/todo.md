@@ -19,7 +19,7 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 - [x] **T1.1** **Vocabulary** types + `work` **Script** + `entry.gleam` (`describe` / `run`)
 - [x] **T1.2** C12 Toolchain — login-shell resolution, `starkit.toml` override, named error
-- [ ] **T1.3** C5 Builder + `Staleness` pure rule **+ its 4 tests**
+- [x] **T1.3** C5 Builder + `Staleness` pure rule **+ its 4 tests**
 - [ ] **T1.4** C4 Runner — spawn `bun`, feed a run, decode **Effects**, 5 s deadline
 - [ ] **T1.5** C7 Effector — **Open** only
 - [ ] **T1.6** Isolation check — break `youtube.gleam`, confirm `work` still runs
