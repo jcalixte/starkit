@@ -17,8 +17,11 @@ CONFIGURATION="${1:-release}"
 # meant to prevent.
 BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Resources/Info.plist)"
 
-swift build -c "$CONFIGURATION"
-BINARY="$(swift build -c "$CONFIGURATION" --show-bin-path)/Starkit"
+# `--product Starkit`, because the package also holds the throwaway PasteSpike target (T0.5) and a
+# plain `swift build` would compile it into every Starkit build. Harmless to drop again once the
+# spike is deleted at Checkpoint A.
+swift build -c "$CONFIGURATION" --product Starkit
+BINARY="$(swift build -c "$CONFIGURATION" --product Starkit --show-bin-path)/Starkit"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"

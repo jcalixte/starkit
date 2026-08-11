@@ -13,5 +13,14 @@ let package = Package(
             path: "Sources/Starkit",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
+        // Throwaway, deleted at Checkpoint A along with `Sources/PasteSpike` and
+        // `scripts/spike-paste.sh`. A separate bundle rather than a flag on Starkit, so that
+        // removing it leaves nothing behind in code that survives — and so that the Accessibility
+        // grant it needs is its own and not Starkit's.
+        .executableTarget(
+            name: "PasteSpike",
+            path: "Sources/PasteSpike",
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
     ]
 )
