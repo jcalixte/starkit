@@ -13,11 +13,11 @@
 //// building or running anything (F2). Splitting it also means a Script can be broken without
 //// the bar losing its name.
 ////
-//// Both verbs answer with a JSON object, never a bare array. `run` can fail in a way no Effect
-//// can express — an unknown Keyword means the cached manifests have gone stale, and an
-//// undecodable payload means the Shelf sent something it promised not to — so the envelope
-//// carries either `effects` or `error`, and the Shelf's decode stays total. A Script reporting
-//// its *own* failure is not this: that is a Notify, which is an Effect like any other.
+//// Both verbs answer with a JSON object, never a bare array, because `run` can answer with a
+//// Refusal instead of Effects — an unknown Keyword means the cached Manifests have gone stale,
+//// and an undecodable payload means the Shelf sent something it promised not to. Neither is a
+//// Script failing: no Script got to decide anything, which is exactly what makes it a Refusal
+//// rather than a Notify. Carrying both in one object is also what keeps the Shelf's decode total.
 ////
 //// This file is Shelf-owned: vendored into ~/.starkit and overwritten on every install.
 
@@ -30,19 +30,19 @@ import starkit.{
   Paste, RunningApps,
 }
 
-/// Every Script's manifest, as JSON.
+/// Every Script's Manifest, as JSON.
 pub fn describe() -> String {
   registry.all() |> json.array(of: manifest) |> json.to_string
 }
 
 /// Run the Script with this Keyword against the payload the Shelf gathered.
 pub fn run(keyword: String, payload: String) -> String {
-  let envelope = case find(keyword) {
-    Error(message) -> error(message)
+  let answer = case find(keyword) {
+    Error(why) -> refusal(why)
     Ok(script) ->
       case json.parse(payload, payload_decoder()) {
         Error(_) ->
-          error(
+          refusal(
             "The payload for \""
             <> keyword
             <> "\" is not the shape the Shelf promised.",
@@ -55,7 +55,7 @@ pub fn run(keyword: String, payload: String) -> String {
         }
       }
   }
-  json.to_string(envelope)
+  json.to_string(answer)
 }
 
 fn find(keyword: String) -> Result(Script, String) {
@@ -66,7 +66,7 @@ fn find(keyword: String) -> Result(Script, String) {
 }
 
 /// Every Need arrives under the same key it is named by, so the ContextGatherer can work from
-/// the manifest alone and never needs a second table mapping one to the other.
+/// the Manifest alone and never needs a second table mapping one to the other.
 ///
 /// Undeclared Needs are absent from the payload rather than empty, and decode to their empty
 /// value here — the Script sees nothing, which is the behaviour starkit.gleam documents and the
@@ -110,6 +110,8 @@ fn tagged(kind: String, field: String, value: String) -> Json {
   json.object([#("kind", json.string(kind)), #(field, json.string(value))])
 }
 
-fn error(message: String) -> Json {
-  json.object([#("error", json.string(message))])
+/// `refusal` rather than `error`: it is Starkit's own voice, not a Script's, and `error` would
+/// collide with Swift's own when C4 decodes this.
+fn refusal(why: String) -> Json {
+  json.object([#("refusal", json.string(why))])
 }

@@ -47,9 +47,9 @@ switch (verb) {
     // protocol, and a shim that understood it would be a second place to change.
     const answer = await module.run(keyword, payload ?? "{}");
     console.log(answer);
-    // Both channels report the same thing. The envelope is for the Shelf, which decodes it
-    // anyway; the exit code is for a person running this by hand.
-    if (JSON.parse(answer).error !== undefined) process.exitCode = 1;
+    // A Refusal reported twice, on purpose. The Shelf reads the answer it already decodes; the
+    // exit code is for a person running this by hand.
+    if (JSON.parse(answer).refusal !== undefined) process.exitCode = 1;
     break;
   }
 
