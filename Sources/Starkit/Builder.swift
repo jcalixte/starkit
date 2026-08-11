@@ -83,6 +83,46 @@ struct Builder {
         try? data.write(to: record)
     }
 
+    /// Bring the **Artefact** up to date, or **Refuse** — and **Refuse** only when it is *this*
+    /// **Script**'s problem.
+    ///
+    /// All five **Scripts** share one Gleam project, so a broken `youtube.gleam` fails the build that
+    /// `work` also needs. `Staleness` is what turns that into one **Refusal** instead of five — see
+    /// [ADR 0002](../../docs/adr/0002-one-project-with-per-script-staleness.md).
+    ///
+    /// The F4 path, and the only one: the bar reaches it at ↩ and the debug CLI reaches it per
+    /// invocation. Two copies of this would be two ways to decide whether a **Script** may run.
+    func ensureCurrent(_ keyword: String) throws(Refusal) {
+        // The build's own **Refusal** is held rather than thrown. A project that does not compile is
+        // only *this* **Script**'s problem if this **Script** changed since the project last
+        // compiled, and that question has not been asked yet.
+        var failed: Refusal?
+        do {
+            try build()
+            remember()
+        } catch {
+            failed = error
+        }
+
+        let why = switch try staleness(of: keyword) {
+        case .current: nil as String?
+        case .artefactMissing: "there is no Artefact for it"
+        case .sourceChanged: "it has changed since it was last built"
+        case .sharedModuleChanged(let module): "\(module) changed since it was last built"
+        }
+        guard let why else { return }
+
+        throw Refusal(
+            "Starkit cannot run \"\(keyword)\": \(why).",
+            // The compile error verbatim when there was one — it is the only thing here that says
+            // what to fix, and there is nothing Starkit could add to a Gleam diagnostic by rewording
+            // it. With no compile error, the build succeeded and the **Artefact** is still not where
+            // Starkit looks: that path is a layout Gleam never promised to keep (DESIGN.md §9), so
+            // name it rather than report this as a missing **Script**.
+            detail: failed?.detail ?? "Expected it at \(artefact(of: keyword).path)."
+        )
+    }
+
     /// Whether this **Script**'s **Artefact** was built from the source on disk.
     ///
     /// Hashing the files is C5's job and comparing the hashes is not: the rule itself is pure and
