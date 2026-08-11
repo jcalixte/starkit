@@ -1,7 +1,7 @@
 import AppKit
 import StarkitCore
 
-/// C1 — the bar itself: one panel, built at launch, shown and hidden forever after.
+/// C1 — the bar itself: one panel, built at launch, **Summoned** and **Dismissed** forever after.
 ///
 /// Built once because F1's budget is 50 ms from ⌃⌘K and a window is the expensive part of showing
 /// one. Constructing it lazily would put that cost on the first **Summon** of a session, which is
@@ -10,8 +10,8 @@ import StarkitCore
 ///
 /// The panel takes activation. T0.5 established why and it is not a preference: macOS routes keys
 /// to the *active* application's key window, so a panel belonging to an inactive application can be
-/// on screen and still receive nothing. What that costs is a focus to hand back, which `hide` does
-/// here and C7 will do again before **Paste** (`DESIGN.md` §9).
+/// on screen and still receive nothing. What that costs is a focus to hand back, which `dismiss`
+/// does here and C7 will do again before **Paste** (`DESIGN.md` §9).
 ///
 /// What it holds is a field and the **Manifests** that match what has been typed into it. Deciding
 /// *which* those are is C2's rule and lives in `Keyword`; running one is not C1's business at all,
@@ -57,8 +57,9 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
 
     /// What ↩ does with the **Manifest** it selected and the **Input** typed after the **Keyword**.
     ///
-    /// A callback rather than a **Runner** held here: C1 is the bar — show, hide, narrow, keys — and
-    /// building an **Artefact** and performing **Effects** is C5, C4 and C7's work in that order.
+    /// A callback rather than a **Runner** held here: C1 is the bar — **Summon**, **Dismiss**,
+    /// narrow, keys — and building an **Artefact** and performing **Effects** is C5, C4 and C7's
+    /// work in that order.
     /// Giving the panel a **Toolchain** would put the whole spine behind the one component whose job
     /// is to be on screen in 50 ms.
     var run: ((Manifest, String) -> Void)?
@@ -100,7 +101,8 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         // Not hidden when Starkit stops being active. The spike set this the same way for its own
         // reasons, and the design needs it: at T5.4 a **Script** runs with the bar still up, and
         // an **Open** it performs activates another application. Auto-hiding would take the bar
-        // away mid-run, spinner and all. Dismissal stays something asked for — ⌃⌘K or Escape.
+        // away mid-run, spinner and all. A **Dismissal** stays something asked for — ⌃⌘K, Escape,
+        // or a click outside (T2.6), none of which a launch can be mistaken for.
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = false
         panel.isOpaque = false
@@ -193,7 +195,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         // Everything typed reaches C1 through the field: `controlTextDidChange` narrows, and
         // `doCommandBy` is where ↩ arrives as a selector rather than as a key (F13).
         field.delegate = self
-        panel.cancel = { [weak self] in self?.hide() }
+        panel.cancel = { [weak self] in self?.dismiss() }
         layOut()
         warm()
 
@@ -214,7 +216,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         }
     }
 
-    /// Show the panel once, invisibly, so the first real **Summon** is not the one that pays for it.
+    /// Put the panel on screen once, invisibly, so the first real **Summon** is not what pays for it.
     ///
     /// Building the window at launch was not enough on its own: measured at T2.2, the first
     /// **Summon** of a session cost 25.3 ms to appear against a 7 ms median, and 60.9 ms to become
@@ -235,10 +237,10 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
 
     /// ⌃⌘K when it is up means put it away.
     func toggle() {
-        if panel.isVisible { hide() } else { show() }
+        if panel.isVisible { dismiss() } else { summon() }
     }
 
-    func show() {
+    func summon() {
         let start = CFAbsoluteTimeGetCurrent()
         summonedAt = start
 
@@ -263,11 +265,13 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// into, and an `.accessory` application left active with no window on screen holds the
     /// keyboard away from the application the person was actually using — they would press a key
     /// and have it go nowhere. Hiding is what returns activation, and it is the same debt C7 pays
-    /// before a **Paste**.
-    /// Emptied *after* it is off screen, in that order: clearing the field narrows the list back to
-    /// the whole **Catalogue** and shrinks the panel, and doing that first would show a bar
-    /// collapsing on its way out.
-    func hide() {
+    /// before a **Paste**. It is also why the act has its own name: `hide` is what AppKit calls one
+    /// of the things a **Dismissal** does, not the **Dismissal** itself.
+    ///
+    /// The field is emptied *after* the panel is off screen: clearing it narrows back to the whole
+    /// **Catalogue**, which shrinks the panel, and doing that first would be a bar collapsing on its
+    /// way out.
+    func dismiss() {
         summonedAt = 0
         panel.orderOut(nil)
         NSApp.hide(nil)
@@ -291,7 +295,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         let manifest = matches[selected]
         // Read before hiding, which clears the field.
         let input = Keyword.split(field.stringValue).input
-        hide()
+        dismiss()
         run?(manifest, input)
     }
 

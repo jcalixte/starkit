@@ -35,7 +35,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Starkit's" claims is only what was asked for and granted, which is the whole of what is
     /// knowable here — the rest is visible in the one place it can be, the bar not coming up.
     private func listen() {
-        hotKey = HotKey { [weak self] in self?.summon() }
+        hotKey = HotKey { [weak self] in
+            // Safe to reach the panel from here even though it is built after the chord is
+            // registered: Carbon dispatches on the run loop, which is not turning until
+            // `applicationDidFinishLaunching` has returned.
+            self?.panel.toggle()
+        }
         do {
             try hotKey.register()
             report("⌃⌘K is Starkit's.")
@@ -43,12 +48,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             status.set(error.reason, for: .hotKey)
             report(error.reason)
         }
-    }
-
-    /// Safe to reach the panel from here even though it is built after the chord is registered:
-    /// Carbon dispatches on the run loop, which is not turning until this method has returned.
-    private func summon() {
-        panel.toggle()
     }
 
     /// Resolve the **Toolchain**, then build, then write down what was built — before anything
@@ -108,7 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// On the main thread that is the whole application frozen, menu bar included, for as long as
     /// the slowest cold launch takes.
     ///
-    /// Nothing here touches the panel, which is already off screen (C1 hides before it hands over),
+    /// Nothing here touches the panel, which C1 has already **Dismissed** before handing over,
     /// so the only thing that comes back to the main thread is the sentence C10 shows.
     ///
     /// A run when the **Toolchain** never resolved says so on stderr and no more: the menu bar is

@@ -24,6 +24,14 @@ To bring the **Shelf** on screen with its one key binding. The **Shelf** is neve
 clicking, and never appears unasked.
 _Avoid_: open, show, invoke, trigger
 
+**Dismiss**:
+To put the **Shelf** away without running anything — ⌃⌘K again, Escape, or a click outside it. The
+person **Dismisses**; a **Script** never does, and neither does an **Effect** that happens to
+activate another application while the bar is up.
+_Avoid_: close, cancel, hide — `hide` is AppKit's word for hiding the *application*, which is how
+the keyboard is handed back, and that is one of the things a **Dismissal** does rather than the
+thing itself.
+
 **Input**:
 The text a person types into the **Shelf** before a **Script** runs.
 _Avoid_: argument, query, prompt, parameter
@@ -126,6 +134,7 @@ _Avoid_: processes, open apps
 
 ## Relationships
 
+- The person **Summons** and **Dismisses** the **Shelf**; a **Script** does neither
 - The **Shelf** runs many **Scripts**; a **Script** never runs another **Script**
 - A **Script** declares zero or more **Context** slices and consumes at most one **Input**
 - A **Script** that declares an **Input** has it **Seeded**; one that declares none never is
@@ -170,6 +179,14 @@ _Avoid_: processes, open apps
   a **Script** get to decide, and whose words are these". A **Notify** is a decision a **Script**
   made. A stack trace is not; it is the runtime's. No new word was needed, and finding that out is
   what the case was worth.
+- "hide" named two acts at once: putting the bar away, and `NSApp.hide`, which is what returns
+  activation to the application the person came from. C1 did both in one method called `hide`, so the
+  code could not say which it meant, and **Summon** had no opposite in the glossary at all — while
+  its own _Avoid_ list already ruled out "show", which C1 was using. Resolved: the act is a
+  **Dismissal**, and `NSApp.hide` is one of the things it does. Found while specifying T2.6, when
+  clicking outside became a third way to do the first one and nothing named it. It costs the
+  **Vocabulary** nothing (G6): no **Script** author ever writes it, for the same reason none of them
+  writes **Shelf** or **Artefact**.
 - The reply to a run was briefly called an "envelope", a word from messaging that named the JSON
   shape rather than anything in the domain. Resolved — it carries **Effects** or a **Refusal**, and
   those two words are enough; the shape needs no name of its own.
