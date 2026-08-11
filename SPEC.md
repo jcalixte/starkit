@@ -24,7 +24,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 
 | Command | Does |
 | ------- | ---- |
-| `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else — Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. |
+| `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else — Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. Asks for the login keychain password once, so that signing never waits on a dialog afterwards. |
 | `./scripts/build.sh [debug\|release]` | Compiles and assembles `build/Starkit.app`. |
 | `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `~/.starkit` without clobbering edited **Scripts**, runs the first `gleam build`, launches. |
 | `./scripts/gen-registry.sh` | Regenerates `~/.starkit/src/registry.gleam` from `src/scripts/*.gleam`. Graduates into the Watcher in slice 6. |
