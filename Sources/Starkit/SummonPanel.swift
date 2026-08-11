@@ -299,6 +299,9 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         stopWatchingForClicksElsewhere()
         panel.orderOut(nil)
         NSApp.hide(nil)
+        // Dropped before the stage is left, so a **Dismissal** in the middle of a question does not
+        // restore the **Keyword** that asked it into a field about to be emptied anyway.
+        typed = ""
         stopAsking()
         field.stringValue = ""
         narrow()
