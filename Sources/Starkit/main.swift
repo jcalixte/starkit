@@ -80,15 +80,12 @@ private func ensureCurrent(_ keyword: String, _ builder: Builder) throws(Refusal
     var failed: Refusal?
     do {
         try builder.build()
-        // Every **Artefact** on disk now matches the source beside it. Recorded here, while it is
-        // true, because that is the only moment anything can vouch for it.
         builder.remember()
     } catch {
         failed = error
     }
 
     let why = switch try builder.staleness(of: keyword) {
-    // Runs, even though the project as a whole may not compile. This line is the guarantee.
     case .current: nil as String?
     case .artefactMissing: "there is no Artefact for it"
     case .sourceChanged: "it has changed since it was last built"

@@ -54,8 +54,8 @@ struct EffectTests {
         #expect(try read(reply) == [.open(app: "Slack"), .open(app: "Notion"), .open(app: "Ghostty")])
     }
 
-    // T11's whole justification: gleam_json owns the escaping on the two paths that carry arbitrary
-    // text, a page title into Paste and an error into Notify. This is the Swift end of that claim.
+    // gleam_json owns the escaping on the two paths that carry arbitrary text — a page title into
+    // Paste, an error into Notify. This is the Swift end of that claim.
     @Test("text survives quotes, newlines, backslashes and multi-byte characters")
     func awkwardText() throws {
         let text = "He said \"go\"\n\tC:\\Users — naïve, 日本語, 🌟"
@@ -71,8 +71,6 @@ struct EffectTests {
     @Test("a Script that decided on nothing answers with no Effects, not a Refusal")
     func nothingDecided() throws {
         #expect(try read(#"{"effects":[]}"#).isEmpty)
-        // Not a shape entry.gleam writes — every reply carries one key or the other — but the seeded
-        // work.gleam decides on nothing until you fill it in, and that is not a failure.
         #expect(try read("{}").isEmpty)
     }
 
@@ -106,8 +104,6 @@ struct EffectTests {
             try read("", diagnostics: trace, exitStatus: 1)
         }
         #expect(refusal?.reason == "The Script \"work\" failed while it was running.")
-        // Verbatim. There is nothing Starkit can add to a stack trace, and any paraphrase of one
-        // would be worse than passing it through.
         #expect(refusal?.detail == trace)
     }
 
@@ -120,9 +116,9 @@ struct EffectTests {
 
     // MARK: - The two halves of the Vocabulary drifting
 
-    // The Effect vocabulary is spelled twice, in two languages, with no generator between them. This
-    // is the case that keeps that affordable: an Effect this Starkit does not know must be a loud
-    // Refusal naming the word, never an Effect the Effector silently skips.
+    // An Effect this Starkit does not know must be a loud Refusal naming the word, never one the
+    // Effector silently skips. This is the case that makes spelling the Vocabulary twice
+    // affordable.
     @Test("an Effect this Starkit does not know is a Refusal, and the reply is not half-performed")
     func unknownKind() {
         let reply = """
@@ -147,8 +143,8 @@ struct EffectTests {
 
     // MARK: - What --dry-run prints
 
-    // Rendered as the Script author wrote it, in Gleam, because that is who reads it. Escaping is
-    // what makes a Paste of two lines legible as one line of output rather than breaking the list.
+    // Escaping is what makes a Paste of two lines legible as one line of output rather than
+    // breaking the list.
     @Test("an Effect prints the way it was written in Gleam")
     func rendering() {
         #expect("\(Effect.open(app: "Slack"))" == #"Open("Slack")"#)

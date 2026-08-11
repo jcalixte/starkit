@@ -29,17 +29,12 @@ public struct SharedModule: Equatable, Sendable {
 /// identifies the culprit precisely, and yields the guarantee worth stating plainly: **a Script you
 /// have not edited always runs.**
 ///
-/// Comparing anything at all rather than just running `gleam build` and using the result will look
-/// like superstition to a future reader. It is not. It is the isolation mechanism.
-///
-/// It compares content, not mtimes, and that distinction was paid for. The mtime version of this
-/// rule was measured wrong at T1.4, on the first real run: Gleam's incremental build compares
-/// content too, so `touch work.gleam && gleam build` correctly recompiles nothing and correctly
-/// leaves the **Artefact**'s mtime where it was — while the mtime rule read that as an edit and
-/// **Refused** a **Script** no rebuild could ever make **Current** again. Any editor that rewrites a
-/// file on save without changing a byte reaches it. The lesson generalises past the bug: Starkit and
-/// Gleam have to mean the same thing by "changed", or they disagree about **Stale** and Gleam wins
-/// every time, because Gleam is the one that decides what gets compiled.
+/// It compares content, not mtimes, because Gleam's incremental build compares content too:
+/// `touch work.gleam && gleam build` recompiles nothing and leaves the **Artefact**'s mtime where
+/// it was, so an mtime rule reads that as an edit and **Refuses** a **Script** no rebuild can ever
+/// make **Current** again. Any editor that rewrites a file on save without changing a byte reaches
+/// it. Starkit and Gleam have to mean the same thing by "changed", and Gleam is the one that
+/// decides what gets compiled.
 ///
 /// Pure by construction — it takes hashes, never paths, so the rule can be tested without a
 /// filesystem and reading files stays in C5 where it belongs.

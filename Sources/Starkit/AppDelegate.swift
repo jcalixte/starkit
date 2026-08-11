@@ -16,8 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// SPEC is explicit that a **Toolchain** or build failure is reported in the menu bar the
     /// moment it is known and not at **Summon** time. Without the Watcher — slice 6 — launch is
     /// the only moment anything is known, so the build happens here even though nothing needs an
-    /// **Artefact** yet. A red icon at login is the whole point: it is the difference between
-    /// finding out now and finding out while reaching for a **Script**.
+    /// **Artefact** yet.
     ///
     /// Both steps share one **Refusal** path because from the outside they are the same failure —
     /// Starkit cannot run your **Scripts**, and here is which part gave way.
@@ -30,8 +29,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let builder = Builder(toolchain: toolchain, home: Toolchain.home)
             self.builder = builder
             try builder.build()
-            // While it is true: every **Artefact** matches the source beside it, and this is the
-            // record a later failed build is attributed against (ADR 0002).
             builder.remember()
             report("Scripts compile.")
         } catch {

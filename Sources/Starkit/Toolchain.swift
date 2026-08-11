@@ -99,20 +99,12 @@ extension Toolchain {
     /// empty path: the caller needs to know *which* is missing to name it, and a shell that exits
     /// non-zero on the first failure would hide the second.
     ///
-    /// `-ilc`, not `-lc`. A login shell that is not *interactive* reads `.zshenv`, `/etc/zprofile`,
-    /// `~/.zprofile` and `~/.zlogin` — and never `~/.zshrc`, which is where people actually put
-    /// their `PATH`. Measured on this machine: `~/.bun/bin` is added by `~/.zshrc`, so `-lc` cannot
-    /// see `bun` at all from a clean environment, while `gleam` resolves either way. The original
-    /// `-lc` was validated against node, whose `.vite-plus` shim happens to sit in the login
-    /// `PATH` — so it looked correct and only worked because the tool it was tested on was
-    /// reachable without `~/.zshrc`. Under `SMAppService` the app starts with a minimal
-    /// environment and nothing to fall back on, so `-lc` would go red on every boot: an F9 failure
-    /// that no amount of local testing from a terminal would have shown, because a terminal hands
-    /// down a `PATH` that already has the answer in it.
-    ///
-    /// It costs 510 ms against 35 ms, once per launch, inside F9's 3 s. `-ic` was measured too and
-    /// is no cheaper (537 ms) — the price is reading `~/.zshrc`, not the login half — so there is
-    /// nothing to buy by giving up `.zprofile`.
+    /// `-ilc`, not `-lc`. A login shell that is not *interactive* never reads `~/.zshrc`, which is
+    /// where people actually put their `PATH` — `~/.bun/bin` is added there, so `-lc` cannot see
+    /// `bun` at all from a clean environment. Under `SMAppService` the app starts with exactly such
+    /// an environment, so `-lc` would go red on every boot while looking correct from a terminal.
+    /// The cost is measured in DESIGN.md §4, F9; `-ic` is no cheaper, so there is nothing to buy
+    /// by giving up `.zprofile`.
     ///
     /// The login shell comes from the password database rather than being hardcoded. A
     /// login-launched app inherits a minimal environment, so `$SHELL` cannot be trusted to be

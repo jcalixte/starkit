@@ -64,8 +64,7 @@ struct Builder {
     ///
     /// Called only after `build()` returns without **Refusing**, and the ordering is the point: at
     /// that instant every **Artefact** on disk matches the source beside it, and this is the record
-    /// of *which* source that was. Nothing else in Starkit needs it — while builds keep succeeding
-    /// the answer is always **Current**. It earns its keep the first time one fails.
+    /// of *which* source that was.
     ///
     /// A failure to write is not a **Refusal**. The worst it costs is that the next failed build
     /// cannot attribute blame and refuses **Scripts** it did not need to, which is the safe

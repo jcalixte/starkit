@@ -3,23 +3,10 @@ import StarkitCore
 
 /// C4 — run one **Artefact** and collect what it decided.
 ///
-/// A fresh `bun` per run, and nothing kept between runs. T3 proposed the opposite — spawn on
-/// **Summon** so the process is warm by the time ↩ is pressed — and it was dropped here, at the task
-/// DESIGN.md §9 nominated for deciding it. Measured on this machine, through `Process`, against the
-/// installed `~/.starkit`: a cold run is 19.8 ms min / 22.7 median / 24.2 p90, of which about 5 ms
-/// is `Process`'s own fork and exec. That is 3 ms over F5's 20 ms target and under two frames at
-/// 60 Hz, on a threshold whose entire purpose is imperceptibility — and the **Effects** themselves
-/// are orders of magnitude slower, since `Open` launches applications.
-///
-/// What the 16 ms would have cost is the part worth recording. A process spawned before a
-/// **Keyword** is known cannot be handed one on `argv`, so feeding it a run means replacing
-/// `run.mjs`'s argument reading with a stdin protocol — framing and a read loop, in a **Shelf**-owned
-/// file vendored into everyone's `~/.starkit` — on top of the lifecycle itself: dismissal mid-run, a
-/// second **Summon**, a child that died while waiting, a build that landed underneath it. §7 already
-/// named C4 the riskiest component. This is the version with no lifecycle in it at all.
-///
-/// A cold spawn also keeps two properties T3 had to argue for: a fresh module cache every run, so an
-/// edited **Script** is always the one that runs, and 0 MB held while idle (G4).
+/// A fresh `bun` per run, and nothing kept between runs — no lifecycle in it at all. 22.7 ms
+/// median, 3 ms over F5; the warm-process alternative (T3) and what it would have cost are in
+/// DESIGN.md §9. A cold spawn also keeps a fresh module cache every run, so an edited **Script**
+/// is always the one that runs, and 0 MB held while idle (G4).
 struct Runner {
     /// F14. A **Script** may not hold the bar longer than this, and SPEC lists outliving it among
     /// the things Starkit never does — so the deadline is enforced with `SIGKILL` rather than by
@@ -31,14 +18,9 @@ struct Runner {
 
     /// The **Effects** this **Script** decided on, or a **Refusal** naming what happened instead.
     ///
-    /// Every failure here is a **Refusal** rather than a **Notify**, including a **Script** that
-    /// crashed or hung: a **Notify** is a **Script** reporting what it *decided*, and a run that
-    /// died decided nothing. `entry.gleam` already takes the same view — an unknown **Keyword** and
-    /// an undecodable payload come back as `refusal` from inside the child.
-    ///
-    /// Obtaining the reply is this component's job; reading it is `Effect.all(inReplyTo:…)`, which is
-    /// pure and tested. The split is where the line between "needs a machine" and "needs deciding"
-    /// falls, and it is the same line `Staleness` sits on.
+    /// Every failure here is a **Refusal**, never a **Notify** — including a **Script** that
+    /// crashed or hung, since dying is not deciding. `entry.gleam` takes the same view from inside
+    /// the child: an unknown **Keyword** and an undecodable payload both come back as `refusal`.
     func run(keyword: String, input: String = "") throws(Refusal) -> [Effect] {
         let (reply, diagnostics, status) = try execute(keyword: keyword, input: input)
         return try Effect.all(

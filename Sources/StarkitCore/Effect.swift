@@ -4,10 +4,8 @@ import Foundation
 ///
 /// The Swift half of the **Effect** vocabulary that `starkit.gleam` declares, and the only shape in
 /// which a **Script**'s decision crosses into code that may act. There is no generator between the
-/// two halves and no schema they are both checked against: the wire format is four tagged objects,
-/// and a **Vocabulary** that grows by decision rather than by convenience (G6) is cheaper to spell
-/// twice than to derive. What that costs is one **Refusal** when they drift, which is why an unknown
-/// `kind` is a decode failure with the offending word in it rather than an **Effect** the
+/// two halves and no schema they are both checked against, so drift is possible — which is why an
+/// unknown `kind` is a decode failure with the offending word in it rather than an **Effect** the
 /// **Effector** would silently skip.
 public enum Effect: Equatable, Sendable {
     /// Bring an application to the front, launching it if it is not running.
@@ -24,11 +22,8 @@ extension Effect {
     /// Read what `entry.gleam` answered: the **Effects** a **Script** decided on, or the **Refusal**
     /// that came back instead of them.
     ///
-    /// Pure, and in `StarkitCore` for that reason. C4 owns the process — spawning `bun`, holding the
-    /// deadline, draining the pipes — and none of that is testable without a machine. Deciding what a
-    /// reply *means* is separable from obtaining one, and it is the half where a bug is silent: a
-    /// misread reply either performs **Effects** a **Script** did not ask for or **Refuses** one that
-    /// did nothing wrong, and neither announces itself.
+    /// Pure, and in `StarkitCore` for that reason: C4 owns the process and none of that is testable
+    /// without a machine, while deciding what a reply *means* is separable from obtaining one.
     ///
     /// - Parameters:
     ///   - reply: everything the child wrote to stdout.
@@ -74,8 +69,8 @@ extension Effect {
         return keys.effects ?? []
     }
 
-    /// The two keys `entry.gleam` writes. A decoding mechanism, not a name for the reply: CONTEXT.md
-    /// settled that the shape carries **Effects** or a **Refusal** and needs no name of its own.
+    /// The two keys `entry.gleam` writes — a decoding mechanism, not a name for the reply, which
+    /// CONTEXT.md deliberately leaves unnamed.
     private struct Keys: Decodable {
         let effects: [Effect]?
         let refusal: String?
