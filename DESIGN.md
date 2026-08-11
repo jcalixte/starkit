@@ -36,7 +36,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F1  | Put the bar on screen                   |  ↓  | ≤ 50 ms from ⌃⌘K                 |
 | F2  | Know the catalogue without building     |  ↓  | ≤ 5 ms, from cached **Manifests**    |
-| F3  | Narrow to a **Script** as you type      |  ↓  | ≤ 16 ms — one frame              |
+| F3  | Narrow to a **Script** as you type      |  ↓  | ≤ 16 ms — measured 2.0 ms        |
 | F13 | Drive the whole bar from the home row   |  ↑  | 0 mouse, 0 arrow-key-only paths; ⌃N/⌃P work |
 
 ### Build & run
@@ -172,6 +172,11 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       - **Component**: C2 Catalogue · C6 Watcher
   - **F3** Narrow to a **Script** as you type
     - **How**: prefix match on **Keyword** over ~5 entries; no index worth building
+      - **Measured at T2.4: 2.0 ms for the keystroke that changes the shape of the bar, 0.1 ms for
+        one that does not.** The match itself is not what costs — resizing the window and drawing a
+        row that was hidden is, and it is paid only when the number of matches changes. Both are
+        inside one frame, so the rows are built at launch and reused rather than created per
+        keystroke: the same argument as F1, one level down
       - **Component**: C2 Catalogue · C1 SummonPanel
   - **F5** Execute the **Artefact**
     - **How**: spawn `bun` per run and keep nothing between runs. Measured at T1.4 through

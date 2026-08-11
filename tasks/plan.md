@@ -195,6 +195,47 @@ listing cannot **Refuse**. And **Needs** cross as the strings `entry.gleam` name
 as a Swift mirror of the `Need` type: nothing reads them until C8 gathers **Context** at T4.2, and
 that is where a name that does not match has to be caught.
 
+T2.4 is the first task where a **Script** runs because someone asked for it rather than because a
+command was typed, and the number that matters is the one that says so: `↩ work — 4 Effects in
+498.4 ms`, with every application already running. F4 and F5 account for about 50 ms of that and the
+four **Opens** for the rest, which is T1.5's warning arriving — half a second of blocking on the
+main thread would have frozen the menu bar along with the bar. So the whole ↩ path runs off it, and
+the only thing that comes back is the sentence C10 shows.
+
+F1 and F3 both hold with the list attached: **16.5, 11.0 and 7.1 ms** on screen across three
+**Summons** against 50, and **2.0 ms** to narrow against 16 — where the 2.0 is the keystroke that
+resizes the window and reveals a row, and a keystroke that changes neither costs 0.1. The rows are
+built at launch and reused for that reason, which is F1's own argument one level down.
+
+Three things were decided by looking rather than by taste. The panel grows **downwards** with the
+match count and its top edge does not move, because a bar whose field jumps while you type into it
+is a bar you cannot type into. Layout is set explicitly rather than by `autoresizingMask`: the head
+keeping its distance from the top and the list absorbing the change are both flexible in the same
+direction, and autoresizing splits a delta between everything flexible instead of giving it to the
+one that asked. And `hide` empties the field only *after* the panel is off screen — clearing it
+narrows back to the whole **Catalogue**, which shrinks the panel, which would have been a bar
+collapsing on its way out.
+
+Two things settled that were not asked for and are worth having. `ensureCurrent` moved from
+`main.swift` onto **C5**, because the bar and the debug CLI would otherwise be two places deciding
+whether a **Script** may run. And C10 grew its third **Concern**: ↩ hides the bar before the run
+starts, so a **Refusal** from that run has nowhere on screen to land, and F12 asks that the message
+survive the bar closing. It is the transient one — cleared by the next run that works — and T5.4 is
+what takes it back into the bar, where a spinner gives the bar a reason to still be there.
+
+Two things handed forward. **T2.5 is smaller than it looks and still worth doing**: ↩ could not be
+built without handling a key, so it arrives as `insertNewline:` through the field's delegate rather
+than as a keycode, which is F13's shape already — what is left is `moveUp:`/`moveDown:`, the
+selection actually moving, and verifying that ⌃N/⌃P come free rather than assuming it. **The
+eight-row cap needs the selection to catch up with it**: past the eighth match the way on is to type,
+which is fine while nothing can select a row that is not shown, and stops being fine at T2.5.
+
+One inconsistency spotted and left alone. F7's target is "≤ 10 ms otherwise", and its own §4 entry
+has contradicted that since T1.5 measured **Open** at ~35 ms warm and seconds cold; four warm
+**Opens** at ~440 ms of the 498 confirm it a second way. Moving a budget is a design decision rather
+than bookkeeping, so it is recorded here for T8.1 to settle — either the target moves or the row
+admits that **Open** is not a function call.
+
 **Checkpoint C** — ⌃⌘K runs Work. Starkit is usable for 2 of 5 **Scripts** (Work, Personal).
 
 ## Phase 4 — Clean (slice 3)

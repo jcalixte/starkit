@@ -38,8 +38,10 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       once invisibly there too, which is what building it at launch does not pay for
 - [x] **T2.3** C2 Catalogue + `Keyword` pure parsing **+ its 3 tests** — and writing
       `manifests.json`, since C6 is the thing that would have and it is slice 6
-- [ ] **T2.4** Bar view — list, filter, selection, ↩ runs
-- [ ] **T2.5** F13 — Cocoa action selectors, not keycodes (⌃N/⌃P come free)
+- [x] **T2.4** Bar view — list, filter, selection, ↩ runs — off the main thread, because ↩ measured
+      498 ms with every application already running
+- [ ] **T2.5** F13 — Cocoa action selectors, not keycodes (⌃N/⌃P come free) — ↩ already arrives as
+      `insertNewline:`, so what is left is the selection moving and the eight-row cap following it
 
 > **Checkpoint C** — ⌃⌘K runs Work. 2 of 5 **Scripts** usable.
 
