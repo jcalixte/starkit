@@ -7,8 +7,10 @@ application.delegate = delegate
 // Menu-bar-only. Set here as well as via `LSUIElement` in Info.plist, because the executable
 // is also run directly from a terminal during development, where no bundle is involved.
 //
-// `.accessory` matters beyond the missing Dock icon: the Shelf must never take focus away from
-// the app you were in, because Paste has to give it back. An app that never became active has
-// nothing to give back.
+// `.accessory` is about the Dock icon and nothing more. It is *not* a promise that the Shelf never
+// takes focus — T0.5 measured that it has to: macOS routes keys only to the active application's
+// key window, so a panel in an inactive app cannot be typed into, and a bar that cannot be typed
+// into is not a bar. The Shelf takes activation on Summon and Paste hands it back, at a measured
+// 19.4 ms (DESIGN.md §4, F7).
 application.setActivationPolicy(.accessory)
 application.run()

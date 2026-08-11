@@ -39,10 +39,13 @@ Effector(Open). That path is slice 1 and it is the whole architecture end to end
 Two things could invalidate design decisions rather than just needing more work, so both are
 pulled forward:
 
-1. **Paste** (T0.5, a spike). `CGEvent` ⌘V into the previously frontmost app, from a self-signed
-   bundle. If this doesn't work as designed, the **Paste** **Effect** needs rethinking and it is
-   load-bearing for Youtube and Link — 2 of 5 **Scripts**. Discovering that in slice 4 means
-   redesigning on top of four finished slices.
+1. ~~**Paste** (T0.5, a spike).~~ **Retired.** `CGEvent` ⌘V lands in the previously frontmost app
+   from a self-signed bundle, in 23.1 ms against F7's 200 ms, with multi-byte text intact and the
+   grant surviving a rebuild. The **Effect** needed no rethinking — but pulling it forward paid for
+   itself anyway, because it moved a different component: the bar cannot be typed into unless the
+   **Shelf** activates, so C1 must take activation and C7 must hand it back. Found in slice 0 for
+   the cost of one throwaway bundle; found in slice 4 it would have arrived on top of T2.2, T2.4
+   and T5.1, all of which assume how the panel takes focus.
 2. **Spawn-on-Summon** (T1.4). The 6.7 ms figure was measured with a hand-rolled harness, not
    inside an app under `SMAppService`. Fallback is cold spawn at 53 ms, which still meets the
    original F5 target, so this is a budget risk rather than a design risk.
@@ -59,8 +62,18 @@ Everything else has either a working precedent in `cmd-tab` or a measurement beh
 | T0.4 | `install.sh`: `/Applications`, idempotent seed, first `gleam build` | T0.2, T0.3 | run twice; `shasum` of an edited **Script** identical before and after |
 | T0.5 | **Paste spike** — throwaway: activate previous app, synthesise ⌘V, restore nothing | T0.2 | text lands in TextEdit after the panel hides; grant survives a rebuild |
 
-**Checkpoint A** — the app installs, keeps its signature, and Paste is proven possible. If T0.5
-fails, stop and revisit the **Paste** **Effect** before building anything on it.
+**Checkpoint A — reached.** The app installs, keeps its signature, and **Paste** works at 23.1 ms.
+The spike itself is deleted; what it measured is in `DESIGN.md` §4 (F7) and §9, and the code is in
+git history rather than in the tree, because a throwaway that survives stops being one.
+
+Two things it hands to later tasks:
+
+- **T2.2 must activate**, and its "≤ 50 ms to visible" now needs reading as *visible*, not *ready
+  to type*: `isKeyWindow` is still false on the run-loop turn that shows the panel, and settles
+  about 50 ms later. Whether that is felt as latency is a T2.2 measurement, not an assumption.
+- **T5.3 inherits held modifiers.** ⌃⌘K may still be down when a **Script** finishes, and a
+  `CGEvent` built from `.combinedSessionState` would post ⌃⌘V. Unreachable from a menu-driven
+  spike; the fix is `.privateState` or waiting on `flagsChanged`.
 
 ## Phase 2 — The spine, no UI (slice 1)
 
@@ -152,9 +165,9 @@ thing that makes a new one visible, expect to want this immediately after MVP �
 
 ## What would change the plan
 
-- **T0.5 fails** → the **Paste** **Effect** is redesigned before phase 2. Alternatives: synthesise
-  keystrokes character by character (breaks on multi-line and emoji), or drop to
-  clipboard-only-no-paste and press ⌘V yourself.
+- ~~**T0.5 fails**~~ → it didn't. The alternatives it would have forced — synthesising keystrokes
+  character by character, or clipboard-only with ⌘V pressed by hand — are unneeded and recorded
+  only because their absence is what makes the **Paste** **Effect** as simple as it is.
 - **T1.4 misses 20 ms** → fall back to cold spawn at 53 ms, which still meets F5's original
   target. Budget risk, not design risk.
 - **T2.2 misses 50 ms** → drop the panel's blur/material before dropping anything behavioural.

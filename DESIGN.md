@@ -155,7 +155,13 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F7** Perform each **Effect** in order, restoring focus before **Paste** _(also G5)_
     - **How**: `openApplication` / `forceTerminate` need no permission; **Paste** activates the
       previously frontmost app then synthesises ⌘V via `CGEvent`, which is the one thing needing
-      Accessibility. Pasted text stays on the clipboard by design
+      Accessibility. Pasted text stays on the clipboard by design. Measured at T0.5: 23.1 ms for
+      the whole **Paste**, of which 19.4 ms is waiting for the previously frontmost app to report
+      itself active again. Awaited via `didActivateApplicationNotification` rather than polled,
+      because polling would block the run loop that notification has to arrive on; the deadline
+      behind it exists for the case where it never fires. Multi-byte text arrives intact, so it is
+      not a second problem to solve, and the Accessibility grant reaches a process already
+      running — unlike the event tap in `cmd-tab`, nothing restarts after it is given
       - **Component**: C7 Effector
 
 - **G3** A new automation is one file and one minute _W:7_
@@ -247,6 +253,19 @@ everything still works but silently goes **Stale**.
   costs you a morning; the fix is per-**Script** projects, and it is not free.
 - **The **Vocabulary** will want to grow.** G6 is weight 6, not a cap. **Trigger:** a third
   **Script** wanting the same missing **Effect** — two is coincidence.
+- **C1 and C7 are coupled through activation** (T0.5). The bar has to be typed into, and macOS
+  routes keys only to the *active* application's key window — so a `.nonactivatingPanel` in an
+  inactive app never becomes key and can hold no **Keyword** at all. The **Shelf** must therefore
+  take activation on **Summon**, which is precisely what makes "restore focus before **Paste**"
+  load-bearing rather than defensive. Measured both ways: without activation the paste costs 2–8 ms
+  and cannot be driven; with it, 23.1 ms and it works. **Trigger to revisit:** anything that
+  changes how C1 shows the panel changes what C7 has to undo — they are one decision in two
+  components, and the 19.4 ms is the price of the split.
+- **A synthesised ⌘V inherits the modifiers physically held down.** `CGEventSource` built from
+  `.combinedSessionState` carries real modifier state, and ⌃⌘K may still be held when a **Script**
+  finishes — which would post ⌃⌘V rather than ⌘V. Not reachable from T0.5, whose trigger was a
+  menu. **Trigger:** the first **Paste** driven from the chord, at T5.3; the fix is `.privateState`
+  or waiting on `flagsChanged`, and it is cheap once seen.
 - **The **Shelf** reads Gleam's build output path directly** — `build/dev/javascript/<pkg>/<mod>.mjs`
   is an internal layout, not a documented interface, and F5 depends on it. Mitigation: when a
   build succeeds but the expected **Artefact** is absent, go red with that specific message
@@ -273,6 +292,11 @@ everything still works but silently goes **Stale**.
   (**Vocabulary** size). Only after splitting did the 356-vs-10 number become the headline.
 - **"Shortcut" meant two mechanisms.** Resolved to **Keyword** only; the sole key chord
   **Summons** the **Shelf**.
+- **The **Shelf** was assumed able to hold the keyboard without activating.** `main.swift` said so
+  in as many words — that an app which never became active has nothing to take away, so nothing to
+  give back. T0.5 showed the opposite: not activating costs the bar its keyboard entirely. The
+  activation policy stays `.accessory` for the missing Dock icon, but the panel activates, and
+  **Paste** hands activation back. Corrected where it was written down rather than only here.
 - **"Restore the clipboard" was ambiguous** between the **Seed** and the pasted text. Resolved:
   keep the pasted text.
 - **"Closed **Vocabulary**" read as frozen.** Corrected to closed-but-not-frozen.

@@ -9,10 +9,11 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [x] **T0.2** `setup-signing.sh` + signing in `build.sh` — adapt from `cmd-tab`
 - [x] **T0.3** `~/.starkit` skeleton: `gleam.toml`, `starkit.gleam`, `entry.gleam`, 5 stubs, `gen-registry.sh`
 - [x] **T0.4** `install.sh` — `/Applications`, idempotent seed, first `gleam build`
-- [ ] **T0.5** Paste spike (throwaway) — ⌘V into the previously frontmost app from a signed bundle
+- [x] **T0.5** Paste spike (throwaway) — ⌘V into the previously frontmost app from a signed bundle
 
-> **Checkpoint A** — installs, keeps its signature, Paste proven possible.
-> If T0.5 fails, stop and redesign the **Paste** **Effect** before phase 2.
+> **Checkpoint A** — reached. Installs, keeps its signature, and **Paste** measured at 23.1 ms
+> against a 200 ms budget. The **Effect** survives as designed; what moved is C1 — the bar must
+> take activation to be typed into, so T2.2 and T5.3 are one decision (`DESIGN.md` §9).
 
 ## Phase 2 — The spine, no UI
 
@@ -28,7 +29,7 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 ## Phase 3 — The bar
 
 - [ ] **T2.1** C3 HotKey ⌃⌘K + C10 MenuBarStatus red when the chord can't be held
-- [ ] **T2.2** C1 SummonPanel — built once at launch, shown/hidden, Escape
+- [ ] **T2.2** C1 SummonPanel — built once at launch, activates, shown/hidden, Escape
 - [ ] **T2.3** C2 Catalogue + `Keyword` pure parsing **+ its 3 tests**
 - [ ] **T2.4** Bar view — list, filter, selection, ↩ runs
 - [ ] **T2.5** F13 — Cocoa action selectors, not keycodes (⌃N/⌃P come free)
