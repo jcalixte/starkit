@@ -253,6 +253,17 @@ everything still works but silently goes **Stale**.
   rather than failing as a missing **Script**. **Trigger to revisit:** a Gleam release that moves
   it — at which point the fix is a compiled-in path template, not a redesign.
 
+  Narrowed at T0.3, and it turned out worse before it got better. Gleam's `entry.mjs` only
+  `export`s `main` — nothing calls it, so `node entry.mjs` exits silently. `gleam run` works by
+  generating a second file named `gleam@@private_main_v1.18.1.mjs`: marked private, and carrying
+  the Gleam version in its name, so every upgrade renames it. Depending on that would have put a
+  `brew upgrade gleam` between the user and all five **Scripts**, which is exactly what G7 forbids.
+  Shelling out to `gleam run` avoids the path but re-resolves the project on every **Summon**, far
+  outside the F5 budget. Resolved with `run.mjs`, a shim we own and vendor: it depends only on
+  `entry.mjs` exporting a function, and a rename would break it loudly at import rather than
+  silently. Confirmed that a plain `gleam build` never emits the private file at all, so nothing in
+  the design touches `gleam run`.
+
 ## 10. Inconsistencies spotted and fixed
 
 - **`CONTEXT.md` claimed a **Script** is pure.** Writing the manifest type showed it can't be —

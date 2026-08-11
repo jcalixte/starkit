@@ -66,7 +66,7 @@ fails, stop and revisit the **Paste** **Effect** before building anything on it.
 
 | ID | Task | Depends | Verify with |
 | -- | ---- | ------- | ----------- |
-| T1.1 | **Vocabulary** types + `work` **Script** + `entry.gleam` answering `describe` / `run` | T0.3 | `node build/dev/javascript/starkit/entry.mjs describe` prints 5 manifests; `… run work '{}'` prints 4 **Open** **Effects** |
+| T1.1 | **Vocabulary** types + `work` **Script** + `entry.gleam` answering `describe` / `run` | T0.3 | `node run.mjs describe` prints 5 manifests; `node run.mjs run work '{}'` prints the `work` **Open** **Effects**. Not `entry.mjs` directly — it exports `main` without calling it (T0.3) |
 | T1.2 | C12 Toolchain — login-shell resolution, `starkit.toml` override, named error when absent | T0.1 | with `PATH` stripped, the error names the **Toolchain**; no crash |
 | T1.3 | C5 Builder + `Staleness` as a pure, tested rule. **Introduces a `StarkitCore` library target**: SwiftPM cannot cleanly link an executable into a test target, so everything tested lives outside the executable — `Staleness` and `Keyword` both move there | T1.2 | `swift test` — 4 cases: source newer, artefact newer, shared module newer, artefact missing |
 | T1.4 | C4 Runner — spawn `node`, feed a run, decode **Effects**, 5 s deadline | T1.1, T1.3 | `Starkit run work --dry-run` prints 4 **Open** **Effects**, opens nothing |
@@ -159,5 +159,6 @@ thing that makes a new one visible, expect to want this immediately after MVP �
   target. Budget risk, not design risk.
 - **T2.2 misses 50 ms** → drop the panel's blur/material before dropping anything behavioural.
 - **Gleam moves its build output path** → C4 and C5 both hardcode
-  `build/dev/javascript/<pkg>/<mod>.mjs`, which is not a documented interface. Recorded as a
-  watched tension in `DESIGN.md` §9.
+  `build/dev/javascript/<pkg>/<mod>.mjs`, which is not a documented interface. Narrowed at T0.3 to
+  a single reference inside our own `run.mjs`, so a move is one line rather than a redesign.
+  Recorded as a watched tension in `DESIGN.md` §9.

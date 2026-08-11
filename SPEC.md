@@ -27,7 +27,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else — Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. Asks for the login keychain password once, so that signing never waits on a dialog afterwards. |
 | `./scripts/build.sh [debug\|release]` | Compiles and assembles `build/Starkit.app`. |
 | `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `~/.starkit` without clobbering edited **Scripts**, runs the first `gleam build`, launches. |
-| `./scripts/gen-registry.sh` | Regenerates `~/.starkit/src/registry.gleam` from `src/scripts/*.gleam`. Graduates into the Watcher in slice 6. |
+| `./scripts/gen-registry.sh` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do. Graduates into the Watcher in slice 6. |
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
 | `swift test` | The two pure Swift test suites. |
 | `cd ~/.starkit && gleam test` | The **Script** test suites. |
@@ -35,10 +35,17 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 ## Project structure
 
 ```
-starkit/                          # this repo — the Shelf only
+starkit/                          # this repo — the Shelf, plus what it seeds
 ├── Package.swift                 # SwiftPM executable, no Xcode project
 ├── Resources/Info.plist          # LSUIElement: true — menu bar, no Dock icon
 ├── scripts/                      # the four commands above
+├── seed/                         # vendored into ~/.starkit by install.sh
+│   ├── gleam.toml                #   Shelf-owned — always overwritten
+│   ├── run.mjs                   #   Shelf-owned — always overwritten
+│   ├── src/starkit.gleam         #   Shelf-owned — always overwritten
+│   ├── src/entry.gleam           #   Shelf-owned — always overwritten
+│   ├── src/scripts/*.gleam       #   yours — seeded once, never overwritten
+│   └── test/starkit_test.gleam   #   the gleeunit runner
 ├── Sources/Starkit/
 │   ├── main.swift                # GUI, or `run <keyword>` when given arguments
 │   ├── AppDelegate.swift         # wiring
@@ -63,17 +70,28 @@ starkit/                          # this repo — the Shelf only
 ```
 
 ```
-~/.starkit/                       # Scripts — yours, not the repo's
+~/.starkit/                       # your Scripts, plus the vendored Shelf side
 ├── gleam.toml                    # name = "starkit", target = "javascript"
 ├── starkit.toml                  # optional Toolchain override; absent by default
+├── run.mjs                       # the shim the Shelf executes — see below
 ├── manifests.json                # generated after each successful build
 ├── src/
 │   ├── starkit.gleam             # the vendored Vocabulary — `import starkit`
 │   ├── entry.gleam               # answers `describe` and `run <name>`
 │   ├── registry.gleam            # generated from src/scripts/
 │   └── scripts/{work,personal,clean,youtube,link}.gleam
-└── build/                        # Gleam's, ~2.8 MB
+└── build/                        # Gleam's, measured at 2.4 MB
 ```
+
+Only `src/scripts/` is yours; everything else is vendored from `seed/` and replaced on every
+install, so the **Vocabulary** can be upgraded without asking you to merge it by hand.
+
+The **Shelf** runs `node run.mjs`, never `gleam run`. Gleam's `entry.mjs` exports `main` without
+calling it, and the file that does the calling is named `gleam@@private_main_v<version>.mjs` — it is
+private and it is renamed by every Gleam upgrade, which G7 rules out depending on. `run.mjs` is
+ours, so the only assumption left is that `entry.mjs` exports a function, and it fails at import
+rather than silently. This is also why `entry.gleam` need not match the package name: nothing
+resolves it as a package entry point.
 
 `src/starkit.gleam` is the **Vocabulary**, not the entry point, so a **Script** reads
 `import starkit.{type Effect, Open, Paste}`. The entry point is `entry.gleam`, which the **Shelf**
@@ -162,6 +180,10 @@ call into a framework, and a mock would pass while the app was broken. Verified 
 - `codesign -dv` reports the same signing identity before and after a rebuild.
 
 ### Slice 1 — the spine, without any UI
+
+The seeded `work.gleam` opens nothing, because the repo carries no app lists — so the first two
+criteria are met by filling in your own `~/.starkit/src/scripts/work.gleam`, not by the seed. That
+is the boundary working, not a gap in it.
 
 - `Starkit run work` opens ghostty, Slack, Notion and Zen.
 - `Starkit run work --dry-run` prints four `Open` **Effects** and opens nothing.
