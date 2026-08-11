@@ -396,7 +396,46 @@ over: both answers should describe the machine as ↩ was pressed, rather than a
 left it several hundred milliseconds later. The bar path pays 0.01 ms on the main thread for that,
 which is what the warming at launch is for.
 
-**Checkpoint D** — 3 of 5 **Scripts** working. Nothing needs Accessibility yet.
+**T4.3 was verified at a scale that could be undone.** The acceptance line is "Clean **Kills** every
+regular app but the untouchables", and on this machine performing it literally closes the terminal
+the verification is running in. So the whole path was exercised against a scratch `STARKIT_HOME`
+whose keep list spared everything except one expendable application: **Context** gathered, filter
+applied, `Kill` decided, `forceTerminate` performed, Calculator gone, Ghostty, Zed, Firefox and
+Starkit still standing. Same code, same wire, one name. The full-screen version is a person's to
+run, not a verification's.
+
+**The first real Kill matched nothing, and the reason was the machine's language.**
+`localizedName`
+is what an application calls itself *here*, and here that is `Calculatrice` — so `Kill("Calculator")`
+found nothing to kill and said so, while `Open("Calculator")` would have launched it, because
+LaunchServices answers to either spelling. One string that opens an application and then cannot close
+it is a seam in the **Vocabulary**, not a quirk of one **Effect**, and it is closed by asking
+LaunchServices the same question for a **Kill** that **Open** already asks. Recorded in `CONTEXT.md`
+as the ambiguity it is: "the name of an application" was two names all along, and only a machine that
+is not in English can tell you. A keep list has no such help — it is compared against the displayed
+name, because that is what a **Running Apps** **Context** is made of.
+
+**Three decisions about what a Kill does when it cannot do exactly what it was told.**
+
+- **Nothing running by that name is done, not refused.** The **Effect** asks that an application not
+  be running, and one that quit between the gather and the **Kill** has answered it. Refusing would
+  abandon the rest of the list over a race in the machine — and Clean's list is aimed at a
+  **Context** sampled milliseconds earlier, so that race is the normal case rather than the exotic
+  one. The cost is a misspelt name passing in silence where **Open** would be loud, and it is
+  unavoidable: from C7, "already gone" and "never existed" are the same absence. The log says so.
+- **A **Kill** aimed at Starkit is a **Refusal**.** `clean.gleam` keeps Starkit off its own list and
+  C8 never gathers it, but both of those are about a name arriving *from* a **Context**, and any
+  **Script** can write the word itself. Starkit ending mid-run would leave every **Effect** after it
+  as a decision nobody carried out. Matched by the names Starkit answers to rather than by process,
+  which is what also stops a terminal run from killing the Starkit holding ⌃⌘K — and neither name is
+  written down, because a guard that hard-codes the product's name stops being true the day it
+  changes.
+- **Every instance answering to the name dies.** Two copies of one application are the same answer
+  to "that should not be running".
+
+**Checkpoint D** — reached. 3 of 5 **Scripts**, and the destructive one behaves as designed: it
+closes what it was told to and nothing else, and it cannot close the thing performing it. "Nothing
+needs Accessibility yet" is the half of this checkpoint that Phase 5 already spent.
 
 ## Phase 5 — Youtube (slice 4)
 

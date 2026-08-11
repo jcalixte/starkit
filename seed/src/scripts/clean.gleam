@@ -27,7 +27,9 @@ pub fn script() -> Script {
 /// overwritten by an install.
 ///
 /// Write the name macOS shows for the application, spelled in full: `Google Chrome`, not `Chrome`.
-/// Case and surrounding spaces do not matter; anything else does.
+/// Case and surrounding spaces do not matter; anything else does — including the language. The list
+/// the Shelf hands over is what each application calls itself on *this* machine, so on a French one
+/// it says `Calculatrice` and a keep list saying `Calculator` spares nothing (T4.3).
 ///
 /// Finder is here rather than in `untouchable` because sparing it is a preference and not a rule —
 /// force-terminating Finder only makes macOS start it again, so killing it costs a relaunch and

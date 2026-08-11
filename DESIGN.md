@@ -224,6 +224,14 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F7** Perform each **Effect** in order, restoring focus before **Paste** _(also G5)_
     - **How**: `NSWorkspace.open` / `forceTerminate` need no permission — **Open** measured at
       T1.5 at ~35 ms warm and seconds cold, since it returns only once the launch is under way.
+      **Kill** arrived at T4.3 and needs no permission either, which is what makes the one guarantee
+      here Starkit's own to keep: a **Kill** aimed at Starkit is a **Refusal**, because the process
+      performing a list of **Effects** cannot be one of the things on it. That is the third lock on
+      a door C8 and `clean.gleam` already hold shut, and the only one that holds for a **Script**
+      that writes the name itself rather than reading it out of a **Context**. A **Kill** finding
+      nothing of that name running is *done*, not refused — the **Effect** asks that an application
+      not be running, and one that quit on its own has answered it — and the price of that, a
+      misspelling passing in silence, is what T4.3 paid on the first try
       **Paste** activates the previously frontmost app then synthesises ⌘V via `CGEvent`, which is
       the one thing needing Accessibility. Pasted text stays on the clipboard by design. Measured
       at T0.5: 23.1 ms for the whole **Paste**, of which 19.4 ms is waiting for the app to report

@@ -71,9 +71,18 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       connection rather than the list, so it is paid at launch where nobody is waiting. A **Need**
       this binary cannot gather is a **Refusal** naming it, because a **Script** handed half a
       **Context** decides about a machine that does not exist
-- [ ] **T4.3** C7 **Kill** — `forceTerminate`
+- [x] **T4.3** C7 **Kill** — `forceTerminate`, verified at a scale that could be undone: a scratch
+      home whose keep list spared everything but one expendable application, so the whole path ran
+      and the terminal it ran from survived it. The first real **Kill** matched nothing, because
+      `localizedName` is the name in the machine's language and this one calls Calculator
+      *Calculatrice* — one string that **Opens** an application and cannot **Kill** it is a seam in
+      the **Vocabulary**, closed by asking LaunchServices the same question C7 already asks for an
+      **Open**. A **Kill** aimed at Starkit is a **Refusal**: the third lock, and the only one that
+      holds for a **Script** that writes the name itself
 
-> **Checkpoint D** — 3 of 5.
+> **Checkpoint D** — reached. 3 of 5, and the destructive **Script** closes what it was told to and
+> nothing else. It cannot close the thing performing it, which is now true in three places and
+> tested in one.
 
 ## Phase 5 — Youtube
 

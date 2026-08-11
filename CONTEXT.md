@@ -211,3 +211,12 @@ _Avoid_: processes, open apps
 - A **Script** was briefly called pure — wrong. Youtube and Link from URL fetch over HTTP, and
   the response decides the **Effects**, so the network cannot be a **Context** slice. The line
   is not purity: a **Script** owns the network, the **Shelf** owns the machine.
+- "the name of an application" turned out to be two names, and only a machine that is not in English
+  can tell you. **Open** says "the name you see in the Finder", and on this one that is
+  *Calculatrice* while the bundle on disk is *Calculator.app* — so `Kill("Calculator")` found nothing
+  to kill and said so, while `Open("Calculator")` would have launched it, because LaunchServices
+  answers to either. Found at T4.3 by killing the wrong thing's absence. Resolved: the **Vocabulary**
+  keeps one word, and both **Effects** accept both spellings — C7 asks LaunchServices the same
+  question for a **Kill** that it already asked for an **Open**. What a **Script** compares on its
+  own side has no such help: a keep list in `clean.gleam` is matched against a **Running Apps**
+  **Context**, which is made of displayed names, so *Calculatrice* is the spelling that spares it.
