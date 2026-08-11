@@ -29,7 +29,35 @@ const entry = join(here, "build", "dev", "javascript", "starkit", "entry.mjs");
 
 const module = await import(entry);
 
-// T1.1 replaces this with the two-verb protocol: `describe` prints every manifest as JSON, and
-// `run <keyword> <payload>` prints the Effects. Both need process.argv, which is why the shim and
-// not Gleam owns the argument handling.
-await module.main();
+const [verb, keyword, payload] = process.argv.slice(2);
+
+// Every answer is awaited. Nothing entry.gleam exports is asynchronous today, but a Script that
+// reaches the network is a Promise on this target, and awaiting a plain string costs nothing —
+// so the shim is already right whichever way that lands. See DESIGN.md §9.
+switch (verb) {
+  case "describe":
+    console.log(await module.describe());
+    break;
+
+  case "run": {
+    if (keyword === undefined) {
+      fail("run needs a Keyword: run <keyword> [payload]");
+    }
+    // The payload is passed through verbatim rather than parsed here: entry.gleam owns the
+    // protocol, and a shim that understood it would be a second place to change.
+    const answer = await module.run(keyword, payload ?? "{}");
+    console.log(answer);
+    // Both channels report the same thing. The envelope is for the Shelf, which decodes it
+    // anyway; the exit code is for a person running this by hand.
+    if (JSON.parse(answer).error !== undefined) process.exitCode = 1;
+    break;
+  }
+
+  default:
+    fail(`unknown verb ${JSON.stringify(verb ?? "")} — expected describe or run`);
+}
+
+function fail(message) {
+  console.error(`run.mjs: ${message}`);
+  process.exit(1);
+}

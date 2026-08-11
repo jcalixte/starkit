@@ -9,5 +9,12 @@ target = "javascript"
 [dependencies]
 gleam_stdlib = ">= 0.60.0 and < 2.0.0"
 
+# The protocol entry.gleam speaks to the Shelf. Both directions carry arbitrary text — a page
+# title into Paste, an error into Notify — so escaping is a correctness problem, not a formatting
+# one, and hand-rolling it would put a silent-corruption bug in Shelf-owned code. Scripts never
+# import this; it exists for the boundary, which is why the dependency sits in a file the
+# installer overwrites rather than in one you maintain.
+gleam_json = ">= 3.0.0 and < 4.0.0"
+
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
