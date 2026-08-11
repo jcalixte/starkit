@@ -237,6 +237,24 @@ has contradicted that since T1.5 measured **Open** at ~35 ms warm and seconds co
 than bookkeeping, so it is recorded here for T8.1 to settle — either the target moves or the row
 admits that **Open** is not a function call.
 
+T2.5 spent nothing on either key. ⌃N and ⌃P are `moveDown:` and `moveUp:` in macOS's own bindings,
+so the two selectors added for ↑/↓ answered all four ways of asking, and pressing them was the check
+rather than the documentation: the band moved, and the log recorded no narrowing at all, which is the
+other half of it — a ⌃N the field editor had kept would have arrived as a character typed into the
+**Keyword**. F13 is now the reason this task was two `case`s instead of a keycode table.
+
+The selection is bounded by the rows **shown** rather than by the matches, which is the eight-row cap
+being answered rather than worked around: a selection free to travel past the eighth row would make
+↩ run a **Script** whose name is not on screen, and a bar that lists rather than guesses cannot do
+that. With five **Scripts** only the `matches.count` half of that bound is exercised; the `mostRows`
+half waits for a **Catalogue** bigger than the bar. And it stops at both ends rather than wrapping —
+with at most eight rows in front of you, wrapping saves a keystroke that was never expensive and
+costs knowing where the band went.
+
+F1 held a third time on the way past: **15.9 ms** on screen and **23.3 ms** to become key. The
+selection moving is not measured, because it is not on a budget — F3's frame is the keystroke that
+changes the *list*, and a moved band is two rows redrawing.
+
 T2.6 was added after T2.4 rather than designed with it, because using the bar is what showed the
 gap: click into another window and it stays on top of your work — `.floating`, on every space —
 until you come back and press Escape. G2 asks for it to be there every time you reach for it, not

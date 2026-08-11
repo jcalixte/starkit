@@ -40,8 +40,8 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       `manifests.json`, since C6 is the thing that would have and it is slice 6
 - [x] **T2.4** Bar view — list, filter, selection, ↩ runs — off the main thread, because ↩ measured
       498 ms with every application already running
-- [ ] **T2.5** F13 — Cocoa action selectors, not keycodes (⌃N/⌃P come free) — ↩ already arrives as
-      `insertNewline:`, so what is left is the selection moving and the eight-row cap following it
+- [x] **T2.5** F13 — Cocoa action selectors, not keycodes: ⌃N/⌃P did come free, and the selection is
+      bounded by the rows *shown* rather than by the matches, so ↩ cannot run a name off screen
 - [ ] **T2.6** A click outside **Dismisses** the bar — a mouse-down monitor, never
       `hidesOnDeactivate`, which cannot tell a click from a **Script**'s **Open**
 

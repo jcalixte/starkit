@@ -219,7 +219,9 @@ is the boundary working, not a gap in it.
   A **Script**'s own **Open** activating another application is *not* a **Dismissal** — that is the
   case `hidesOnDeactivate = false` exists for, and the one a focus-based implementation gets wrong.
 - Typing `wo` selects Work; ↩ runs it and the bar disappears.
-- ⌃N and ⌃P move the selection, as do ↓ and ↑.
+- ⌃N and ⌃P move the selection, as do ↓ and ↑. It stops at the first and last row rather than
+  wrapping, and it never leaves the rows on screen: with more matches than the bar lists, the way
+  past the last one is to type, so ↩ cannot run a **Script** whose name is not visible.
 - With Script Kit running, ⌃⌘K reaches Script Kit and Starkit stays quiet — the chord is never
   taken from whoever else is listening for it. The red icon this criterion also asked for is
   **withdrawn**: measured at T2.1, macOS tells an application nothing about another one claiming
