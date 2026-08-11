@@ -86,6 +86,12 @@ Two things it hands to later tasks:
 | T1.5 | C7 Effector — **Open** only | T1.4 | `Starkit run work` opens ghostty, Slack, Notion, Zen |
 | T1.6 | Isolation check — no new code, an executable reading of [ADR 0002](../docs/adr/0002-one-project-with-per-script-staleness.md) | T1.5 | break `youtube.gleam`: `run work` still works, `run youtube` **Refuses** and prints the compile error |
 
+T1.2 hands one thing forward: **resolution costs 510 ms and blocks the main thread at launch**, up
+from an assumed ~40 ms, because the login shell has to be interactive to see `~/.zshrc` where
+`PATH` is set (`DESIGN.md` §4, F9). Inside F9's 3 s, but it means **T2.1 should register the chord
+before resolving**, not after — otherwise ⌃⌘K is dead for half a second after every login, which is
+the one moment F9 exists to protect.
+
 **Checkpoint B** — one **Script** works end to end from a terminal, and the isolation guarantee is
 demonstrated rather than asserted. This is the architecture proven; everything after is surface.
 

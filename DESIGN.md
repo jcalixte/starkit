@@ -103,11 +103,23 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       - **Component**: C3 HotKey · C10 MenuBarStatus
   - **F9** Be ready after login _(also G4)_
     - **How**: `SMAppService.mainApp`, no helper bundle. A login-launched app gets a minimal
-      `PATH`, so the toolchain is resolved at each launch by asking the login shell
-      (`/bin/zsh -lc 'command -v bun'`) — measured 16.4 ms min / 22.4 ms median, and `gleam` costs
-      the same again, so budget ~40 ms of the 3 s for resolution. It follows version-manager moves
-      for free. Rejected: caching absolute paths at install, which pins whatever was current then.
-      `~/.starkit/starkit.toml` holds an *override* for when the shell lies, not the source of truth
+      `PATH`, so the **Toolchain** is resolved at each launch by asking the login shell — one spawn
+      for both tools, `command -v` so the shell's own answer wins and a version manager's shim
+      resolves as a shim. It follows version-manager moves for free. Rejected: caching absolute
+      paths at install, which pins whatever was current then. `~/.starkit/starkit.toml` holds an
+      *override* for when the shell lies, not the source of truth, and a wrong path in it goes red
+      at launch rather than at the **Summon** that first needs it
+      - **The shell must be interactive**, `-ilc` and not `-lc`. Corrected at T1.2 against a
+        measurement: a login shell that is not interactive never reads `~/.zshrc`, which is where
+        `PATH` is actually set — `~/.bun/bin` is added there on this machine, so `-lc` cannot see
+        `bun` from a clean environment at all. The earlier 16.4/22.4 ms figure was taken with `-lc`
+        from a terminal, which hands down a `PATH` that already contains the answer, and it was
+        validated against node, whose `.vite-plus` shim does sit in the login `PATH`. Both facts
+        hid the failure. Under `SMAppService` there is no inherited `PATH` to fall back on, so it
+        would have gone red on every boot — the exact F9 failure, reachable only by testing from an
+        empty environment rather than a terminal. Costs 510 ms against 35 ms, once per launch,
+        17 % of the 3 s budget. `-ic` was measured at 537 ms, so dropping `.zprofile` buys nothing:
+        the price is reading `~/.zshrc`, not the login half
       - **Component**: C9 LoginItem · C12 Toolchain
   - **F10** Surface breakage at save time, not **Summon** time
     - **How**: `FSEventStream` on `~/.starkit/src` → build, then set the menu bar state
@@ -190,11 +202,13 @@ Each function sits under the goal it serves most; secondary goals are noted inli
   - **F15** Follow the **Toolchain** the shell reports, and notice when it moves
     - **How**: ask the login shell at each launch. Nothing is pinned, so a bun or Gleam upgrade is
       not an event — verified rather than assumed: 1.3.8 and 1.3.14 spawn within noise of each
-      other. Measured 16.4 ms min / 22.4 ms median, resolving `~/.bun/bin/bun`, which is the real
+      other. Measured 510 ms per launch at T1.2, resolving `~/.bun/bin/bun`, which is the real
       binary — bun has no version-manager shim, so unlike node there is no indirection to pay for
-      and no shim-versus-binary choice to get wrong. Rejected: caching the absolute path, which
-      pins a version `bun upgrade` will move underneath it; and a hardcoded `PATH` list, which
-      would have missed `~/.bun` entirely
+      and no shim-versus-binary choice to get wrong. That `~/.bun/bin` is reachable only through
+      `~/.zshrc` is what forced the interactive shell and the cost with it; the argument is under
+      F9. Rejected: caching the absolute path, which pins a version `bun upgrade` will move
+      underneath it; and a hardcoded `PATH` list, which would have missed `~/.bun` entirely — the
+      same blind spot `-lc` had, arrived at from the other direction
       - **Component**: C12 Toolchain · C10 MenuBarStatus
 
 - **G5** I write Gleam, not glue _W:6_ · **G6** Almost nothing to remember _W:6_
