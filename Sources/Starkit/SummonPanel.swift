@@ -37,8 +37,8 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     ///
     /// Not a scrolling list. Starkit is for a handful of **Scripts** (five in MVP), so the cap
     /// exists to bound the window rather than to page through it — the way past the eighth match is
-    /// to type, which is what the field is for. It matters again at T2.5, where a selection that
-    /// can move has to be able to move onto a row that is not shown.
+    /// to type, which is what the field is for. It is also where the selection stops, for the same
+    /// reason: see `move`.
     private static let mostRows = 8
 
     /// The periwinkle square the carambola sits on, and the gap after it.
@@ -75,7 +75,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// What the **Keyword** typed so far selects, in the order it will be listed.
     private var matches: [Manifest] = []
 
-    /// Which of them ↩ runs. Always the first for now; T2.5 is what lets it move.
+    /// Which of them ↩ runs. Moved by `move`, and never off the rows on screen.
     private var selected = 0
 
     /// When the **Summon** being measured started, or 0 between them.
@@ -299,6 +299,24 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         run?(manifest, input)
     }
 
+    /// Move the selection one row, in whichever direction Cocoa was asked for.
+    ///
+    /// Bounded by what is *shown* rather than by what matched. The list is capped at `mostRows` and
+    /// the way past the last of them is to type, so a selection that could travel past the eighth
+    /// row would be ↩ running a **Script** whose name is not on screen — the one thing a bar that
+    /// lists rather than guesses must never do.
+    ///
+    /// It stops at the ends rather than wrapping. With at most eight rows in front of you, wrapping
+    /// saves a keystroke that was never expensive and costs the certainty of knowing where the band
+    /// went; every macOS launcher this bar is measured against stops too.
+    private func move(by step: Int) {
+        let shown = min(matches.count, Self.mostRows)
+        let next = min(max(selected + step, 0), shown - 1)
+        guard shown > 0, next != selected else { return }
+        selected = next
+        list.select(selected)
+    }
+
     /// Narrow the list to what has been typed, and grow or shrink the panel to hold the result (F3).
     private func narrow() {
         matches = Keyword.matches(Keyword.split(field.stringValue).keyword, in: catalogue)
@@ -381,15 +399,25 @@ extension SummonPanel {
 
     /// F13 inside the field: the selector Cocoa names for the key, never the key itself.
     ///
-    /// ↩ is the one this task needs. ↑/↓ and ⌃N/⌃P arrive at T2.5 through this same door, which is
-    /// the point of using it for ↩ now — a keycode here would be code written to be deleted.
+    /// Three selectors, four ways of pressing them — ⌃N and ⌃P are `moveDown:` and `moveUp:` in
+    /// macOS's own key bindings, so they arrive here having cost nothing, and so would anything else
+    /// a person has bound to moving. That is the whole of F13's argument, and it is why ↩ was read
+    /// as `insertNewline:` at T2.4 rather than as a keycode that would have been deleted now.
+    ///
     /// Escape is not handled here on purpose: the field editor passes `cancelOperation:` up the
     /// responder chain on its own, and the window is where it lands.
     func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
-        guard selector == #selector(NSResponder.insertNewline(_:)) else { return false }
-        accept()
-        // Taken even when nothing matched. There is nothing to run, and the alternative is the
-        // field editor beeping at a person who can already see the list is empty.
+        switch selector {
+        // Taken even when nothing matched. There is nothing to run or move onto, and the
+        // alternative is the field editor beeping at a person who can already see the list is
+        // empty.
+        case #selector(NSResponder.insertNewline(_:)): accept()
+        case #selector(NSResponder.moveUp(_:)): move(by: -1)
+        case #selector(NSResponder.moveDown(_:)): move(by: 1)
+        // Everything else is the field editor's, including the arrows that move along the line a
+        // **Keyword** and an **Input** are typed on.
+        default: return false
+        }
         return true
     }
 }
@@ -431,6 +459,12 @@ private final class ListView: NSView {
             guard index < manifests.count else { continue }
             row.show(manifests[index], selected: index == selected)
         }
+    }
+
+    /// Move the band, leaving what the rows say alone. Which **Manifest** a row carries changes when
+    /// the list narrows, and that is a different event from the selection moving within it.
+    func select(_ selected: Int) {
+        for (index, row) in rows.enumerated() { row.select(index == selected) }
     }
 
     /// The hairline between the field and the first row.
@@ -495,10 +529,15 @@ private final class RowView: NSView {
     func show(_ manifest: Manifest, selected: Bool) {
         name.stringValue = manifest.name
         keyword.stringValue = manifest.keyword
-        if self.selected != selected {
-            self.selected = selected
-            needsDisplay = true
-        }
+        select(selected)
+    }
+
+    /// Redrawn only when the answer changed. A selection moving one row is told to every row, and
+    /// two of them are the only ones it is news to.
+    func select(_ selected: Bool) {
+        guard self.selected != selected else { return }
+        self.selected = selected
+        needsDisplay = true
     }
 
     /// The band behind the selected row — the accent, resolved per appearance, inset far enough to
