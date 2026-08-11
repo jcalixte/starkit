@@ -81,6 +81,9 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// When the **Summon** being measured started, or 0 between them.
     private var summonedAt: CFAbsoluteTime = 0
 
+    /// What is watching for the click that **Dismisses** the bar, or nothing while it is down.
+    private var clicksElsewhere: Any?
+
     override init() {
         panel = KeyablePanel(
             contentRect: NSRect(x: 0, y: 0, width: Self.width, height: Self.header),
@@ -101,8 +104,8 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         // Not hidden when Starkit stops being active. The spike set this the same way for its own
         // reasons, and the design needs it: at T5.4 a **Script** runs with the bar still up, and
         // an **Open** it performs activates another application. Auto-hiding would take the bar
-        // away mid-run, spinner and all. A **Dismissal** stays something asked for — ⌃⌘K, Escape,
-        // or a click outside (T2.6), none of which a launch can be mistaken for.
+        // away mid-run, spinner and all. A **Dismissal** stays something asked for — ⌃⌘K, Escape, or
+        // a click outside (`watchForClicksElsewhere`), none of which a launch can be mistaken for.
         panel.hidesOnDeactivate = false
         panel.isMovableByWindowBackground = false
         panel.isOpaque = false
@@ -249,6 +252,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         // rather than an empty box you must already know the answer to fill.
         narrow()
         place()
+        watchForClicksElsewhere()
         NSApp.activate()
         panel.makeKeyAndOrderFront(nil)
         panel.makeFirstResponder(field)
@@ -273,10 +277,46 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// way out.
     func dismiss() {
         summonedAt = 0
+        stopWatchingForClicksElsewhere()
         panel.orderOut(nil)
         NSApp.hide(nil)
         field.stringValue = ""
         narrow()
+    }
+
+    /// Watch for the click that means the bar is not what is being reached for.
+    ///
+    /// A **global** monitor, which sees only what is on its way to *another* application — so a click
+    /// on the bar itself never arrives here. That is the whole definition of "outside", decided by
+    /// the window server rather than by hit-testing a frame, and it means the menu bar item is inside
+    /// too, because the item is Starkit's as much as the panel is.
+    ///
+    /// Not `hidesOnDeactivate`, which is the one-line version and answers the wrong question. At T5.4
+    /// a **Script** runs with the bar still up and an **Open** it performs activates another
+    /// application: the same lost focus as a click, and it must not put the bar away. A mouse-down
+    /// answers the *person*, so a launch can never be mistaken for a **Dismissal** and T5.4 needs no
+    /// "is a run in flight" flag to protect the difference.
+    ///
+    /// Only while the bar is up. A monitor left installed forever would have Starkit in the path of
+    /// every click on the machine for the ~99% of the time it has nothing on screen, and G4 is a
+    /// promise about what Starkit costs while idle.
+    ///
+    /// All three buttons, because the question is whether a person touched something else and no
+    /// button answers it differently.
+    private func watchForClicksElsewhere() {
+        guard clicksElsewhere == nil else { return }
+        clicksElsewhere = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        ) { _ in
+            // Delivered on the main run loop, which is the only thread this class exists on.
+            MainActor.assumeIsolated { [weak self] in self?.dismiss() }
+        }
+    }
+
+    private func stopWatchingForClicksElsewhere() {
+        guard let clicksElsewhere else { return }
+        NSEvent.removeMonitor(clicksElsewhere)
+        self.clicksElsewhere = nil
     }
 
     /// ↩ — run what is selected, and get out of the way first.
