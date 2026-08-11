@@ -49,12 +49,26 @@ private func command(_ arguments: [String]) -> Int32 {
         let toolchain = try Toolchain.resolve(home: home)
         try Builder(toolchain: toolchain, home: home).ensureCurrent(keyword)
 
-        let effects = try Runner(toolchain: toolchain, home: home).run(keyword: keyword, input: input)
+        let runner = Runner(toolchain: toolchain, home: home)
+        // A **Keyword** no **Manifest** answers to declares nothing, and the run goes ahead: the
+        // **Script** does not exist, and the sentence saying so is `entry.gleam`'s to write. Guessing
+        // at **Needs** here would only change which of the two speaks first.
+        let needs = try Catalogue(home: home).manifest(for: keyword, using: runner)?.needs ?? []
+        let gathered = CFAbsoluteTimeGetCurrent()
+        let payload = try ContextGatherer().payload(input: input, keyword: keyword, needs: needs)
+        let gathering = (CFAbsoluteTimeGetCurrent() - gathered) * 1000
+
+        let effects = try runner.run(keyword: keyword, payload: payload)
 
         // `--dry-run` prints the decision and performs none of it. The two are exclusive on
         // purpose: the flag exists to answer "what did this **Script** decide" without the machine
         // changing underneath the answer.
         if dryRun {
+            // What the **Script** was given, above what it decided from it — and the clock, because
+            // F6 is a budget of 5 ms and this is the only place it can be read without putting an
+            // instrument on the ↩ path. T2.6 is the reason that distinction is worth keeping.
+            print(payload, terminator: "")
+            print(String(format: " in %.2f ms", gathering))
             for effect in effects { print(effect) }
         } else {
             try Effector().perform(effects)

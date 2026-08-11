@@ -29,6 +29,21 @@ struct Catalogue {
         return manifests
     }
 
+    /// What one **Keyword** declares, for the run about to happen.
+    ///
+    /// The cache first and the **Artefact** only if the cache has never heard of the **Keyword**,
+    /// which is the same order the bar reads them in — so a terminal run reproduces what ↩ does,
+    /// stale cache and all, rather than being quietly better informed than the thing it exists to
+    /// debug. A machine that has never launched Starkit has no cache at all, and that is the case
+    /// the `describe` is for.
+    ///
+    /// Nothing is written here: a `describe` on this path is answering one question, not standing in
+    /// for the build that would have replaced the file.
+    func manifest(for keyword: String, using runner: Runner) throws(Refusal) -> Manifest? {
+        if let known = cached().first(where: { $0.keyword == keyword }) { return known }
+        return try runner.describe().first { $0.keyword == keyword }
+    }
+
     /// Ask the **Artefact** what it holds, and write it down.
     ///
     /// Only ever called after a build that succeeded, and it writes only when the answer arrives —

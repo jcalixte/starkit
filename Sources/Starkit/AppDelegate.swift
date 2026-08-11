@@ -31,6 +31,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.run = { [weak self] manifest, input, run in
             self?.perform(manifest, input: input, started: run)
         }
+        // Before `prepare` only because everything here is ordered by who is waiting, and after this
+        // line nobody is: the chord is taken and the bar is built. What it buys is in C8.
+        ContextGatherer.warm()
         prepare()
     }
 
@@ -137,13 +140,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // whatever the **Script** does next.
         let previous = focus.previous
 
+        // C8 on this thread and for the same reason: `NSWorkspace`'s list is AppKit's own, the main
+        // actor is where AppKit is read, and both answers should describe the machine as ↩ was
+        // pressed rather than as a build left it several hundred milliseconds later. It costs
+        // 0.006–0.016 ms against F6's 5 — the connection it would otherwise have paid for was
+        // bought at launch — and a **Script** that declares nothing pays none of it.
+        let payload: Payload
+        do throws(Refusal) {
+            payload = try ContextGatherer()
+                .payload(input: input, keyword: manifest.keyword, needs: manifest.needs)
+        } catch {
+            report(error.reason)
+            if let detail = error.detail { report(detail) }
+            status.set(error.reason, for: .run)
+            panel.settled(error.reason, for: run)
+            return
+        }
+
         DispatchQueue.global().async { [weak self] in
             let start = CFAbsoluteTimeGetCurrent()
             let refusal: Refusal?
             do throws(Refusal) {
                 try builder.ensureCurrent(manifest.keyword)
                 let effects = try Runner(toolchain: toolchain, home: Toolchain.home)
-                    .run(keyword: manifest.keyword, input: input)
+                    .run(keyword: manifest.keyword, payload: payload)
                 try Effector(
                     handingFocusBackTo: previous,
                     notifying: { message in

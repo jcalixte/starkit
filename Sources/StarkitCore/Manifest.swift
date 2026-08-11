@@ -12,9 +12,12 @@ public struct Manifest: Equatable, Sendable, Codable {
 
     /// The **Needs** as `entry.gleam` names them — `running_apps` and, for now, nothing else.
     ///
-    /// Strings rather than a Swift mirror of the `Need` type, because nothing reads them yet.
-    /// C8 gathers **Context** at T4.2 and that is where a mismatched name has to be caught; giving
-    /// them a type here would be deciding how, three tasks before anything exercises the decision.
+    /// Strings, and they stay strings now that C8 reads them (T4.2). Decoding them into `Need` here
+    /// would move the failure from the run to the *listing*, and a `manifests.json` naming one slice
+    /// this binary has never heard of would empty the bar of every **Script** in it — which is
+    /// precisely the collapse F2 exists to prevent. So the word is carried as written and refused at
+    /// the moment it would have been gathered, by `Need.all`, where the **Refusal** can name the
+    /// **Script** that asked for it.
     public let needs: [String]
 
     /// The question this **Script** asks, or nothing if it decides on its own.

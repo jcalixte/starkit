@@ -21,12 +21,12 @@ struct Runner {
     /// Every failure here is a **Refusal**, never a **Notify** — including a **Script** that
     /// crashed or hung, since dying is not deciding. `entry.gleam` takes the same view from inside
     /// the child: an unknown **Keyword** and an undecodable payload both come back as `refusal`.
-    func run(keyword: String, input: String = "") throws(Refusal) -> [Effect] {
+    func run(keyword: String, payload: Payload) throws(Refusal) -> [Effect] {
         // The payload travels as one `argv` element with no shell between here and there, so a
         // **Script** name or an **Input** containing quotes, spaces or a semicolon needs no escaping
         // and cannot be read as anything but data.
         let (reply, diagnostics, status) = try execute(
-            ["run.mjs", "run", keyword, try payload(input: input)],
+            ["run.mjs", "run", keyword, try encoded(payload)],
             called: "The Script \"\(keyword)\""
         )
         return try Effect.all(
@@ -132,14 +132,17 @@ struct Runner {
         }
     }
 
-    /// The payload `entry.gleam` decodes: the **Input** typed after the **Keyword**, and later a key
-    /// per **Context** slice once C8 gathers them. Slices a **Script** did not declare stay absent
-    /// rather than arriving empty — `payload_decoder` is written for exactly that, and it is why the
-    /// Clean **Kill** list is worth testing.
-    private func payload(input: String) throws(Refusal) -> String {
-        guard let encoded = try? JSONEncoder().encode(["input": input]) else {
-            throw Refusal("Starkit could not encode the Input it was given.")
+    /// The payload `entry.gleam` decodes, as the one `argv` element it travels in.
+    ///
+    /// What goes in it is C8's decision and was made before this was called (`ContextGatherer`);
+    /// this only writes it down. Encoding cannot fail for a `Payload` — every field is a `String` or
+    /// a list of them — so the **Refusal** below is a sentence nobody should ever read, kept because
+    /// the alternative is a `try!` that would take the whole application with it if that ever
+    /// stopped being true.
+    private func encoded(_ payload: Payload) throws(Refusal) -> String {
+        guard let json = try? JSONEncoder().encode(payload) else {
+            throw Refusal("Starkit could not encode the payload it gathered.")
         }
-        return String(decoding: encoded, as: UTF8.self)
+        return String(decoding: json, as: UTF8.self)
     }
 }
