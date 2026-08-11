@@ -11,6 +11,11 @@ cd "$(dirname "$0")/.."
 IDENTITY="${STARKIT_IDENTITY:-Starkit Self-Signed}"
 APP="build/Starkit.app"
 CONFIGURATION="${1:-release}"
+# Read from Info.plist rather than repeated here. The bundle identifier appears in the app's
+# designated requirement, so a copy that drifted from the plist would change the requirement and
+# silently invalidate the Accessibility grant — the exact failure signing a stable identity is
+# meant to prevent.
+BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Resources/Info.plist)"
 
 swift build -c "$CONFIGURATION"
 BINARY="$(swift build -c "$CONFIGURATION" --show-bin-path)/Starkit"
@@ -22,10 +27,10 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' >"$APP/Contents/PkgInfo"
 
 if security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
-	codesign --force --sign "$IDENTITY" --identifier dev.jclab.starkit --timestamp=none "$APP"
+	codesign --force --sign "$IDENTITY" --identifier "$BUNDLE_ID" --timestamp=none "$APP"
 	echo "✓ Signed with '$IDENTITY' — the Accessibility grant survives rebuilds."
 else
-	codesign --force --sign - --identifier dev.jclab.starkit "$APP"
+	codesign --force --sign - --identifier "$BUNDLE_ID" "$APP"
 	echo "! No '$IDENTITY' certificate found, so this build is signed ad-hoc."
 	echo "  Every rebuild will reset Accessibility, so Paste will stop working."
 	echo "  Run scripts/setup-signing.sh once to fix that."
