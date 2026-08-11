@@ -75,7 +75,9 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [x] **T5.2** `youtube` **Script** + tests (6 URL shapes) + `gleam_fetch` — taken before T5.1,
       because it needs no UI and proves the slice from a terminal; and it is where the **Vocabulary**
       grew **Fetching**, which `DESIGN.md` §9 left for the first fetching **Script** to decide
-- [ ] **T5.3** C7 **Paste** — restore focus, ⌘V, leave the pasted text on the clipboard
+- [x] **T5.3** C7 **Paste** — restore focus, ⌘V, leave the pasted text on the clipboard; and the
+      held-modifier hazard `DESIGN.md` §9 has carried since T0.5, closed with `.privateState`
+      before it was ever seen
 - [ ] **T5.4** **Notify** in the bar, spinner, 5 s kill
 - [ ] **T5.5** Accessibility grant survives a rebuild
 

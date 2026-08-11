@@ -432,6 +432,39 @@ one and took a hand-written line while the other four were replaced from `seed/`
 per-file surgery and knowing which file is whose — tolerable at five **Scripts**, and the reason to
 have taken the field now rather than at fifty.
 
+**T5.3 pastes into the application the bar took the keyboard from**, end to end from ⌃⌘K: `yt`, ↩,
+↩, and the note is in the editor that was in front before any of it, with the markdown still on the
+clipboard for the ⌘V that repeats it. Four things it settled, none of which the spike could:
+
+- **Where a **Paste** goes cannot be looked up when it fires.** By then the frontmost application is
+  Starkit, so C7 samples it as it happens — and *pins* it when the **Shelf** becomes active, which
+  the spike had no reason to do. Without the pin, an **Open** among the same run's **Effects** would
+  move the target, and a **Script** that **Opens** and then **Pastes** would paste into what it just
+  launched rather than into "whatever was frontmost before the **Shelf** appeared", which is what
+  the **Vocabulary** promises in as many words. No **Script** does both today; the pin is where that
+  sentence stays true when one does.
+- **Starkit becoming active is the moment the bar appeared**, so C7 needs nothing from C1 to know
+  when to pin. An `.accessory` application with one window has no other way to become active. The
+  two components are joined by the fact rather than by a call, which is the cheapest form the C1/C7
+  coupling `DESIGN.md` §9 records could take.
+- **The hand-back is usually already done.** C1 hides on **Dismissal** and the **Script** then spends
+  a build check, a `bun` spawn and a fetch, so the target is active again long before its **Effects**
+  arrive and the wait costs nothing. The spike's 19.4 ms was the price of pressing ↩ and pasting in
+  the same breath. The wait stays because it is the difference between an observation and an
+  assumption, and T8.1 owns the number.
+- **Accessibility is asked for at the first **Paste**, not at launch.** Most sessions never paste, and
+  a permission dialog at login for something nobody has asked for is how an application gets denied
+  on principle. A **Paste** that finds itself untrusted **Refuses** and says where to grant it, with
+  the text on the clipboard either way — the grant reaches a running process (T0.5), so the fix from
+  there is ↩ again rather than a relaunch. T5.5 therefore has a real first grant to check a rebuild
+  against, which is what it was written to check.
+
+It hands one thing to **T5.4**, and it is the same order this task depended on. A spinner is a reason
+for the bar to stay, so C1 will no longer have hidden by the time **Effects** are performed — which
+turns C7's hand-back from the second of two into the only one, and makes the wait above the thing
+that is actually paid rather than the thing that is skipped. The wait is written for that already;
+what T5.4 has to decide is when the bar goes, not whether the paste can find its way home.
+
 **Checkpoint E** — 4 of 5, and the only permission-gated path is working and stable across
 rebuilds.
 

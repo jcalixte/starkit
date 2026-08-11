@@ -210,7 +210,11 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       because polling would block the run loop that notification has to arrive on; the deadline
       behind it exists for the case where it never fires. Multi-byte text arrives intact, so it is
       not a second problem to solve, and the Accessibility grant reaches a process already
-      running — unlike the event tap in `cmd-tab`, nothing restarts after it is given
+      running — unlike the event tap in `cmd-tab`, nothing restarts after it is given. Built at
+      T5.3, where "the previously frontmost app" became something sampled as it happens and pinned
+      when the **Shelf** activates, because at **Paste** time the answer is Starkit; where the event
+      source became `.privateState`; and where the grant is asked for at the first **Paste** rather
+      than at launch, a **Paste** without it being a **Refusal** naming System Settings
       - **Component**: C7 Effector
 
 - **G3** A new automation is one file and one minute _W:7_
@@ -315,11 +319,11 @@ everything still works but silently goes **Stale**.
   and cannot be driven; with it, 23.1 ms and it works. **Trigger to revisit:** anything that
   changes how C1 shows the panel changes what C7 has to undo — they are one decision in two
   components, and the 19.4 ms is the price of the split.
-- **A synthesised ⌘V inherits the modifiers physically held down.** `CGEventSource` built from
-  `.combinedSessionState` carries real modifier state, and ⌃⌘K may still be held when a **Script**
-  finishes — which would post ⌃⌘V rather than ⌘V. Not reachable from T0.5, whose trigger was a
-  menu. **Trigger:** the first **Paste** driven from the chord, at T5.3; the fix is `.privateState`
-  or waiting on `flagsChanged`, and it is cheap once seen.
+- ~~**A synthesised ⌘V inherits the modifiers physically held down.**~~ **Closed at T5.3.**
+  `.privateState` rather than `.combinedSessionState`, so the event's flags are the only ones it
+  carries and ⌃⌘K being held cannot turn a **Paste** into ⌃⌘V. One word, taken before the failure
+  was ever seen, which is what writing the trigger down bought: it was cheap here and would have
+  been a bug reproducible only while holding a key.
 - **Any application with an event tap can take ⌃⌘K, and Starkit cannot tell.** Measured at T2.1
   against Script Kit: its `uiohook` tap consumes the key before Carbon dispatch, so Starkit's
   handler never runs and its registration still reports success. Left alone rather than worked
