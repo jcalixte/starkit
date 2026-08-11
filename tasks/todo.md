@@ -42,10 +42,15 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       498 ms with every application already running
 - [x] **T2.5** F13 — Cocoa action selectors, not keycodes: ⌃N/⌃P did come free, and the selection is
       bounded by the rows *shown* rather than by the matches, so ↩ cannot run a name off screen
-- [ ] **T2.6** A click outside **Dismisses** the bar — a mouse-down monitor, never
-      `hidesOnDeactivate`, which cannot tell a click from a **Script**'s **Open**
+- [x] **T2.6** A click outside **Dismisses** the bar — a mouse-down monitor, never
+      `hidesOnDeactivate`, which cannot tell a click from a **Script**'s **Open**; and it needs no
+      Accessibility, measured rather than assumed
 
-> **Checkpoint C** — ⌃⌘K runs Work. 2 of 5 **Scripts** usable.
+> **Checkpoint C** — reached. ⌃⌘K **Summons** the bar in **10.7 ms**, `wo` narrows to Work, ↩ runs
+> it, and ↑/↓/⌃N/⌃P move between the five. It goes away three ways and stays for the one that only
+> looks like a fourth: another application taking focus with no mouse-down, which is T5.4's whole
+> hazard answered before T5.4 exists. Still 2 of 5 **Scripts** usable (Work, Personal) — everything
+> Phase 3 added is how you reach a **Script**, not how many there are.
 
 ## Phase 4 — Clean
 

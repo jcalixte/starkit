@@ -272,7 +272,33 @@ withdrawn, not worked around.
 No new function in `DESIGN.md` §2. Escape and ⌃⌘K put the bar away without one, and a third way to
 do the same thing is not a fourteenth thing the design does.
 
-**Checkpoint C** — ⌃⌘K runs Work. Starkit is usable for 2 of 5 **Scripts** (Work, Personal).
+The permission came back the way the task needed it to: the monitor **fired with
+`AXIsProcessTrusted()` reporting `false`**, printed beside it in the same log rather than inferred
+from the two facts separately. So mouse-down is outside the grant, T2.6 stands, and C7's line in
+`DESIGN.md` §4 — that **Paste** is *the one thing* needing Accessibility — survives a task that could
+have broken it. That check was temporary and is gone, for a reason worth keeping: the call is an IPC to
+the accessibility subsystem and it sat on the **Summon** path, where it cost **46.3 ms of F1's 50** —
+an instrument three times more expensive than everything it was measuring. With it removed, **10.7 ms
+on screen and 16.3 ms to key**, which is where the previous three **Summons** were, so installing the
+monitor costs nothing anyone can see.
+
+The monitor lives only while the bar is up. A global monitor is Starkit in the path of every click on
+the machine, and it would hold that position for the ~99% of the time the bar is not on screen, which
+G4 is a promise about. Installing it in `summon` and removing it in `dismiss` is also what makes
+"outside" free: a *global* monitor never sees events going to Starkit itself, so a click on the bar
+is excluded by the window server rather than by hit-testing a frame — and the menu bar item is inside
+for the same reason, which a frame test would have got wrong.
+
+Both halves were verified, and the negative one is the half that matters. A click into another window
+**Dismisses** the bar. Another application taking activation with no mouse-down does *not*: driven by
+watching the log for a **Summon** and activating Calculator the moment one appeared, so no hand was
+near the mouse, and the bar was still there over it. That is T5.4's hazard answered before T5.4
+exists, and it is the case a focus-based implementation gets wrong.
+
+**Checkpoint C** — reached. ⌃⌘K **Summons** the bar in 10.7 ms, `wo` narrows to Work, ↩ runs it, and
+↑/↓/⌃N/⌃P move between the five. Three ways to put it away, and one that only looks like a fourth
+and is refused. Starkit is usable for 2 of 5 **Scripts** (Work, Personal) — everything Phase 3 added
+is how you *reach* a **Script**, not how many there are.
 
 ## Phase 4 — Clean (slice 3)
 
