@@ -9,6 +9,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var toolchain: Toolchain?
     private var builder: Builder?
 
+    /// Watching from launch rather than from the first **Summon**, because what it has to know
+    /// happened before either: which application the bar will be taking the keyboard from.
+    private let focus = Focus()
+
     /// The chord and the bar first, then everything they will eventually need.
     ///
     /// Ordered against a measurement rather than by taste: resolving the **Toolchain** costs 510 ms
@@ -119,6 +123,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // Read here rather than inside the run: this is the main actor, and it is also the last
+        // moment the answer is still about the bar that was just **Dismissed** rather than about
+        // whatever the **Script** does next.
+        let previous = focus.previous
+
         DispatchQueue.global().async { [weak self] in
             let start = CFAbsoluteTimeGetCurrent()
             let refusal: Refusal?
@@ -126,7 +135,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try builder.ensureCurrent(manifest.keyword)
                 let effects = try Runner(toolchain: toolchain, home: Toolchain.home)
                     .run(keyword: manifest.keyword, input: input)
-                try Effector().perform(effects)
+                try Effector(handingFocusBackTo: previous).perform(effects)
                 // The one line a run that worked writes. Every other component reports what it did,
                 // and without this a **Script** running and ↩ doing nothing at all look identical
                 // from outside — which is the difference this task had to verify. It is also the
