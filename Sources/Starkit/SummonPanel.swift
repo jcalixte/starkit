@@ -708,14 +708,17 @@ private final class RowView: NSView {
     init(frame: NSRect, leading: CGFloat, margin: CGFloat) {
         super.init(frame: frame)
 
-        // `labelColor` and `secondaryLabelColor`, not the palette. Palette is explicit that it does
-        // not replace the system's text colours: those already answer light and dark correctly, and
-        // a periwinkle name would be a legibility bug on whichever appearance was not being looked
-        // at while choosing it. The palette's job here is the band behind the selected row.
+        // `labelColor` for the name, not the palette. Palette is explicit that it does not replace
+        // the system's text colours: those already answer light and dark correctly, and a periwinkle
+        // name would be a legibility bug on whichever appearance was not being looked at while
+        // choosing it. The palette's job here is the band behind the selected row.
+        //
+        // The **Keyword** is the exception, and `Palette.aside` says why: `secondaryLabelColor` is
+        // weighted for an opaque window, and this bar is not one.
         name.font = .systemFont(ofSize: 15)
         name.textColor = .labelColor
         keyword.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
-        keyword.textColor = .secondaryLabelColor
+        keyword.textColor = Palette.aside
         keyword.alignment = .right
         for label in [name, keyword] {
             label.lineBreakMode = .byTruncatingTail
