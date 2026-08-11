@@ -29,8 +29,17 @@ enum Palette {
         NSColor(hex: 0xAAC4F5, alpha: appearance.isDark ? 0.45 : 0.9)
     }
 
-    /// `#8CA9FF` — the chip, the caret, and the selected row when T2.4 has rows to select.
+    /// `#8CA9FF` — the chip and the caret, where the accent is the ink.
     static let accent = NSColor(hex: 0x8CA9FF)
+
+    /// The accent behind the selected row, where it is the paper instead.
+    ///
+    /// Weighted per appearance for the same reason `wash` is, and against the same constraint: the
+    /// row's name stays `labelColor`, so the band has to be strong enough to be the selection and
+    /// weak enough to leave near-black text readable on it in one appearance and white in the other.
+    static let selection = NSColor(name: "starkit.selection") { appearance in
+        NSColor(hex: 0x8CA9FF, alpha: appearance.isDark ? 0.30 : 0.45)
+    }
 
     /// The accent, taken far enough towards the background it sits on to be read as placeholder text
     /// rather than as something typed. Periwinkle at full strength on cream is a colour, not a word.
