@@ -1,0 +1,13 @@
+name = "starkit"
+version = "0.1.0"
+
+# JavaScript, not Erlang. Measured at roughly 5x faster to start for this workload — see
+# docs/adr/0001-compile-gleam-to-javascript.md in the Starkit repo. The consequence is that this is
+# not BEAM Gleam: no OTP, no actors, and no Erlang-only Hex packages.
+target = "javascript"
+
+[dependencies]
+gleam_stdlib = ">= 0.60.0 and < 2.0.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
