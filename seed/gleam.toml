@@ -21,5 +21,19 @@ gleam_stdlib = ">= 0.60.0 and < 2.0.0"
 # installer overwrites rather than in one you maintain.
 gleam_json = ">= 3.0.0 and < 4.0.0"
 
+# How a Script reaches the network, which it owns — the Shelf owns the machine and never fetches on
+# a Script's behalf. Added at T5.2 for `youtube`, and `link` uses it at T6.1. There is no
+# synchronous HTTP on this target, so these three arrive together: gleam_fetch wraps the runtime's
+# own fetch, gleam_http is the Request it takes, and gleam_javascript is the Promise it answers with
+# — the same Promise the Vocabulary's `Fetching` names.
+#
+# Not hand-rolled through @external, which was the alternative and would have kept the lock file
+# smaller: the ban on @external in a Script is what makes the Vocabulary the whole interface, and
+# widening it to smuggle in HTTP would trade a dependency for the one boundary the design has.
+gleam_fetch = ">= 1.4.0 and < 2.0.0"
+gleam_http = ">= 4.3.0 and < 5.0.0"
+gleam_javascript = ">= 1.0.1 and < 2.0.0"
+gleam_http = ">= 4.3.0 and < 5.0.0"
+
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
