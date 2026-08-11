@@ -71,7 +71,7 @@ starkit/                          # this repo — the Shelf only
 │   ├── starkit.gleam             # the vendored Vocabulary — `import starkit`
 │   ├── entry.gleam               # answers `describe` and `run <name>`
 │   ├── registry.gleam            # generated from src/scripts/
-│   └── scripts/{theodo,personal,clean,youtube,link}.gleam
+│   └── scripts/{work,personal,clean,youtube,link}.gleam
 └── build/                        # Gleam's, ~2.8 MB
 ```
 
@@ -138,8 +138,10 @@ call into a framework, and a mock would pass while the app was broken. Verified 
   two **Scripts** wanting the same one is coincidence; three is a signal.
 - Anything requiring a permission beyond Accessibility. One grant is a property worth keeping.
 - Adding a dependency to `gleam.toml`, or any Swift dependency at all.
-- Turning on notarization or Homebrew distribution — that decides whether the repo goes public,
-  and the Theodo **Script** names where you work.
+- Turning on notarization or Homebrew distribution — that decides whether the repo goes public.
+  **Scripts** live in `~/.starkit`, not here, so this repo carries no personal app lists; keep it
+  that way. Anything naming an employer, a client or a private hostname belongs in a **Script**,
+  which is never committed to this repo.
 
 **Never**
 
@@ -161,17 +163,17 @@ call into a framework, and a mock would pass while the app was broken. Verified 
 
 ### Slice 1 — the spine, without any UI
 
-- `Starkit run theodo` opens ghostty, Slack, Notion and Zen.
-- `Starkit run theodo --dry-run` prints four `Open` **Effects** and opens nothing.
-- Breaking `youtube.gleam` and running `Starkit run theodo` still works; running
+- `Starkit run work` opens ghostty, Slack, Notion and Zen.
+- `Starkit run work --dry-run` prints four `Open` **Effects** and opens nothing.
+- Breaking `youtube.gleam` and running `Starkit run work` still works; running
   `Starkit run youtube` refuses and prints the compile error. This is [ADR 0002](./docs/adr/0002-one-project-with-per-script-staleness.md) working.
-- Deleting `node` from the shell's `PATH` makes `Starkit run theodo` fail with a message naming
+- Deleting `node` from the shell's `PATH` makes `Starkit run work` fail with a message naming
   the **Toolchain**, not a crash.
 
 ### Slice 2 — the bar
 
 - ⌃⌘K shows the bar in ≤ 50 ms; ⌃⌘K again hides it; Escape hides it.
-- Typing `th` selects Theodo; ↩ runs it and the bar disappears.
+- Typing `wo` selects Work; ↩ runs it and the bar disappears.
 - ⌃N and ⌃P move the selection, as do ↓ and ↑.
 - With Script Kit running, Starkit's menu bar icon is red and ⌃⌘K reaches Script Kit — the chord
   is never swallowed silently.

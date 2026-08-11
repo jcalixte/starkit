@@ -66,12 +66,12 @@ fails, stop and revisit the **Paste** **Effect** before building anything on it.
 
 | ID | Task | Depends | Verify with |
 | -- | ---- | ------- | ----------- |
-| T1.1 | **Vocabulary** types + `theodo` **Script** + `entry.gleam` answering `describe` / `run` | T0.3 | `node build/dev/javascript/starkit/entry.mjs describe` prints 5 manifests; `… run theodo '{}'` prints 4 **Open** **Effects** |
+| T1.1 | **Vocabulary** types + `work` **Script** + `entry.gleam` answering `describe` / `run` | T0.3 | `node build/dev/javascript/starkit/entry.mjs describe` prints 5 manifests; `… run work '{}'` prints 4 **Open** **Effects** |
 | T1.2 | C12 Toolchain — login-shell resolution, `starkit.toml` override, named error when absent | T0.1 | with `PATH` stripped, the error names the **Toolchain**; no crash |
 | T1.3 | C5 Builder + `Staleness` as a pure, tested rule. **Introduces a `StarkitCore` library target**: SwiftPM cannot cleanly link an executable into a test target, so everything tested lives outside the executable — `Staleness` and `Keyword` both move there | T1.2 | `swift test` — 4 cases: source newer, artefact newer, shared module newer, artefact missing |
-| T1.4 | C4 Runner — spawn `node`, feed a run, decode **Effects**, 5 s deadline | T1.1, T1.3 | `Starkit run theodo --dry-run` prints 4 **Open** **Effects**, opens nothing |
-| T1.5 | C7 Effector — **Open** only | T1.4 | `Starkit run theodo` opens ghostty, Slack, Notion, Zen |
-| T1.6 | Isolation check — no new code, an executable reading of [ADR 0002](../docs/adr/0002-one-project-with-per-script-staleness.md) | T1.5 | break `youtube.gleam`: `run theodo` still works, `run youtube` refuses and prints the compile error |
+| T1.4 | C4 Runner — spawn `node`, feed a run, decode **Effects**, 5 s deadline | T1.1, T1.3 | `Starkit run work --dry-run` prints 4 **Open** **Effects**, opens nothing |
+| T1.5 | C7 Effector — **Open** only | T1.4 | `Starkit run work` opens ghostty, Slack, Notion, Zen |
+| T1.6 | Isolation check — no new code, an executable reading of [ADR 0002](../docs/adr/0002-one-project-with-per-script-staleness.md) | T1.5 | break `youtube.gleam`: `run work` still works, `run youtube` refuses and prints the compile error |
 
 **Checkpoint B** — one **Script** works end to end from a terminal, and the isolation guarantee is
 demonstrated rather than asserted. This is the architecture proven; everything after is surface.
@@ -83,10 +83,10 @@ demonstrated rather than asserted. This is the architecture proven; everything a
 | T2.1 | C3 HotKey ⌃⌘K + C10 MenuBarStatus going red when it can't hold the chord | T0.1 | with Script Kit running, icon is red **and** ⌃⌘K reaches Script Kit — never swallowed |
 | T2.2 | C1 SummonPanel — one `NSPanel` built at launch, shown/hidden, Escape hides | T2.1 | ≤ 50 ms to visible; the first ⌃⌘K is no slower than the tenth |
 | T2.3 | C2 Catalogue — read `manifests.json`; `Keyword` parsing as a pure, tested rule | T1.1 | `swift test` — first token splits from **Input**; no match; **Keyword** that prefixes another |
-| T2.4 | Bar view — list, filter, selection, ↩ runs | T2.2, T2.3 | `th` selects Theodo, ↩ runs it, bar disappears |
+| T2.4 | Bar view — list, filter, selection, ↩ runs | T2.2, T2.3 | `wo` selects Work, ↩ runs it, bar disappears |
 | T2.5 | F13 — handle `moveUp:`/`moveDown:`/`insertNewline:`/`cancelOperation:` rather than keycodes | T2.4 | ⌃N/⌃P **and** ↑/↓ both move the selection |
 
-**Checkpoint C** — ⌃⌘K runs Theodo. Starkit is usable for 2 of 5 **Scripts** (Theodo, Personal).
+**Checkpoint C** — ⌃⌘K runs Work. Starkit is usable for 2 of 5 **Scripts** (Work, Personal).
 
 ## Phase 4 — Clean (slice 3)
 

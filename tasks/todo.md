@@ -16,12 +16,12 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 2 — The spine, no UI
 
-- [ ] **T1.1** **Vocabulary** types + `theodo` **Script** + `entry.gleam` (`describe` / `run`)
+- [ ] **T1.1** **Vocabulary** types + `work` **Script** + `entry.gleam` (`describe` / `run`)
 - [ ] **T1.2** C12 Toolchain — login-shell resolution, `starkit.toml` override, named error
 - [ ] **T1.3** C5 Builder + `Staleness` pure rule **+ its 4 tests**
 - [ ] **T1.4** C4 Runner — spawn `node`, feed a run, decode **Effects**, 5 s deadline
 - [ ] **T1.5** C7 Effector — **Open** only
-- [ ] **T1.6** Isolation check — break `youtube.gleam`, confirm `theodo` still runs
+- [ ] **T1.6** Isolation check — break `youtube.gleam`, confirm `work` still runs
 
 > **Checkpoint B** — the architecture is proven end to end. Everything after this is surface.
 
@@ -33,7 +33,7 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [ ] **T2.4** Bar view — list, filter, selection, ↩ runs
 - [ ] **T2.5** F13 — Cocoa action selectors, not keycodes (⌃N/⌃P come free)
 
-> **Checkpoint C** — ⌃⌘K runs Theodo. 2 of 5 **Scripts** usable.
+> **Checkpoint C** — ⌃⌘K runs Work. 2 of 5 **Scripts** usable.
 
 ## Phase 4 — Clean
 
