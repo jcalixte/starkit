@@ -560,9 +560,10 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         guard shown > 0 else { return }
 
         guard let selected else {
-            // Only reachable when the one row is an offer to write a **Script**. ↓ takes it, ↑ leaves
-            // it alone: the offer is below the field, and arriving on it by pressing *up* would be the
-            // accident this is written to prevent.
+            // Reachable two ways, both of them a list nobody has chosen from yet: the offer to write a
+            // **Script**, and the whole **Catalogue** under an empty field. ↓ enters at the top, ↑
+            // leaves it alone — the rows are below the field, and arriving on one by pressing *up* is
+            // the accident this is written to prevent.
             guard step > 0 else { return }
             self.selected = 0
             list.select(0)
@@ -648,7 +649,12 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
             selected = nil
         } else {
             choices = matches.map(Choice.script)
-            selected = 0
+            // Nothing typed lists the whole **Catalogue**, and nothing in it was chosen: the first row
+            // is whatever sorts first, which is `clean` — the one **Script** whose **Effects** cannot
+            // be taken back. A band there would make ⌃⌘K ↩ the shortest way to close every
+            // application with whatever was unsaved in it. The band arrives with the first keystroke
+            // that narrows the list, or with a deliberate ↓.
+            selected = keyword.isEmpty ? nil : 0
         }
 
         show()

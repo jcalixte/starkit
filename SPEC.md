@@ -205,7 +205,8 @@ and §8 records where their numbers came from instead.
 - Add `@external` to a **Script**.
 - Let a **Script** run another **Script**, or outlive the 5 s deadline.
 - Overwrite a **Script** in `~/.starkit` during install.
-- Make `Create "<keyword>"` the default selection in the bar.
+- Make `Create "<keyword>"` the default selection in the bar, or put a selection on a list nobody has
+  narrowed or arrived on — an empty field selects nothing, whatever sorts first.
 - Delete a **Script** with one keystroke, or with `unlink`. Two presses, and the Trash, so a mistake
   is recoverable without Starkit having to hold an undo of its own.
 - Delete a **Script**'s source and leave its test suite behind. `gleam build` typechecks `test/`, so
@@ -242,6 +243,8 @@ is the boundary working, not a gap in it.
   A **Script**'s own **Open** activating another application is *not* a **Dismissal** — that is the
   case `hidesOnDeactivate = false` exists for, and the one a focus-based implementation gets wrong.
 - Typing `wo` selects Work; ↩ runs it and the bar disappears.
+- ⌃⌘K with nothing typed lists the whole **Catalogue** and selects none of it: ↩ there does nothing,
+  because the first row is whichever **Keyword** sorts first rather than anything that was chosen.
 - ⌃N and ⌃P move the selection, as do ↓ and ↑. It stops at the first and last row rather than
   wrapping, and it never leaves the rows on screen: with more matches than the bar lists, the way
   past the last one is to type, so ↩ cannot run a **Script** whose name is not visible.

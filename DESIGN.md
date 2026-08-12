@@ -256,6 +256,12 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         row that was hidden is, and it is paid only when the number of matches changes. Both are
         inside one frame, so the rows are built at launch and reused rather than created per
         keystroke: the same argument as F1, one level down
+      - **An empty field selects nothing, the same rule F11 already holds.** Nothing typed lists the
+        whole **Catalogue**, and the registry sorts its **Keywords**, so the row a band would land on
+        is `clean` — the **Script** that force-terminates every application without asking. Selecting
+        it costs one chord and one ↩ and nothing in between reads as a decision, which is the
+        shortest destructive path a bar can have. The band belongs to something that was narrowed to
+        or arrived on: the first keystroke, or a deliberate ↓
       - **Component**: C2 Catalogue · C1 SummonPanel
   - **F5** Execute the **Artefact**
     - **How**: spawn `bun` per run and keep nothing between runs. Measured at T1.4 through
