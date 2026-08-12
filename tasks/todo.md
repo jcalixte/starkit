@@ -209,5 +209,13 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       "0 registry edits" holds and why the bar and Zed are the same event — and it **never overwrites**,
       since a **Script** that has never compiled is missing from the list while its file is right there.
       The template was checked by letting C6 build the exact bytes it emits: listed 174 ms later, runs,
-      and `gleam format`-clean. **Four bar interactions still want a keypress**: the offer appearing, ↩
-      on a typo doing nothing, ↓ reaching it, ↩ writing and opening Zed
+      and `gleam format`-clean. **It shipped crashing and that is the lesson**: `Data.write` was given
+      `[.atomic, .withoutOverwriting]`, which Foundation traps on unconditionally — a `fatalError`, so
+      the `do/catch` was decoration and every ↩ on that row killed the app. `.withoutOverwriting` is
+      the half kept, since clobbering a **Script** is the only outcome that loses work. It reached
+      someone because **C11 was the one component the debug CLI could not reach**, so its only
+      filesystem call had never been executed; `Starkit create <keyword>` fixes that properly, and no
+      test would have — the write is in the app module and a mock would have passed. Now exercised:
+      writes, refuses to overwrite an edited file, names an invalid **Keyword**, and C6 lists the
+      result 238 ms later. **Three bar interactions still want a keypress**: the offer appearing, ↩ on
+      a typo doing nothing, ↓ reaching it

@@ -942,9 +942,29 @@ a file appearing in the real `~/.starkit` was listed **360 ms** later and removi
 with the registry returning to five imports. Slower than the scratch home's 201–238 ms over a larger
 tree, and 72 % of F10's budget — the row to watch as **Scripts** accumulate.
 
-**What is not verified by running: the four bar interactions.** Typing a name that matches nothing to
-see the offer, ↩ on it doing nothing, ↓ then ↩ writing the file and opening Zed. Those need a keypress,
-and SPEC already puts C1 under "not tested — verified by running it".
+**It crashed on the first ↩, and the reason it reached anyone is the interesting part.**
+`Data.write(to:options:)` was given `[.atomic, .withoutOverwriting]`, and Foundation traps on that
+combination unconditionally — *"withoutOverwriting is not supported with atomic"*, a `fatalError` rather
+than a thrown error, so the `do/catch` around it was decoration and **every** press of that row killed
+the app on the main thread. Of the two options, `.withoutOverwriting` is the one that was kept:
+clobbering a **Script** someone wrote is the only outcome here that loses work, while a half-written
+*new* file announces itself by not compiling within 200 ms.
+
+**The verb `Starkit create <keyword>` is the actual fix.** Every other component is reachable from the
+debug CLI — that is what it is for, and it is why C5, C4, C7 and C8 were all exercised before they were
+ever pressed. C11 was reachable only through a keystroke in the bar, so its one filesystem call was
+never run, and no test could have caught it either: the write is in the app module, and a mock of
+`Data.write` would have passed while the app trapped. A path that cannot be run without a keypress is a
+path that does not get run.
+
+**Now exercised end to end**: `create` writes the template, a second `create` over an edited file leaves
+the edit alone, an invalid **Keyword** is refused with the reason, and with C6 running the new **Script**
+is listed 238 ms later and runs.
+
+**What is still not verified by running: the three bar interactions.** The offer appearing for a
+**Keyword** that matches nothing, ↩ on it doing nothing, and ↓ then ↩ reaching it. Those are selection
+behaviour rather than filesystem behaviour, they need a keypress, and SPEC already puts C1 under "not
+tested — verified by running it".
 
 ## Deferred (slice 6, specified but outside MVP)
 

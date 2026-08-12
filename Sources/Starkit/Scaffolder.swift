@@ -28,8 +28,15 @@ struct Scaffolder {
 
         if !FileManager.default.fileExists(atPath: destination.path) {
             do {
+                // `.withoutOverwriting` and **not** `.atomic`. The two cannot be combined — Foundation
+                // traps on sight with "withoutOverwriting is not supported with atomic", which is what
+                // crashed the first ↩ on this row — and of the two, refusing to overwrite is the one
+                // worth keeping: clobbering a **Script** someone wrote is the only outcome here that
+                // loses work, while a half-written *new* file announces itself by not compiling within
+                // 200 ms. It also keeps the guarantee at the filesystem rather than in the check above,
+                // which cannot see a file created between asking and writing.
                 try Data(Scaffold.source(for: keyword).utf8)
-                    .write(to: destination, options: [.atomic, .withoutOverwriting])
+                    .write(to: destination, options: .withoutOverwriting)
             } catch {
                 throw Refusal(
                     "Starkit could not write \(destination.path).",

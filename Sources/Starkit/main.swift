@@ -39,11 +39,13 @@ private func command(_ arguments: [String]) -> Int32 {
 
     if words.first == "login" { return login(Array(words.dropFirst())) }
     if words.first == "registry" { return registry() }
+    if words.first == "create" { return create(Array(words.dropFirst())) }
 
     guard words.count >= 2, words[0] == "run" else {
         report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
         report("       Starkit login [on|off]")
         report("       Starkit registry")
+        report("       Starkit create <keyword>")
         return 2
     }
     let keyword = words[1]
@@ -81,6 +83,41 @@ private func command(_ arguments: [String]) -> Int32 {
         } else {
             try Effector().perform(effects)
         }
+        return 0
+    } catch {
+        report(error.reason)
+        if let detail = error.detail { report(detail) }
+        return 1
+    }
+}
+
+/// `Starkit create <keyword>` — C11 from a terminal.
+///
+/// **This verb exists because its absence shipped a crash.** Every other component is reachable from
+/// this CLI, and C11 was reachable only by pressing ↩ on a row in the bar — so the one line that
+/// mattered, the write itself, was never executed until someone did that, and it trapped on the first
+/// try (`Scaffolder`). A path that cannot be run without a keystroke is a path that does not get run.
+///
+/// It writes and opens exactly as the bar does, and performs no build: C6 does that, or `registry`
+/// does it by hand when nothing is watching.
+private func create(_ words: [String]) -> Int32 {
+    guard let keyword = words.first, words.count == 1 else {
+        report("usage: Starkit create <keyword>")
+        return 2
+    }
+    // Checked here as well as in the bar, because the bar's check is about what to *offer* and this
+    // one is about what a person typed. Both ask `Scaffold`, so they cannot disagree.
+    guard Scaffold.isValid(keyword) else {
+        report(
+            "\"\(keyword)\" cannot be a Keyword: a Script is a Gleam module, so it needs lowercase "
+                + "letters, digits and underscores, starting with a letter."
+        )
+        return 2
+    }
+
+    do throws(Refusal) {
+        let file = try Scaffolder(home: Toolchain.home).create(keyword)
+        print("→ \(file.path)")
         return 0
     } catch {
         report(error.reason)
