@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # Regenerates $STARKIT_HOME/src/registry.gleam from the Scripts in src/scripts/.
 #
-# Gleam has no runtime reflection, so the list of Scripts has to exist as source. Rather than ask
-# you to remember to edit a list every time you add a file, this derives it from the directory.
+# Gleam has no runtime reflection, so the list of Scripts has to exist as source. This derives it
+# from the directory instead of asking you to maintain a list.
 #
 # The convention it relies on: every src/scripts/<keyword>.gleam exposes `pub fn script() ->
-# starkit.Script`. A file that does not will fail the build with a type error naming it, which is
-# the intended outcome — a Script the registry cannot see is worse than one that fails loudly.
+# starkit.Script`. A file that does not fails the build with a type error naming it, which is the
+# intended outcome.
 #
-# Output is sorted, so running this twice produces a byte-identical file. That matters because the
-# Watcher (slice 6) will run it on every save, and a file whose mtime changes for no reason would
-# make every other Script look Stale.
+# Output is sorted, so running this twice produces a byte-identical file. The Watcher (slice 6) runs
+# it on every save, and a file whose mtime moved for no reason would make every Script look Stale.
 set -euo pipefail
 
 STARKIT_HOME="${STARKIT_HOME:-$HOME/.starkit}"
@@ -37,10 +36,9 @@ trap 'rm -f "$tmp"' EXIT
 	echo "////"
 	echo "//// Add a Script by creating src/scripts/<keyword>.gleam; it appears here on the next run."
 	echo
-	# Import order matches `gleam format`, which sorts alphabetically. That is not cosmetic: if this
-	# file were not already formatted, running `gleam format` would rewrite it and move its mtime,
-	# which is what marks a Script Stale. Every `scripts/…` sorts before `starkit`, so the
-	# Vocabulary import always goes last.
+	# Import order matches `gleam format`, which sorts alphabetically. Not cosmetic: an unformatted
+	# file would be rewritten by `gleam format`, moving its mtime and marking Scripts Stale. Every
+	# `scripts/…` sorts before `starkit`, so the Vocabulary import always goes last.
 	for name in "${modules[@]}"; do
 		echo "import scripts/$name"
 	done

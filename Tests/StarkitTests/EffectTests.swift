@@ -3,13 +3,11 @@ import Testing
 
 @testable import StarkitCore
 
-/// Reading what a **Script** answered. Tested because both ways of getting it wrong are silent: a
-/// misread reply either performs **Effects** nobody asked for, or **Refuses** a **Script** that did
-/// nothing wrong. Neither crashes, and neither announces itself.
+/// Reading what a **Script** answered.
 ///
-/// C4's other half — spawning `bun`, holding the 5 s deadline, draining two pipes — is not here and
-/// should not be. It is a thin call into Foundation, where a mock would pass while the app was
-/// broken, so it is verified by running it (SPEC.md § Testing strategy).
+/// C4's other half — spawning `bun`, holding the 5 s deadline, draining two pipes — is deliberately
+/// not here: it is a thin call into Foundation where a mock would pass while the app was broken, so
+/// it is verified by running it (SPEC.md § Testing strategy).
 struct EffectTests {
     private func read(
         _ reply: String,
@@ -42,9 +40,8 @@ struct EffectTests {
         )
     }
 
-    // CONTEXT.md: a Script emits Effects *in order*, and the Shelf performs them in order. Work's
-    // last Open is the one that ends up frontmost, so a reordering here would be felt rather than
-    // seen.
+    // A Script emits Effects *in order* and the Shelf performs them in order (CONTEXT.md). Work's
+    // last Open is the one that ends up frontmost, so a reordering here would be felt, not seen.
     @Test("Effects keep the order the Script decided on")
     func order() throws {
         let reply = """
@@ -81,13 +78,12 @@ struct EffectTests {
         let reply = #"{"refusal":"No Script answers to the Keyword \"wrok\"."}"#
         let refusal = #expect(throws: Refusal.self) { try read(reply) }
         #expect(refusal?.reason == "No Script answers to the Keyword \"wrok\".")
-        // Nothing to add: entry.gleam already said which and why, which is the whole of a Refusal.
+        // Passed through untouched: entry.gleam already said which and why.
         #expect(refusal?.detail == nil)
     }
 
-    // run.mjs reports a Refusal twice on purpose — in the reply the Shelf decodes, and in the exit
-    // code, for a person running it by hand. Reading the status as failure would turn every Refusal
-    // into "the Script crashed" and lose the sentence explaining it.
+    // run.mjs reports a Refusal in both the reply and the exit code. Reading the status as failure
+    // would turn every Refusal into "the Script crashed" and lose the sentence explaining it.
     @Test("a non-zero exit with a good reply is the Refusal, not a crash")
     func refusalExitsNonZero() {
         let reply = #"{"refusal":"The payload for \"work\" is not the shape the Shelf promised."}"#
@@ -117,8 +113,7 @@ struct EffectTests {
     // MARK: - The two halves of the Vocabulary drifting
 
     // An Effect this Starkit does not know must be a loud Refusal naming the word, never one the
-    // Effector silently skips. This is the case that makes spelling the Vocabulary twice
-    // affordable.
+    // Effector silently skips.
     @Test("an Effect this Starkit does not know is a Refusal, and the reply is not half-performed")
     func unknownKind() {
         let reply = """

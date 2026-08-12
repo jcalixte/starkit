@@ -5,14 +5,11 @@ import Testing
 
 /// The payload a **Script** is handed, which is C8's half of the wire.
 ///
-/// Tested for the same reason `Effect` is: obtaining the answer needs a machine, writing it down does
-/// not, and the part that does not is where a mistake is silent. A **Need** that arrives under the
-/// wrong key, or a slice that arrives empty where it should be absent, produces a **Script** that
-/// runs and decides from nothing — and `entry.gleam` cannot tell that apart from a machine with
-/// nothing on it.
+/// A **Need** under the wrong key, or a slice that arrives empty where it should be absent, produces
+/// a **Script** that runs and decides from nothing — and `entry.gleam` cannot tell that apart from a
+/// machine with nothing on it.
 struct PayloadTests {
-    /// Untyped on the way out, like `EffectTests`' own: `#expect(throws:)` takes a closure, and a
-    /// typed-throwing call inside one is what the compiler is asked to do everywhere else here.
+    /// Untyped on the way out because `#expect(throws:)` takes a closure.
     private func needs(_ declared: [String], for keyword: String) throws -> Set<Need> {
         try Need.all(declared, for: keyword)
     }
@@ -58,11 +55,8 @@ struct PayloadTests {
         #expect(try needs(["running_apps", "running_apps"], for: "clean") == [.runningApps])
     }
 
-    /// Loud, not skipped. A **Script** handed nothing where it declared something still runs, and it
+    /// Loud, not skipped: a **Script** handed nothing where it declared something still runs, and
     /// decides from an empty **Context** with no way to know that is not the truth about the machine.
-    ///
-    /// The **Refusal** names both the word and the **Script**, and blames the half that is actually
-    /// behind: the word came out of a **Vocabulary** in `~/.starkit` that this binary is older than.
     @Test("a Need this Starkit cannot gather is a Refusal naming the word and the Script")
     func unknownNeedIsRefused() throws {
         let refusal = #expect(throws: Refusal.self) { try needs(["windows"], for: "tidy") }
@@ -71,9 +65,8 @@ struct PayloadTests {
         #expect(refusal?.detail?.contains("reinstall") == true)
     }
 
-    /// One unknown word refuses the run rather than costing only itself, which is the same call
-    /// `Effect` makes in the other direction — half a **Context** is not a smaller **Context**, it is
-    /// a **Script** deciding on a machine that does not exist.
+    /// One unknown word refuses the whole run: half a **Context** is not a smaller **Context**, it
+    /// is a **Script** deciding on a machine that does not exist.
     @Test("a known Need beside an unknown one does not rescue the run")
     func oneUnknownNeedRefusesTheWholeRun() throws {
         #expect(throws: Refusal.self) {

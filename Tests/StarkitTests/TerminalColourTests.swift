@@ -2,8 +2,7 @@ import Testing
 
 @testable import StarkitCore
 
-/// Tested because the input is not ours and the failure is silent: escapes that survive do not
-/// crash anything, they just make a menu bar item unreadable at the moment it matters most.
+/// Escapes that survive do not crash anything — they make a menu bar item unreadable.
 struct TerminalColourTests {
     @Test("a real gleam diagnostic comes out readable")
     func gleamDiagnostic() {

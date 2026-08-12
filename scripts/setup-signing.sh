@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # Creates a self-signed code-signing identity in the login keychain.
 #
-# Why this exists: macOS ties the Accessibility grant to an app's code signature. Paste is the
-# only Effect that needs Accessibility (DESIGN.md §9, T5.3), and an ad-hoc signature changes on
-# every build — so without this, every rebuild would silently drop the grant and Paste would
-# start failing until you re-ticked the box in System Settings. Signing with a stable identity
-# pins the app's designated requirement to this certificate, and the grant survives rebuilds.
+# Why this exists: macOS ties the Accessibility grant to an app's code signature, and an ad-hoc
+# signature changes on every build — so without this, every rebuild silently drops the grant and
+# Paste fails until you re-tick the box in System Settings. Signing with a stable identity pins the
+# app's designated requirement to this certificate, and the grant survives rebuilds.
 #
-# The certificate is never trusted as a root, and it does not need to be: codesign accepts it by
-# name regardless, and TCC matches on the leaf certificate hash rather than on trust. It will not
-# appear in `security find-identity -v -p codesigning`, which lists only trusted identities —
-# that absence is expected and is not a problem.
+# The certificate is never trusted as a root and does not need to be: codesign accepts it by name
+# regardless, and TCC matches on the leaf certificate hash rather than on trust. It will not appear
+# in `security find-identity -v -p codesigning`, which lists only trusted identities — that absence
+# is expected.
 #
 # Run once per machine, before install.sh. It is idempotent, and asks for your login keychain
 # password once (see authorise_codesign below for why).
@@ -25,14 +24,14 @@ P12_PASSWORD=starkit-transient
 
 # Lets /usr/bin/codesign use the new private key without a confirmation dialog.
 #
-# `security import -A` marks the key "allow all applications", but that is only half of it: macOS
-# also keeps a *partition list* per key, and codesign is not on it after an import. The result is
-# a SecurityAgent prompt on the first signing attempt — and if that dialog is not clickable (a
+# `security import -A` marks the key "allow all applications", which is only half of it: macOS also
+# keeps a *partition list* per key, and codesign is not on it after an import. The result is a
+# SecurityAgent prompt on the first signing attempt — and if that dialog is not clickable (a
 # non-interactive shell, a remote session, a locked screen) codesign blocks forever rather than
 # failing, which looks exactly like a hung build.
 #
-# Setting the partition list needs the login keychain's own password, so this is the one moment
-# the setup is interactive. It happens once per machine; every build afterwards is silent.
+# Setting the partition list needs the login keychain's own password, so this is the one moment the
+# setup is interactive.
 authorise_codesign() {
 	if [ ! -t 0 ]; then
 		echo "! Not running in a terminal, so codesign cannot be authorised now."

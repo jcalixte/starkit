@@ -5,12 +5,8 @@ let package = Package(
     name: "Starkit",
     platforms: [.macOS(.v14)],
     targets: [
-        // Everything that has tests lives here. SwiftPM cannot cleanly link an executable target
-        // into a test target, so the split is forced by the tooling rather than chosen — but it
-        // lands in the right place anyway, because the rules worth testing are exactly the ones
-        // this design made pure: `Staleness`, `Effect`, `Keyword` and the `Manifest` a reply carries
-        // — reading a reply is separable from obtaining one, which is the same line C5 sits on.
-        // `Refusal` lives here because all of them throw it, not because it is tested.
+        // Everything that has tests lives here: SwiftPM cannot cleanly link an executable target
+        // into a test target, so the split is forced by the tooling.
         .target(
             name: "StarkitCore",
             path: "Sources/StarkitCore",

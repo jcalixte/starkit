@@ -4,10 +4,6 @@ import Testing
 @testable import StarkitCore
 
 /// The three cases SPEC names, and the two the bar would be broken without.
-///
-/// Tested because every **Summon** goes through this and a bug here is silent in the worst way: the
-/// wrong **Script** runs, having been asked for by name. **Kill** is one keystroke away from Work in
-/// the same list.
 struct KeywordTests {
     private let catalogue = [
         Manifest(keyword: "clean", name: "Clean", needs: ["running_apps"]),
@@ -31,8 +27,8 @@ struct KeywordTests {
         #expect(typed.input == "")
     }
 
-    // The Input is what a Script is handed verbatim, so its own spacing is not Starkit's to tidy.
-    // A page title has spaces in it and arrives through this path at T6.1.
+    // The Input is handed to a Script verbatim, so its own spacing is not Starkit's to tidy — a
+    // page title has spaces in it and arrives through this path.
     @Test("the Input keeps the spaces inside it")
     func inputIsVerbatim() {
         #expect(Keyword.split("link  a  b").input == "a  b")
@@ -54,9 +50,8 @@ struct KeywordTests {
         #expect(Keyword.matches("WO", in: catalogue).map(\.keyword) == ["work"])
     }
 
-    // The case that decides what ↩ runs. Typing `link` in full must run Link and not the Script that
-    // merely starts the same way — while both stay listed, because the longer one is still reachable
-    // by typing more of it.
+    // Typing `link` in full must run Link, not the Script that merely starts the same way — while
+    // both stay listed, because the longer one is still reachable by typing more of it.
     @Test("a Keyword that prefixes another lists both, the exact one first")
     func exactBeforeLonger() {
         let ambiguous =

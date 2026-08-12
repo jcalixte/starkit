@@ -2,11 +2,10 @@
 # Builds Starkit, installs it into /Applications, seeds $STARKIT_HOME (default ~/.starkit), and
 # launches it.
 #
-# Meant to be run again and again — after a Vocabulary change, after a rebuild, after nothing at
-# all. The two halves of ~/.starkit are treated differently and that difference is the whole point
-# of this script: the Shelf-owned files are vendored on every run so the Vocabulary can be upgraded
-# without asking you to merge it by hand, and src/scripts/ — the half you write — is only ever
-# written when a file is absent. An install never touches a Script you have edited.
+# Meant to be run again and again. The two halves of ~/.starkit are treated differently: Shelf-owned
+# files are vendored on every run so the Vocabulary upgrades without a hand merge, and src/scripts/ —
+# the half you write — is only ever written when a file is absent. **An install never touches a
+# Script you have edited.**
 #
 # Set STARKIT_HOME to install the Scripts somewhere else, which is also how this script gets
 # exercised against a machine that has never had Starkit without disturbing your real one.
@@ -19,13 +18,13 @@ export STARKIT_HOME # gen-registry.sh reads it too, and both must agree on which
 CONFIGURATION="${1:-release}"
 DEST="/Applications/Starkit.app"
 
-# Named, not just missing. Everything below needs the Toolchain, and a bare "command not found"
-# from three lines down would blame the wrong thing.
+# Named, not just missing: a bare "command not found" from three lines down would blame the wrong
+# thing.
 #
-# This resolves from the invoking shell's PATH, which is not how the app does it — a login-launched
-# app gets a minimal PATH and asks the login shell instead (DESIGN.md §4, F9). The two can disagree,
-# and only the app's answer matters at Summon time; this check exists to fail the install clearly,
-# not to stand in for C12.
+# Resolves from the invoking shell's PATH, which is *not* how the app does it — a login-launched app
+# gets a minimal PATH and asks the login shell instead (DESIGN.md §4, F9). The two can disagree, and
+# only the app's answer matters at Summon time; this fails the install clearly, it does not stand in
+# for C12.
 for tool in gleam bun; do
 	if ! command -v "$tool" >/dev/null 2>&1; then
 		echo "! The Toolchain is incomplete: '$tool' is not on this shell's PATH." >&2
@@ -59,14 +58,11 @@ codesign --verify --strict "$DEST"
 echo "→ $DEST (signature verified)"
 
 # One rule, applied by path: src/scripts/ is yours, everything else under seed/ is the Shelf's.
-# Derived from the directory rather than a list, so a file added to seed/ later is vendored without
-# anyone having to remember this script exists.
+# Derived from the directory rather than a list, so a file added to seed/ later is vendored anyway.
 #
-# Vendored files are compared before being written, so an identical file keeps its mtime. This was
-# load-bearing until T1.4: the Stale rule compared mtimes, so re-vendoring an unchanged
-# starkit.gleam marked every Script Stale. The rule now compares content (ADR 0002) and cannot be
-# fooled that way, so this is down to not touching what it did not change — worth keeping, no longer
-# propping anything up. Same reasoning as gen-registry.sh.
+# Vendored files are compared before being written, so an identical file keeps its mtime. No longer
+# load-bearing — the Stale rule compares content now (ADR 0002) — but kept so an install does not
+# touch what it did not change. Same reasoning as gen-registry.sh.
 vendored=0
 kept=0
 seeded=0
@@ -100,8 +96,8 @@ echo "= $STARKIT_HOME: $vendored vendored, $seeded seeded, $kept of yours left a
 
 ./scripts/gen-registry.sh
 
-# The first build. Warm on every install afterwards, so this is the one that pays for resolving
-# dependencies — and the one that proves the seeded Scripts actually compile.
+# The first build: the one that pays for resolving dependencies, and that proves the seeded Scripts
+# actually compile.
 echo "Building the Scripts…"
 build_status=0
 (cd "$STARKIT_HOME" && gleam build) || build_status=$?
@@ -109,9 +105,8 @@ build_status=0
 open "$DEST"
 
 if [ "$build_status" -ne 0 ]; then
-	# Installed and launched regardless. An app in the menu bar that refuses the broken Script is
-	# more useful than no app at all, and being visibly broken is the design's answer to this
-	# (DESIGN.md §4, F10). Still a failed install, so it exits like one.
+	# Installed and launched regardless: an app in the menu bar that refuses the broken Script is
+	# more useful than no app at all (DESIGN.md §4, F10). Still exits as a failed install.
 	echo "! Starkit is installed and running, but your Scripts do not compile — see above." >&2
 	exit 1
 fi

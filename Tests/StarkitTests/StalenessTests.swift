@@ -3,12 +3,10 @@ import Testing
 
 @testable import StarkitCore
 
-/// The four cases ADR 0002 turns on. Tested because the rule is what keeps one broken **Script**
-/// from taking the other four down with it, and because a bug here is silent: it does not crash,
-/// it just runs an **Artefact** that is not what is on disk, or refuses one that is.
+/// The four cases ADR 0002 turns on.
 ///
 /// The hashes here are stand-ins — the rule only ever asks whether two of them are equal, which is
-/// exactly why it can be tested without a filesystem or a compiler.
+/// why it can be tested without a filesystem or a compiler.
 struct StalenessTests {
     private let built = "aaaa"
     private let edited = "bbbb"
@@ -44,17 +42,15 @@ struct StalenessTests {
         )
     }
 
-    // Not one of the four, but the case the T1.4 defect arrived as. A file that was touched rather
-    // than edited hashes the same, so it is current — where the mtime version of this rule saw an
-    // edit and refused the Script permanently, because a rebuild had nothing to recompile and so
-    // never moved the Artefact's mtime. This is the regression test for that.
+    // Regression test for T1.4. A file touched rather than edited hashes the same, so it is
+    // current — where the mtime version of this rule saw an edit and refused the Script
+    // permanently, because a rebuild had nothing to recompile and never moved the Artefact's mtime.
     @Test("a source touched but not changed is current")
     func touchedNotEdited() {
         #expect(Staleness.of(source: built, asBuilt: built, artefactExists: true) == .current)
     }
 
-    // A Script the last successful build never saw. It has no Artefact, so artefactMissing answers
-    // first; the case exists to pin down that `nil` is not accidentally read as "matches".
+    // A Script the last successful build never saw. Pins that `nil` is not read as "matches".
     @Test("a Script the last build never compiled is Stale even if an Artefact is there")
     func neverBuilt() {
         #expect(Staleness.of(source: built, asBuilt: nil, artefactExists: true) == .sourceChanged)
