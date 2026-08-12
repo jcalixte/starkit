@@ -128,6 +128,13 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         empty environment rather than a terminal. Costs 510 ms against 35 ms, once per launch,
         17 % of the 3 s budget. `-ic` was measured at 537 ms, so dropping `.zprofile` buys nothing:
         the price is reading `~/.zshrc`, not the login half
+      - **The registration is macOS's, and it is about a bundle rather than a path.** Asked for by
+        `install.sh` through the *installed* bundle — an install is when the promise was asked for,
+        boot included, where an app registering itself at launch would overrule someone who had just
+        turned it off — and read back fresh every time the menu opens, since System Settings can
+        change it with nothing told to us. Measured at T7.2 against `sfltool dumpbtm`: the record
+        follows the bundle across a move and survives the delete-and-`ditto` every install performs,
+        so neither silently unregisters
       - **Component**: C9 LoginItem · C12 Toolchain
   - **F10** Surface breakage at save time, not **Summon** time
     - **How**: `FSEventStream` on `~/.starkit/src` → build, then set the menu bar state
@@ -317,7 +324,7 @@ everything still works but silently goes **Stale**.
 | 2 | F8 hold the chord | 100 % | menu bar turns red on registration failure | fall through to no-op rather than swallowing the chord; never fail silently |
 | 3 | F5 execute | ≤ 20 ms → **22.7 ms measured** (T1.4) | log per-run µs behind a debug flag | nothing to fall back to: cold spawn *is* the design now (T3 dropped). 3 ms over on a threshold about imperceptibility was judged not worth a process lifecycle. If it ever matters, T3 is written down and can be built |
 | 4 | F4 build | ≤ 40 ms | time each `gleam build` | if it regresses, trust the watcher's build and skip the **Summon**-time re-check |
-| 5 | F9 ready after login | ≤ 3 s | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
+| 5 | F9 ready after login | ≤ 3 s → **82 ms to the chord, 734 ms to all five Scripts** (T7.1, from an empty environment; a reboot is still owed) | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
 | 6 | F14 run deadline | 5 s | the deadline itself | none needed — this *is* the fallback |
 | 7 | F6 gather **Context** | ≤ 5 ms | only if a slice ever needs more than `NSWorkspace` | any slice needing a subprocess must be declared, so the cost stays opt-in |
 

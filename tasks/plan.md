@@ -749,6 +749,47 @@ already done.
 | T7.1 | C9 LoginItem — `SMAppService`, lifted from `cmd-tab`; menu toggle reflects reported state | T0.4 | reboot: menu bar item present, ⌃⌘K works within 3 s |
 | T7.2 | Bundle moved out of `/Applications` and back does not silently unregister | T7.1 | the menu shows what `SMAppService` reports, never a cached assumption |
 
+**C9 was lifted from `cmd-tab` and then lost its `isEnabled: Bool`.** What the copy answered was
+"are we registered", cached in whatever asked it; what T7.2 needs answered is "what does macOS say
+*now*", and the difference is a menu item. So the menu is built when it opens and at no other time
+— not as a saving, but because building it on a state change would show whatever was true at the
+last **Refusal**. One status read costs **1.3–1.7 ms**, on the one path in this system with no
+budget on it: a person's hand is on the mouse.
+
+The four states macOS reports are four different sentences and three different repairs. Registered
+and on is a tick; never registered, or turned off from here, is the same line without one; a
+registration macOS cannot find a bundle for says so and re-registers when clicked. The fourth,
+`requiresApproval`, is macOS holding the registration and waiting on a person — clicking it opens
+System Settings, because registering again is not what it is waiting for. **That branch is the one
+thing here written and not exercised**: producing it means turning the switch off in System
+Settings, and the state this machine was left in is on.
+
+**`SMAppService` answers about a bundle, not a path**, which is most of T7.2 before the experiment
+is run. The `swift build` binary reports `notFound` and cannot register at all — it is not an app —
+so `install.sh` asks the *installed* copy, never `build/`'s. And `Starkit login [on|off]` exists for
+that call: the registration belongs to the bundle the executable sits in, so it cannot be done by
+the running instance from the outside, and a `login` that prints the state macOS reports afterwards
+is also how T7.2 is checked without a person squinting at a tick.
+
+**T7.2, measured against `sfltool dumpbtm`** rather than against our own report, since the question
+is whether the report is honest. Moved to `/tmp`, the record follows the bundle — the URL is the new
+one, the generation counts up, the disposition stays `enabled`, and the status still reads on. Moved
+back, it follows again. Deleted outright and restored by `ditto`, which is what every `install.sh`
+does, the record does not move at all: same URL, same generation, still enabled. So a reinstall
+never loses the registration, and the `login on` in `install.sh` is the first install's job and a
+no-op afterwards. `unregister()` leaves the record and flips the disposition to `disabled`, which is
+reported as `notRegistered` and shown as an unticked line.
+
+Then the same thing through the running app: turned **off from a terminal behind its back**, the
+menu came up unticked; clicking that line turned it back on and the terminal agreed. Read out of the
+menu itself over the Accessibility API, which is the only way to see what a menu bar item actually
+says.
+
+**What is not measured here is the reboot.** From an empty environment — `env -i`, which is the
+nearest thing to what launchd hands a login item — ⌃⌘K is live at **82 ms** and all five **Scripts**
+are listed at **734 ms**, against F9's 3 s. That is the budget answered; it is not the criterion,
+which is a machine restarting and the item being there. Owed.
+
 ## Phase 8 — Close the budget
 
 | ID | Task | Depends | Verify with |

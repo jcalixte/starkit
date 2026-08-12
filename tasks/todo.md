@@ -129,8 +129,20 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 7 — Boot
 
-- [ ] **T7.1** C9 LoginItem — `SMAppService`, lifted from `cmd-tab`
-- [ ] **T7.2** Moving the bundle and back does not silently unregister
+- [ ] **T7.1** C9 LoginItem — `SMAppService`, lifted from `cmd-tab`, minus the `isEnabled: Bool` it
+      came with: what that answers is "are we registered", and what a menu needs is "what does macOS
+      say now". So the menu is built when it opens and never on a state change, and `install.sh`
+      turns it on through the *installed* bundle, since the registration belongs to the bundle and
+      not to the running instance. From an empty environment ⌃⌘K is live at 82 ms and all five
+      **Scripts** are listed at 734 ms against F9's 3 s — **but the criterion is a reboot, and that
+      is owed**
+- [x] **T7.2** Moving the bundle and back does not silently unregister — and it does not, measured
+      against `sfltool dumpbtm` rather than our own report, since the report is the thing in
+      question: the record follows the bundle to `/tmp` and back, and a delete-and-`ditto`, which is
+      what every install does, does not move it at all. `SMAppService` answers about a *bundle* and
+      not a path, which is why the `swift build` binary cannot register and why the whole hazard is
+      smaller than it looks. Then the same round trip through the running app — turned off from a
+      terminal behind its back, the menu came up unticked, and clicking it turned it back on
 
 ## Phase 8 — Close the budget
 
