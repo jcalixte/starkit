@@ -38,10 +38,12 @@ private func command(_ arguments: [String]) -> Int32 {
     }
 
     if words.first == "login" { return login(Array(words.dropFirst())) }
+    if words.first == "registry" { return registry() }
 
     guard words.count >= 2, words[0] == "run" else {
         report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
         report("       Starkit login [on|off]")
+        report("       Starkit registry")
         return 2
     }
     let keyword = words[1]
@@ -79,6 +81,27 @@ private func command(_ arguments: [String]) -> Int32 {
         } else {
             try Effector().perform(effects)
         }
+        return 0
+    } catch {
+        report(error.reason)
+        if let detail = error.detail { report(detail) }
+        return 1
+    }
+}
+
+/// `Starkit registry` — write `src/registry.gleam` from the **Scripts** on disk, once.
+///
+/// C6 does this on every save, so this verb exists for the two moments no Watcher is running:
+/// `install.sh`, which has to produce a registry *before* its first `gleam build` because a fresh
+/// `~/.starkit` has none, and a person who wants the file back after deleting it. It is the same code
+/// path either way — one rule, one implementation, which is what retired `gen-registry.sh`.
+private func registry() -> Int32 {
+    let home = Toolchain.home
+    do throws(Refusal) {
+        let changed = try Watcher.regenerate(home: home)
+        // Says which of the two happened, because "unchanged" is the interesting answer: it means
+        // every **Artefact** is still valid, and a rewrite would have marked them all **Stale**.
+        print("\(changed ? "→" : "=") \(Watcher.registry(in: home).path)\(changed ? "" : " unchanged")")
         return 0
     } catch {
         report(error.reason)

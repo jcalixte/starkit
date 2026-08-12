@@ -4,7 +4,7 @@ build/
 *.p12
 *.pem
 .swiftpm/
-# Written by scripts/gen-registry.sh into whichever STARKIT_HOME it was pointed at, which is seed/
-# when a measurement runs against a scratch install. The one that is used is in ~/.starkit, and
-# install.sh regenerates it there on every run — nothing vendors this copy.
+# Written by `Starkit registry` — and by C6 on every save — into whichever STARKIT_HOME it was
+# pointed at, which is seed/ when a measurement runs against a scratch install. The one that is used
+# is in ~/.starkit, and install.sh regenerates it there on every run — nothing vendors this copy.
 seed/src/registry.gleam

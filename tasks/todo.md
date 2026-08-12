@@ -171,7 +171,18 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 > in the whole MVP is T7.1's criterion: a machine restarting and the item being there. The budget
 > behind it is answered; the reboot is not.
 
-## Deferred — slice 6, specified, outside MVP
+## Phase 9 — Authoring (slice 6, taken after MVP)
 
-- [ ] C6 Watcher — `FSEvents` → regenerate registry, build, rewrite manifests, set menu bar state
-- [ ] C11 Scaffolder — template a **Script** from a **Keyword** and open it in Zed
+- [x] **T9.1** The registry rule moves into Swift — because C6 runs inside an installed bundle with no
+      repo beside it and could never have called `gen-registry.sh`, and because two implementations
+      writing one file is worse than the inconvenience: the output has to be byte-identical or
+      `registry.gleam`'s mtime moves, and that marks **every Script Stale**, since it is one of C5's
+      shared modules. So the rule is pure and in `StarkitCore` with 5 tests, the filesystem half is
+      C6's, and `gen-registry.sh` is gone. The port was **diffed against it** rather than reasoned
+      about — same scratch directory, a `link_check`/`linkedin` pair for the ordering, and the only
+      difference is the two header lines changed on purpose. `gleam format --check` passes on what it
+      writes for five **Scripts** and for none, which is the mtime claim checked instead of asserted;
+      and a home with no **Scripts** compiles, because `[]` alone cannot typecheck in Gleam and the
+      annotation has to go on a binding. `install.sh` asks the installed bundle for it now
+- [ ] **T9.2** C6 Watcher — `FSEvents` on `src/` → regenerate, build, rewrite manifests, menu bar state
+- [ ] **T9.3** C11 Scaffolder — `Create "<keyword>"`, template, open in Zed

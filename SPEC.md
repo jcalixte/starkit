@@ -10,7 +10,7 @@ MVP is slices 0–5 plus 7 — the five existing **Scripts**, working from the b
 Slice 6 is outside MVP only because those five are seeded at install and need no authoring flow to
 exist. It is not comfortably deferrable beyond that: **Scripts** are always written in Zed, and the
 Watcher is the only thing that makes a new one visible, so until slice 6 lands every new **Script**
-costs a manual `scripts/gen-registry.sh`. Expect to want it the day you write a sixth.
+costs a manual `Starkit registry`. Expect to want it the day you write a sixth.
 
 ## Objective
 
@@ -27,7 +27,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else — Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. Asks for the login keychain password once, so that signing never waits on a dialog afterwards. |
 | `./scripts/build.sh [debug\|release]` | Compiles and assembles `build/Starkit.app`. |
 | `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, turns **Start at Login** on, launches. Registering here rather than at first launch is deliberate: an install is when the whole promise was asked for, boot included, where an app that registered itself on every launch would overrule someone who had just turned it off. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app **Refusing** one **Script** beats no app at all. |
-| `./scripts/gen-registry.sh` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do. Graduates into the Watcher in slice 6. |
+| `Starkit registry` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do, which is what stops every **Script** looking **Stale**. C6 does this on every save; the verb is for `install.sh`, which needs a registry before its first build, and for getting the file back after deleting it. |
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
 | `Starkit run <keyword> --bench[=N]` | The numbers behind [DESIGN.md](./DESIGN.md) §8, taken N times (default 20) on this machine: F4, F5, F6, and the resolve and `describe` that F9's launch is mostly made of, each reported as its first sample and then the median of the rest. **Performs no Effects** — twenty iterations of `work` would otherwise open eighty applications. F1, F8 and F9 are not measurable from here and §8 says why. Point it at a scratch `$STARKIT_HOME` holding a **Script** that loops to measure F14's deadline. |
 | `Starkit login [on\|off]` | Starting at login, from a terminal — what the menu bar item's **Start at Login** does. Always prints the state macOS reports *afterwards*, never what was asked for, and exits non-zero when those differ. Run through the installed bundle: the registration belongs to the bundle the executable sits in. |
@@ -40,7 +40,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 starkit/                          # this repo — the Shelf, plus what it seeds
 ├── Package.swift                 # SwiftPM executable, no Xcode project
 ├── Resources/Info.plist          # LSUIElement: true — menu bar, no Dock icon
-├── scripts/                      # the four commands above
+├── scripts/                      # the shell commands above
 ├── seed/                         # vendored into ~/.starkit by install.sh
 │   ├── gleam.toml                #   Shelf-owned — always overwritten
 │   ├── run.mjs                   #   Shelf-owned — always overwritten
@@ -69,14 +69,16 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── Effect.swift              # C4  the Effect vocabulary and       the split is forced by
 │   │                             #     reading a reply — pure          the tooling. It lands
 │   ├── Keyword.swift             # C2  parsing — pure                  where it belongs anyway:
-│   ├── Manifest.swift            #     what a Script declares — pure   this design made the
-│   ├── Refusal.swift             #     Starkit declining, in its own   risky decisions pure
+│   ├── Registry.swift            # C6  the generated module — pure     this design made the
+│   ├── Manifest.swift            #     what a Script declares — pure   risky decisions pure
+│   ├── Refusal.swift             #     Starkit declining, in its own
 │   │                             #     voice
 │   └── TerminalColour.swift      #     stripping ANSI from borrowed output
 └── Tests/StarkitTests/
     ├── StalenessTests.swift
     ├── EffectTests.swift
     ├── KeywordTests.swift
+    ├── RegistryTests.swift
     └── TerminalColourTests.swift
 ```
 

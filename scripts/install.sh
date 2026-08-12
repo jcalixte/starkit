@@ -14,7 +14,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 STARKIT_HOME="${STARKIT_HOME:-$HOME/.starkit}"
-export STARKIT_HOME # gen-registry.sh reads it too, and both must agree on which home is being set up.
+export STARKIT_HOME # `Starkit registry` reads it too, and both must agree on which home is being set up.
 CONFIGURATION="${1:-release}"
 DEST="/Applications/Starkit.app"
 
@@ -74,7 +74,7 @@ fi
 #
 # Vendored files are compared before being written, so an identical file keeps its mtime. No longer
 # load-bearing — the Stale rule compares content now (ADR 0002) — but kept so an install does not
-# touch what it did not change. Same reasoning as gen-registry.sh.
+# touch what it did not change. Same reasoning as the registry's write-only-on-a-difference rule.
 vendored=0
 kept=0
 seeded=0
@@ -106,7 +106,10 @@ done < <(cd seed && find . -type f ! -name '.DS_Store' | sed 's|^\./||' | LC_ALL
 
 echo "= $STARKIT_HOME: $vendored vendored, $seeded seeded, $kept of yours left alone"
 
-./scripts/gen-registry.sh
+# Through the installed bundle, and before the first build, because a fresh $STARKIT_HOME has no
+# registry.gleam at all and `gleam build` would fail on the missing module. C6 does this on every save
+# once Starkit is running; this is the one moment nothing is watching yet.
+"$DEST/Contents/MacOS/Starkit" registry
 
 # The first build: the one that pays for resolving dependencies, and that proves the seeded Scripts
 # actually compile.

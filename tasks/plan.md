@@ -846,12 +846,41 @@ application on the machine, and 21 MB phys footprint, which is the part that is 
 about the second. Script Kit's side stays blank deliberately: measuring it means launching it, and its
 event tap would take ⌃⌘K away from the system being compared.
 
+## Phase 9 — Authoring (slice 6, taken after MVP)
+
+| ID | Task | Depends | Verify with |
+| -- | ---- | ------- | ----------- |
+| T9.1 | The registry rule moves into Swift — pure + tested, `Starkit registry`, `gen-registry.sh` retired | T0.3 | the ported rule's output diffs against the shell script's on the same directory; `gleam format --check` passes on what it writes |
+| T9.2 | C6 Watcher — `FSEvents` on `src/` → regenerate, build, rewrite **Manifests**, set menu bar state | T9.1 | saving in Zed makes a new **Keyword** work at the next **Summon** with nothing else run, inside F10's 500 ms; a save that does not compile goes red and the other **Scripts** keep working |
+| T9.3 | C11 Scaffolder — `Create "<keyword>"`, template, open in Zed | T9.2 | ↩ on a typo does nothing at all; choosing it writes a compiling `pub fn script()` and Zed opens it |
+
+**The registry had two implementations the moment C6 was specified, and only one could stay.**
+`gen-registry.sh` lives in this repo; the Watcher runs inside an installed bundle that has no repo
+beside it, so C6 could not have called it. Both writing the same file is the worse half of the problem:
+the output has to be byte-identical or `registry.gleam`'s mtime moves, and moving it marks **every**
+**Script** **Stale**, because it is one of C5's shared modules. Two implementations of a rule whose
+failure mode is silent is not a duplication worth keeping, so the rule moved to `StarkitCore` where it
+is tested without a filesystem, the filesystem half went to C6, and the script is gone. `install.sh`
+now asks the *installed bundle* for the registry — `Starkit registry`, the same verb a person can run —
+because a fresh `~/.starkit` has no registry at all and `gleam build` would fail on the missing module.
+
+**The port was diffed rather than reasoned about.** Both versions were run against the same scratch
+`src/scripts/`, including a `link_check`/`linkedin` pair to exercise the ordering, and the output
+differs in exactly the two header lines that were changed on purpose — the file no longer names a
+script that does not exist. `gleam format --check` passes on what it writes, for five **Scripts** and
+for none, which turns "already format-clean" from a claim in a comment into something checked: a file
+Gleam would reformat is a file something else rewrites later, and that is the mtime again.
+
+**A home with no Scripts still compiles**, checked by building one. `[]` on its own does not typecheck
+— Gleam cannot infer an empty list's element type, and the annotation only goes on a binding — so the
+generated module binds `let scripts: List(starkit.Script) = []`. Deleting your last **Script** should
+leave a bar with nothing in it, not a menu bar going red about a home that is merely empty.
+
 ## Deferred (slice 6, specified but outside MVP)
 
-C6 Watcher and C11 Scaffolder. Until they land, a new **Script** costs a manual
-`scripts/gen-registry.sh`. Since **Scripts** are always written in Zed and the Watcher is the only
-thing that makes a new one visible, expect to want this immediately after MVP — see
-`SPEC.md` for its acceptance criteria.
+C11 Scaffolder, and C6 Watcher until T9.2 lands. Since **Scripts** are always written in Zed and the
+Watcher is the only thing that makes a new one visible, expect to want this immediately after MVP —
+see `SPEC.md` for its acceptance criteria.
 
 ## What would change the plan
 
