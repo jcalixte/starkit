@@ -235,6 +235,13 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       `test/`, so trashing `youtube.gleam` while `youtube_test.gleam` still imported it broke the whole
       project 200 ms later and turned the menu bar red. Both move now, both are named in the question,
       both recoverable — the **Trash**, never `unlink`, because `~/.starkit` is not a repository
+- [x] **T9.6** F17 — ⌥↩ (and ⌃O, free: macOS binds both to `insertNewlineIgnoringFieldEditor:`) opens
+      the selected **Script** in Zed, plus `Starkit edit <keyword>`. The cheapest key in the bar to
+      take, because inserting a newline *ignoring the field editor* has no meaning in a one-line field
+      — where ⌃D cost F16 the field's forward-delete. Read out of `StandardKeyBinding.dict` rather than
+      guessed, which is how it came up that ⌘↩ is not a text binding at all and would have needed the
+      keycodes T2.5 spent a slice avoiding. **Refuses** when the file is gone rather than writing a
+      template over the question
 - [x] **T9.5** `login` → `start-at-login`, because `Starkit login on` reads as a sentence about an
       account and Starkit has none. The menu has said **Start at Login** since T7.1; one thing, one name
 

@@ -77,6 +77,10 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// reporting the file is really gone rather than Starkit promising it.
     var delete: ((Manifest) -> Void)?
 
+    /// ⌥↩ or ⌃O on a **Script** — open it where it is written (F17). The bar goes away, because the
+    /// editor is about to take the keyboard and F11 already decided that is where typing happens.
+    var edit: ((Manifest) -> Void)?
+
     /// The sentence the first ⌃D puts on screen, which has to name the files that would actually move
     /// — a **Script**'s test is part of it (C11), and a confirm that said otherwise would be the kind
     /// of surprise the Trash exists to survive rather than to excuse. Supplied from outside because C1
@@ -540,6 +544,18 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         list.select(next)
     }
 
+    /// Open the selected **Script** in the editor.
+    ///
+    /// Nothing on the offer to *create* one: ↩ there already writes the file and opens it, and a second
+    /// key doing three quarters of the same thing is a **Keyword** away from being a mistake.
+    private func editSelected() {
+        guard !working, let selected, choices.indices.contains(selected),
+            case .script(let manifest) = choices[selected]
+        else { return }
+        dismiss()
+        edit?(manifest)
+    }
+
     /// ⌃D once arms the selected **Script**, ⌃D again moves it to the Trash (F16).
     ///
     /// Two presses rather than one because this is the only thing the bar does that destroys a file
@@ -741,6 +757,11 @@ extension SummonPanel {
         // the home row; the **Input** stage hands it back, because there the field holds an answer
         // rather than a **Keyword** and forward-delete is the text's again.
         case #selector(NSResponder.deleteForward(_:)): return armOrDelete()
+        // ⌥↩ *and* ⌃O, both of which macOS binds to this one selector — the same free pair T2.5 got
+        // when ⌃N and ⌃P turned out to be `moveDown:` and `moveUp:`. The cheapest key in the bar to
+        // take: "insert a newline ignoring the field editor" has nothing to do in a field that holds
+        // one line.
+        case #selector(NSResponder.insertNewlineIgnoringFieldEditor(_:)): editSelected()
         // Everything else is the field editor's, including the arrows that move along the line.
         default: return false
         }

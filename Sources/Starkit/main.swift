@@ -41,6 +41,7 @@ private func command(_ arguments: [String]) -> Int32 {
     if words.first == "registry" { return registry() }
     if words.first == "create" { return create(Array(words.dropFirst())) }
     if words.first == "delete" { return delete(Array(words.dropFirst())) }
+    if words.first == "edit" { return edit(Array(words.dropFirst())) }
 
     guard words.count >= 2, words[0] == "run" else {
         report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
@@ -48,6 +49,7 @@ private func command(_ arguments: [String]) -> Int32 {
         report("       Starkit registry")
         report("       Starkit create <keyword>")
         report("       Starkit delete <keyword>")
+        report("       Starkit edit <keyword>")
         return 2
     }
     let keyword = words[1]
@@ -120,6 +122,23 @@ private func create(_ words: [String]) -> Int32 {
     do throws(Refusal) {
         let file = try Scaffolder(home: Toolchain.home).create(keyword)
         print("→ \(file.path)")
+        return 0
+    } catch {
+        report(error.reason)
+        if let detail = error.detail { report(detail) }
+        return 1
+    }
+}
+
+/// `Starkit edit <keyword>` — open a **Script** in the editor, the same way ⌥↩ in the bar does.
+private func edit(_ words: [String]) -> Int32 {
+    guard let keyword = words.first, words.count == 1 else {
+        report("usage: Starkit edit <keyword>")
+        return 2
+    }
+
+    do throws(Refusal) {
+        print("→ \(try Scaffolder(home: Toolchain.home).edit(keyword).path)")
         return 0
     } catch {
         report(error.reason)

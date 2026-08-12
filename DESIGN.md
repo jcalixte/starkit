@@ -70,6 +70,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F11 | Turn an unmatched **Keyword** into a new **Script** | ↓ | 1 file touched, 0 registry edits, 1 deliberate confirmation — all three built at T9.3 |
 | F16 | Take a **Script** away without leaving the home row | ↓ | 2 keystrokes, 0 registry edits, always recoverable |
+| F17 | Open a **Script** where it is written | ↓ | 1 keystroke from the bar to the editor |
 
 ## 3. Competitive assessment
 
@@ -371,6 +372,18 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         **Input** stage hands the key back to the text — there the field holds an answer rather than
         a **Keyword**
       - **Component**: C11 Scaffolder · C6 Watcher
+  - **F17** Open a **Script** where it is written _(also G5)_
+    - **How**: ⌥↩ on the selected **Script** opens it in Zed and **Dismisses** the bar — F11's "the
+      editor is where all typing happens" applied to a **Script** that already exists, so it is the
+      same `open` and not a second way to reach one
+      - **⌥↩ and ⌃O both arrive**, because macOS binds both to `insertNewlineIgnoringFieldEditor:` —
+        the same free pair T2.5 found when ⌃N and ⌃P turned out to be `moveDown:` and `moveUp:`. It is
+        also the cheapest key in the bar to take: inserting a newline *ignoring the field editor* has
+        nothing to do in a field that holds one line, where ⌃D cost F16 the field's forward-delete
+      - **It refuses rather than creating** when the file is not there. A **Keyword** listed with
+        nothing behind it is a **Script** that has gone, and writing a template over that answers a
+        question nobody asked
+      - **Component**: C11 Scaffolder
   - **F13** Drive the whole bar from the home row _(also G1)_
     - **How**: handle Cocoa action selectors (`moveUp:`, `moveDown:`, `insertNewline:`,
       `cancelOperation:`) rather than keycodes, inheriting ⌃N/⌃P, the arrows, ⌃A/⌃E/⌃K and any

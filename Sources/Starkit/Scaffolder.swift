@@ -49,6 +49,25 @@ struct Scaffolder {
         return destination
     }
 
+    /// Open a **Script** that already exists, and say where it went.
+    ///
+    /// The same `open` as `create`, because "the bar scaffolds, the editor is where all typing happens"
+    /// (F11) is the same sentence whether the file was written a second ago or last year. **Refuses**
+    /// rather than creating when there is nothing there: a **Keyword** listed with no file behind it
+    /// means the list is describing a **Script** that has gone, and quietly writing a template over
+    /// that would answer a different question than the one asked.
+    func edit(_ keyword: String) throws(Refusal) -> URL {
+        let source = file(for: keyword)
+        guard FileManager.default.fileExists(atPath: source.path) else {
+            throw Refusal(
+                "There is no Script at \(source.path).",
+                detail: "Nothing was opened."
+            )
+        }
+        open(source)
+        return source
+    }
+
     /// Everything on disk that *is* this **Script**, in the order it would be deleted, and only what
     /// exists.
     ///

@@ -36,6 +36,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.delete = { [weak self] manifest in
             self?.trash(manifest)
         }
+        panel.edit = { [weak self] manifest in
+            self?.editScript(manifest)
+        }
         panel.deletionQuestion = { manifest in
             let files = Scaffolder(home: Toolchain.home).files(of: manifest.keyword)
             guard !files.isEmpty else {
@@ -211,6 +214,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             // The bar has already gone by the time this runs, so the menu bar is the only place left
             // to say so.
+            status.set(error.reason, for: .scripts)
+            report(error.reason)
+            if let detail = error.detail { report(detail) }
+        }
+    }
+
+    /// ⌥↩ or ⌃O in the bar — open the **Script** where it is written (F17).
+    private func editScript(_ manifest: Manifest) {
+        do throws(Refusal) {
+            let file = try Scaffolder(home: Toolchain.home).edit(manifest.keyword)
+            report("Editing \(file.path).")
+        } catch {
             status.set(error.reason, for: .scripts)
             report(error.reason)
             if let detail = error.detail { report(detail) }

@@ -971,6 +971,7 @@ tested — verified by running it".
 | ID | Task | Depends | Verify with |
 | -- | ---- | ------- | ----------- |
 | T9.4 | F16 — ⌃D twice on a selected **Script** moves it to the Trash; `Starkit delete <keyword>` | T9.3 | the **Keyword** leaves the list with nothing else run, the build stays clean, and both files are recoverable |
+| T9.6 | F17 — ⌥↩ opens the selected **Script** in Zed; `Starkit edit <keyword>` | T9.3 | one keystroke from the bar to the editor, and a **Refusal** when there is no file |
 | T9.5 | `login` → `start-at-login` | T7.1 | `install.sh` and the menu agree on one name for one thing |
 
 **Asked for as "a way to delete a Script from the home row", and the home row is the hard part.** Every
@@ -1001,6 +1002,14 @@ the missing module — which is the failure this cannot prevent without reading 
 **The Trash rather than `unlink`**, because `~/.starkit` is not a repository and a **Script** may have
 existed only there. It also puts the undo somewhere a person already knows to look, which no message in
 a bar can do.
+
+**F17 was the cheapest key in the bar.** ⌥↩ *and* ⌃O both arrive as
+`insertNewlineIgnoringFieldEditor:`, which is the same free pair T2.5 found when ⌃N and ⌃P turned out to
+be `moveDown:` and `moveUp:` — and unlike ⌃D, taking it costs nothing, because inserting a newline
+*ignoring the field editor* has no meaning in a field that holds one line. Read out of macOS's
+`StandardKeyBinding.dict` rather than guessed at, which is also how it turned out that ⌘↩ is not in
+there at all: Command chords are not text bindings, so a ⌘↩ version would have needed the keycodes
+T2.5 spent a slice avoiding.
 
 **`login` became `start-at-login`** on the same reading: `Starkit login on` is a sentence about an
 account, and Starkit has no account. The menu item has said **Start at Login** since T7.1, so the verb
