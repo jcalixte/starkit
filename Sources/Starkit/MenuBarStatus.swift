@@ -5,7 +5,7 @@ import AppKit
 /// The broken state is a different *symbol*, never merely a tint: a red-tinted version of the same
 /// glyph is invisible at menu bar size and in a light menu bar.
 @MainActor
-final class MenuBarStatus {
+final class MenuBarStatus: NSObject, NSMenuDelegate {
     /// Kept apart rather than collapsed into a single reason, because they fail independently and at
     /// the same moment — whichever was written second would otherwise erase the first.
     ///
@@ -23,9 +23,16 @@ final class MenuBarStatus {
     private let item: NSStatusItem
     private var problems: [Concern: String] = [:]
 
-    init() {
+    /// One menu for the life of the process, refilled rather than replaced. Replacing it is what the
+    /// first version did, and it cannot be done while the menu is on screen — which is exactly when
+    /// C9's state has to be read (`menuNeedsUpdate`).
+    private let menu = NSMenu()
+
+    override init() {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.menu = NSMenu()
+        super.init()
+        menu.delegate = self
+        item.menu = menu
         apply()
     }
 
@@ -47,24 +54,46 @@ final class MenuBarStatus {
                 accessibilityDescription: description
             )
         item.button?.toolTip = description
-        rebuildMenu()
     }
 
-    /// Rebuilt on every state change rather than mutated, so the reason shown can never be a stale
-    /// copy of a problem that has since been fixed.
-    private func rebuildMenu() {
-        let menu = NSMenu()
+    /// The menu is built when it opens and at no other time, which is the only moment its contents
+    /// are read. That is not a saving: **Start at Login** is a line about something this process
+    /// does not own — System Settings, or another process, can turn it off without telling anyone —
+    /// so building it on a state change would show whatever was true at the last **Refusal** (T7.2).
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        fill()
+    }
+
+    /// Filled from scratch rather than mutated, so the reason shown can never be a stale copy of a
+    /// problem that has since been fixed.
+    private func fill() {
+        menu.removeAllItems()
         for reason in reasons {
             let header = NSMenuItem(title: reason, action: nil, keyEquivalent: "")
             header.isEnabled = false
             menu.addItem(header)
         }
         if !reasons.isEmpty { menu.addItem(.separator()) }
+
+        let login = LoginItem.state
+        let toggle = NSMenuItem(
+            title: login.menuTitle,
+            action: #selector(toggleLoginItem),
+            keyEquivalent: ""
+        )
+        toggle.target = self
+        toggle.state = login.isOn ? .on : .off
+        menu.addItem(toggle)
+
+        menu.addItem(.separator())
         menu.addItem(
             withTitle: "Quit Starkit",
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
-        item.menu = menu
+    }
+
+    @objc private func toggleLoginItem() {
+        LoginItem.flip()
     }
 }

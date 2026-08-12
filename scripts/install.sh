@@ -57,6 +57,18 @@ ditto build/Starkit.app "$DEST"
 codesign --verify --strict "$DEST"
 echo "→ $DEST (signature verified)"
 
+# Boot (F9). Asked for here rather than at first launch, because an install is the moment the whole
+# promise was asked for — where a launch that registered itself would overrule someone who had just
+# turned it off from the menu.
+#
+# Through the *installed* bundle, never build/'s copy: SMAppService registers whichever bundle the
+# calling executable sits in, and that one is a build artefact this script deletes.
+if ! "$DEST/Contents/MacOS/Starkit" login on; then
+	echo "! Starkit is installed, but it will not come back after a reboot." >&2
+	echo "  Turn 'Start at Login' on from the menu bar item, or allow it in" >&2
+	echo "  System Settings > General > Login Items." >&2
+fi
+
 # One rule, applied by path: src/scripts/ is yours, everything else under seed/ is the Shelf's.
 # Derived from the directory rather than a list, so a file added to seed/ later is vendored anyway.
 #

@@ -26,8 +26,11 @@ private func command(_ arguments: [String]) -> Int32 {
         if argument == "--dry-run" { dryRun = true } else { words.append(argument) }
     }
 
+    if words.first == "login" { return login(Array(words.dropFirst())) }
+
     guard words.count >= 2, words[0] == "run" else {
         report("usage: Starkit run <keyword> [input] [--dry-run]")
+        report("       Starkit login [on|off]")
         return 2
     }
     let keyword = words[1]
@@ -67,4 +70,32 @@ private func command(_ arguments: [String]) -> Int32 {
         if let detail = error.detail { report(detail) }
         return 1
     }
+}
+
+/// `Starkit login [on|off]` — C9 from a terminal, since the registration belongs to the *bundle*
+/// this executable sits in and not to the running instance.
+///
+/// It exists for two callers. `install.sh`, because an install is the moment the whole promise was
+/// asked for, boot included; and T7.2, which has to read the state after moving that bundle around
+/// and would otherwise be a person opening a menu and squinting at a tick.
+///
+/// Always prints the state macOS reports *after* the request, never what was requested. Exit 1 when
+/// those differ, so a caller can tell without parsing the sentence.
+private func login(_ words: [String]) -> Int32 {
+    var wanted: Bool?
+    switch words.first {
+    case nil: break
+    case "on": wanted = true
+    case "off": wanted = false
+    default:
+        report("usage: Starkit login [on|off]")
+        return 2
+    }
+
+    if let wanted { LoginItem.set(wanted) }
+
+    let state = LoginItem.state
+    let note = state.note.map { " (\($0))" } ?? ""
+    print("Start at Login: \(state.isOn ? "on" : "off")\(note)")
+    return wanted == nil || wanted == state.isOn ? 0 : 1
 }
