@@ -59,7 +59,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F8  | Hold the chord, and be visibly broken when it can't | ↑ | 100 % held; failure shown, never silent |
-| F9  | Be ready after login                    |  ↓  | ≤ 3 s — measured 734 ms; a reboot is owed |
+| F9  | Be ready after login                    |  ↓  | ≤ 3 s — 734 ms from `env -i`, and ~3 s across a real boot (T7.1) |
 | F10 | Surface breakage at save time, not **Summon** time | ↓ | ≤ 500 ms after save — measured 201–238 ms, and 360 ms against the installed app |
 | F12 | Report a run that failed at runtime     |  ↑  | message survives the bar closing |
 | F14 | Bound how long a run may hold the bar   |  ↓  | killed at 5 s — measured 5004–5007 ms; spinner shown while running |
@@ -465,7 +465,7 @@ everything still works but silently goes **Stale**.
 | 2 | F8 hold the chord | 100 % | **every launch has taken it**, which is the only number this row can have: a chord eaten upstream is reported to nobody (§4 F8), so what is measurable is registration, and registration has never failed | menu bar turns red on registration failure | fall through to no-op rather than swallowing the chord; never fail silently |
 | 3 | F5 execute | ≤ 20 ms | **27.2–29.3 ms median** (23.2 min, 33.0 p90) — and **23.1 ms** with the fetch stack out of the registry, which is T1.4's 22.7 recovered | log per-run µs behind a debug flag | nothing to fall back to: cold spawn *is* the design now (T3 dropped). ~8 ms over on a threshold about imperceptibility, 4.7 of it an import graph rather than the spawn (below). If it ever matters, T3 is written down and can be built |
 | 4 | F4 build | ≤ 40 ms | **23.0–24.5 ms median** (20.0 min, 27.2 p90; 29–36 ms on a process's first build); **23.9–26.1 ms** for the whole staleness check, so hashing every shared module costs ~1 ms | time each `gleam build` | if it regresses, trust the watcher's build and skip the **Summon**-time re-check |
-| 5 | F9 ready after login | ≤ 3 s | **82 ms to the chord, 734 ms to all five Scripts** (T7.1, from an empty environment; a reboot is still owed). Its three costs here: resolve **325–354 ms**, build **23–25 ms**, `describe` **26–31 ms** | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
+| 5 | F9 ready after login | ≤ 3 s | **82 ms to the chord, 734 ms to all five Scripts** (T7.1, from an empty environment). Its three costs here: resolve **325–354 ms**, build **23–25 ms**, `describe` **26–31 ms**. **Across a real boot the listing took ~3 s** — the same sequence against a load average of 62, which is nearly the whole budget, and is tolerable only because the panel is handed the cached **Catalogue** before any of it runs | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
 | 6 | F14 run deadline | 5 s | **5004–5007 ms** — 4–7 ms of overshoot, against a **Script** that loops forever | the deadline itself | none needed — this *is* the fallback |
 | 7 | F6 gather **Context** | ≤ 5 ms | **0.013–0.020 ms** warm median (0.011 min, 0.019 p90); **4.2–5.7 ms** on the first read in a process, which crosses the budget on a busy machine | only if a slice ever needs more than `NSWorkspace` | any slice needing a subprocess must be declared, so the cost stays opt-in |
 

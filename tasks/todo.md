@@ -129,13 +129,25 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 7 — Boot
 
-- [ ] **T7.1** C9 LoginItem — `SMAppService`, lifted from `cmd-tab`, minus the `isEnabled: Bool` it
+- [x] **T7.1** C9 LoginItem — `SMAppService`, lifted from `cmd-tab`, minus the `isEnabled: Bool` it
       came with: what that answers is "are we registered", and what a menu needs is "what does macOS
       say now". So the menu is built when it opens and never on a state change, and `install.sh`
       turns it on through the *installed* bundle, since the registration belongs to the bundle and
       not to the running instance. From an empty environment ⌃⌘K is live at 82 ms and all five
-      **Scripts** are listed at 734 ms against F9's 3 s — **but the criterion is a reboot, and that
-      is owed**
+      **Scripts** are listed at 734 ms against F9's 3 s. **The reboot was then taken, and `env -i`
+      was the optimistic version**: launchd spawned it 50 s after boot — the login screen, not
+      Starkit — with `PATH` the bare `/usr/bin:/bin:/usr/sbin:/sbin`, and with no `starkit.toml` on
+      the machine C12's login-shell probe is the only reason `bun` and `gleam` were found. The whole
+      state came out of **one string**: `apply()` writes the item's accessibility description as
+      `"Starkit"` alone only when no **Concern** is set, so one read says the chord was taken, the
+      **Toolchain** resolved, the build worked and C6 is watching — which matters because a
+      launchd-spawned bundle's stderr goes nowhere. `manifests.json`, written last, landed **3 s
+      after the spawn** at second resolution against a load average of 62; the chord precedes all of
+      it by construction, and a **Summon** at second 2 would have shown the cached **Catalogue**. **A
+      Script ran 29 s in** — `built.json` moved without `manifests.json`, and `ensureCurrent` is the
+      only path that does that — and by hand it felt instant. **One-shot**: the bundle was
+      reinstalled 5 minutes later, and no process a person launched can answer a question about a
+      login
 - [x] **T7.2** Moving the bundle and back does not silently unregister — and it does not, measured
       against `sfltool dumpbtm` rather than our own report, since the report is the thing in
       question: the record follows the bundle to `/tmp` and back, and a delete-and-`ditto`, which is
@@ -165,11 +177,11 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       what quitting would give back. Script Kit's half stays blank — measuring it means launching it,
       and its event tap would take ⌃⌘K off the machine being compared
 
-> **Every row carries a number, and one criterion is still owed.** Six of the seven budgets are met;
-> F5 is ~8 ms over, of which 4.7 is `gleam_fetch` loaded by **Scripts** that do not fetch, and the
-> judgement from T1.4 stands — this is a threshold about imperceptibility. The one thing outstanding
-> in the whole MVP is T7.1's criterion: a machine restarting and the item being there. The budget
-> behind it is answered; the reboot is not.
+> **Every row carries a number.** Six of the seven budgets are met; F5 is ~8 ms over, of which 4.7 is
+> `gleam_fetch` loaded by **Scripts** that do not fetch, and the judgement from T1.4 stands — this is
+> a threshold about imperceptibility. T7.1's criterion — a machine restarting and the item being
+> there — was the last thing outstanding, and it has since been taken: F9's row now carries the boot
+> as well as the budget.
 
 ## Phase 9 — Authoring (slice 6, taken after MVP)
 
@@ -275,6 +287,6 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 - [x] **T9.5** `login` → `start-at-login`, because `Starkit login on` reads as a sentence about an
       account and Starkit has none. The menu has said **Start at Login** since T7.1; one thing, one name
 
-> **Still owed: T7.1's reboot.** Everything else on this list is done, and slice 6 has nothing left
-> deferred behind it.
+> **Nothing is owed.** T7.1's reboot was taken on 12 August 2026 — the item was there, the chord was
+> live, and a **Script** was run 29 s after login — and slice 6 has nothing left deferred behind it.
 

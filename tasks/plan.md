@@ -785,10 +785,41 @@ menu came up unticked; clicking that line turned it back on and the terminal agr
 menu itself over the Accessibility API, which is the only way to see what a menu bar item actually
 says.
 
-**What is not measured here is the reboot.** From an empty environment — `env -i`, which is the
-nearest thing to what launchd hands a login item — ⌃⌘K is live at **82 ms** and all five **Scripts**
-are listed at **734 ms**, against F9's 3 s. That is the budget answered; it is not the criterion,
-which is a machine restarting and the item being there. Owed.
+**The budget was answered before the criterion was.** From an empty environment — `env -i`, which is
+the nearest thing to what launchd hands a login item — ⌃⌘K is live at **82 ms** and all five
+**Scripts** are listed at **734 ms**, against F9's 3 s. That is not the criterion, which is a machine
+restarting and the item being there.
+
+**Then the machine was restarted, and `env -i` turns out to have been the optimistic version.** Boot
+at 12:44:23, Starkit spawned at 12:45:13 — the 50 s between them is the login screen and not
+Starkit's — with `PPID 1`, `state = running` under `com.apple.runningboard`, and `PATH` set to the
+bare `/usr/bin:/bin:/usr/sbin:/sbin`. There is no `starkit.toml` on this machine, so C12's login-shell
+probe is the only reason `bun` and `gleam` were found at all: the override exists for a machine where
+that probe fails, and this boot is the evidence that it does not have to.
+
+**The whole state was read out of one string.** `MenuBarStatus.apply()` writes the item's
+accessibility description as `"Starkit"` and nothing else only when no **Concern** is set, so reading
+it over the Accessibility API answers four independent questions at once — the chord was taken, the
+**Toolchain** resolved, the build succeeded, and C6 is watching. It said `"Starkit"`. That is F8's
+row and F9's in the same read, and it is cheaper than any log this app does not keep: stderr from a
+launchd-spawned bundle goes nowhere.
+
+**Timed by what the launch writes last.** `manifests.json` is written at the end of the sequence,
+after resolve, build and `describe`, and it was stamped **3 s after the spawn** — at second
+resolution, so ±1 s, against `env -i`'s 734 ms, with the machine at a load average of 62. The chord
+precedes all of it by construction (`listen()` before `prepare()`), which is why the criterion holds
+anyway, and the cached **Catalogue** handed to the panel before the resolve is what a **Summon** at
+second 2 would have shown. **Worth keeping in view**: a cold boot spends most of F9's budget on the
+listing, and the thing protecting it is a cache written by the previous launch.
+
+**A Script was run 29 s in, and by hand it felt instant.** `built.json` moved at 12:45:42 while
+`manifests.json` did not, and `ensureCurrent` — build, remember, staleness — is the only path that
+writes one without the other, so that timestamp is a **Summon** and a run rather than a rebuild. The
+`run` **Concern** was clear afterwards, so it did not **Refuse**.
+
+**It is a one-shot observation, deliberately recorded as one.** Five minutes later the bundle was
+reinstalled and the instance replaced, and nothing about a login can be re-read from a process a
+person launched. What is written down here is what that boot said while it was still the boot.
 
 ## Phase 8 — Close the budget
 
