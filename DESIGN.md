@@ -404,6 +404,14 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         question nobody asked
       - **Component**: C11 Scaffolder
   - **F13** Drive the whole bar from the home row _(also G1)_
+    - **⌘ chords travel a different road from ⌃ chords, and that is why ⌘V did not work.** Everything
+      above arrives through `StandardKeyBinding.dict` and the field editor, which needs no menu.
+      ⌘V, ⌘C, ⌘X, ⌘A and ⌘Z are dispatched by AppKit as *menu key equivalents*, so with no
+      `NSApp.mainMenu` there was nothing to dispatch them to and all five were dead in the one field
+      Starkit has. Fixed by building a main menu an `LSUIElement` application never draws — invisible,
+      and the reason the gap was invisible too. It survived this long because of T5.1: an **Input**
+      arrives **Seeded** from the clipboard and selected, so the case ⌘V exists for had already
+      happened, and pasting anything *else* was simply impossible
     - **How**: handle Cocoa action selectors (`moveUp:`, `moveDown:`, `insertNewline:`,
       `cancelOperation:`) rather than keycodes, inheriting ⌃N/⌃P, the arrows, ⌃A/⌃E/⌃K and any
       future `DefaultKeyBinding.dict` for free

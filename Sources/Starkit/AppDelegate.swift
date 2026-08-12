@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// of it because F1 is the tightest budget in the system.
     func applicationDidFinishLaunching(_ notification: Notification) {
         status = MenuBarStatus()
+        allowEditing()
         listen()
         panel = SummonPanel()
         panel.run = { [weak self] manifest, input, run in
@@ -51,6 +52,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // is built. What it buys is in C8.
         ContextGatherer.warm()
         prepare()
+    }
+
+    /// A main menu nobody will ever see, so that ⌘V works in the bar.
+    ///
+    /// **AppKit dispatches ⌘V as a menu key equivalent, not as a key the field handles.** With no main
+    /// menu there is nothing to dispatch to, so ⌘V, ⌘C, ⌘X, ⌘A and ⌘Z were all dead in the one field
+    /// Starkit has. An `LSUIElement` application never draws a menu bar, which is why this can be built
+    /// without adding anything to the screen — and why it was missing in the first place: nothing about
+    /// the bar looks like it needs a menu.
+    ///
+    /// It went unnoticed until now because of T5.1: an **Input** arrives **Seeded** from the clipboard
+    /// and selected, so the one thing ⌘V would have been for had already happened. That is a good
+    /// default rather than a substitute — pasting something *other* than the **Seed** was impossible.
+    ///
+    /// The whole standard set and not `paste:` alone: they are equally broken and equally expected, and
+    /// a field where ⌘V works but ⌘A does not is stranger than one where neither does.
+    private func allowEditing() {
+        let editing = NSMenu()
+        // Titles are load-bearing for nothing here, since this menu is never drawn — the key
+        // equivalents and the actions are the whole content.
+        editing.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        editing.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+        editing.addItem(.separator())
+        editing.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editing.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editing.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editing.addItem(
+            withTitle: "Select All",
+            action: #selector(NSText.selectAll(_:)),
+            keyEquivalent: "a"
+        )
+
+        let edit = NSMenuItem()
+        edit.submenu = editing
+        let main = NSMenu()
+        main.addItem(edit)
+        NSApp.mainMenu = main
     }
 
     /// Take ⌃⌘K, or go red saying it could not be taken. Registering says nothing about whether the

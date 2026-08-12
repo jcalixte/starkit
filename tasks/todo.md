@@ -242,6 +242,15 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       guessed, which is how it came up that ⌘↩ is not a text binding at all and would have needed the
       keycodes T2.5 spent a slice avoiding. **Refuses** when the file is gone rather than writing a
       template over the question
+- [x] **T9.8** ⌘V works in the bar — and ⌘C, ⌘X, ⌘A, ⌘Z, which were equally dead. **A dispatch path,
+      not a bug**: ⌃N/⌃P/⌃A/⌃E/Escape all arrive through `StandardKeyBinding.dict` and the field editor
+      and need no menu, which is T2.5's finding; ⌘ chords are dispatched by AppKit as *menu key
+      equivalents*, so an app with no `NSApp.mainMenu` has nothing to dispatch them to. Fixed with a
+      main menu an `LSUIElement` app never draws — invisible, which is why the gap was invisible too.
+      **T5.1 hid it for six phases**: an **Input** arrives **Seeded** from the clipboard and selected,
+      so the case ⌘V exists for had already happened, and pasting anything else was impossible. Proved
+      in a throwaway harness before shipping — same menu, real `NSTextField`, synthetic ⌘V through
+      `performKeyEquivalent`, marker landed, clipboard saved and put back
 - [x] **T9.7** F18 — a **Script** declares `other_keywords: ["yt"]` and the bar matches them. **The
       glossary said no first**: `CONTEXT.md` bans "alias" and asserted exactly one **Keyword** per
       **Script**. Reversing the ban was the wrong fix — by its own definition a shorthand typed into the

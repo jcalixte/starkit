@@ -296,6 +296,7 @@ is the boundary working, not a gap in it.
 - Creating a file in Zed *without* going through the bar registers it identically.
 - A save that does not compile turns the menu bar icon red within 500 ms, and the previously built
   **Scripts** keep working.
+- ⌘V pastes into the bar's field, and ⌘C, ⌘X, ⌘A and ⌘Z work there too.
 - ⌥↩ or ⌃O on a selected **Script** opens it in Zed and the bar goes away.
 - ⌃D on a selected **Script** asks before doing anything, naming the files it would move; ⌃D again
   moves them to the Trash and the **Keyword** leaves the list without anything else being run.

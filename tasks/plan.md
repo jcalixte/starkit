@@ -972,6 +972,7 @@ tested — verified by running it".
 | -- | ---- | ------- | ----------- |
 | T9.4 | F16 — ⌃D twice on a selected **Script** moves it to the Trash; `Starkit delete <keyword>` | T9.3 | the **Keyword** leaves the list with nothing else run, the build stays clean, and both files are recoverable |
 | T9.6 | F17 — ⌥↩ opens the selected **Script** in Zed; `Starkit edit <keyword>` | T9.3 | one keystroke from the bar to the editor, and a **Refusal** when there is no file |
+| T9.8 | ⌘V, ⌘C, ⌘X, ⌘A and ⌘Z work in the bar's field | T2.4 | a synthetic ⌘V dispatched through the menu lands in a focused field |
 | T9.7 | F18 — a **Script** declares `other_keywords`, and the bar matches them | T2.3 | `yt` finds `youtube`, and a **Keyword** typed in full is never pushed below a shorthand |
 | T9.5 | `login` → `start-at-login` | T7.1 | `install.sh` and the menu agree on one name for one thing |
 
@@ -1003,6 +1004,24 @@ the missing module — which is the failure this cannot prevent without reading 
 **The Trash rather than `unlink`**, because `~/.starkit` is not a repository and a **Script** may have
 existed only there. It also puts the undo somewhere a person already knows to look, which no message in
 a bar can do.
+
+**⌘V never worked in the bar, and the reason is a dispatch path rather than a bug in anything.**
+⌃N, ⌃P, ⌃A, ⌃E and Escape all arrive through `StandardKeyBinding.dict` and the field editor, needing no
+menu — which is the whole of T2.5's finding. The ⌘ chords do not: AppKit dispatches them as *menu key
+equivalents*, so an application with no `NSApp.mainMenu` has no target for them, and ⌘V, ⌘C, ⌘X, ⌘A and
+⌘Z were all dead in the one field Starkit has. The fix is a main menu an `LSUIElement` application never
+draws, which is also why nobody thought to build one: nothing about the bar looks like it needs a menu.
+
+**T5.1 is why it went unnoticed for six phases.** An **Input** arrives **Seeded** from the clipboard and
+selected, so the exact case ⌘V serves had already happened before anyone could reach for it — a good
+default that hid the absence of the general mechanism, and pasting anything *other* than the **Seed** was
+impossible.
+
+**Proved before shipping, for once, in a throwaway harness rather than by asking.** The same menu built
+against a real `NSTextField`, a synthetic ⌘V pushed through `performKeyEquivalent`, and the marker landed
+in the field — with the clipboard saved and put back, since the general pasteboard is the one thing a
+probe like this cannot borrow quietly. Two features in this session were handed over untested and one of
+them crashed, which is the argument for the harness.
 
 **"A shortcut like yt for youtube" was a **Vocabulary** change, and the glossary said no.**
 `CONTEXT.md` bans the word "alias" outright and asserted *exactly one **Keyword** per **Script***, which
