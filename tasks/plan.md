@@ -961,10 +961,15 @@ path that does not get run.
 the edit alone, an invalid **Keyword** is refused with the reason, and with C6 running the new **Script**
 is listed 238 ms later and runs.
 
-**What is still not verified by running: the three bar interactions.** The offer appearing for a
-**Keyword** that matches nothing, ↩ on it doing nothing, and ↓ then ↩ reaching it. Those are selection
-behaviour rather than filesystem behaviour, they need a keypress, and SPEC already puts C1 under "not
-tested — verified by running it".
+**Driven by hand afterwards, and it holds.** The offer was taken from the bar, the file appeared, and the
+**Script** it wrote was deleted from the bar later — as was ⌥↩ opening one in Zed. What nobody has
+pressed is ↩ on a typo doing nothing, which is the one behaviour the `Int?` selection makes unwriteable
+rather than merely unlikely: there is no index for ↩ to act on until a ↓ creates one.
+
+**One report of "it doesn't work" was a build committed but not installed.** ⌥↩ was pressed against the
+previous bundle, because committing is not shipping when the thing under test lives in `/Applications`.
+Worth writing down: every verification in this phase that ran against `.build/debug` proved the code and
+not the app, and the two are one `install.sh` apart.
 
 ## Phase 10 — Taking a Script away
 

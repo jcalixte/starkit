@@ -217,8 +217,10 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       filesystem call had never been executed; `Starkit create <keyword>` fixes that properly, and no
       test would have — the write is in the app module and a mock would have passed. Now exercised:
       writes, refuses to overwrite an edited file, names an invalid **Keyword**, and C6 lists the
-      result 238 ms later. **Three bar interactions still want a keypress**: the offer appearing, ↩ on
-      a typo doing nothing, ↓ reaching it
+      result 238 ms later. **Driven by hand afterwards**: the offer was taken from the bar, the file
+      appeared, and the **Script** it wrote was later deleted from the bar too. ↩ on a typo doing
+      nothing is the one criterion nobody has pressed, and it is the one the `Int?` selection makes
+      unwriteable rather than merely unlikely
 
 ## Phase 10 — Taking a Script away
 
@@ -241,7 +243,9 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       — where ⌃D cost F16 the field's forward-delete. Read out of `StandardKeyBinding.dict` rather than
       guessed, which is how it came up that ⌘↩ is not a text binding at all and would have needed the
       keycodes T2.5 spent a slice avoiding. **Refuses** when the file is gone rather than writing a
-      template over the question
+      template over the question. Confirmed by hand — and the first report that it did not work was a
+      build that had been committed but not installed, which is its own lesson about what "shipped"
+      means when the thing under test is a bundle in `/Applications`
 - [x] **T9.8** ⌘V works in the bar — and ⌘C, ⌘X, ⌘A, ⌘Z, which were equally dead. **A dispatch path,
       not a bug**: ⌃N/⌃P/⌃A/⌃E/Escape all arrive through `StandardKeyBinding.dict` and the field editor
       and need no menu, which is T2.5's finding; ⌘ chords are dispatched by AppKit as *menu key
