@@ -64,8 +64,8 @@ public enum Keyword {
         case several([String])
     }
 
-    /// The canonical **Keyword** behind a word typed at a terminal, so `Starkit run theodo` reaches
-    /// the **Script** whose module is `work.gleam` — everything downstream is addressed by the
+    /// The canonical **Keyword** behind a word typed at a terminal, so `Starkit run yt` reaches
+    /// the **Script** whose module is `youtube.gleam` — everything downstream is addressed by the
     /// canonical one, since C5 finds a source at `src/scripts/<keyword>.gleam` and `entry.gleam`
     /// matches on the name a **Script** declares.
     ///
