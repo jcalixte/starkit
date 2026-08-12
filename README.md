@@ -85,12 +85,17 @@ Starkit has no Dock icon — it lives in the menu bar, and the icon turns red wh
 | ⌃D, then ⌃D again | Moves a Script and its test to the Trash, naming the files first |
 | Escape or ⌃⌘K | Dismisses the bar. A Script already running still finishes and performs its Effects |
 
-From a terminal, where only exact keywords resolve:
+From a terminal, where only exact keywords resolve — a prefix that reaches the wrong Script shows
+you nothing before it runs, so `Starkit run c` meaning `clean` is not a risk worth taking:
 
 ```sh
 Starkit run youtube "https://youtu.be/…"
 Starkit run clean --dry-run    # prints the Effects, performs none
 ```
+
+The tap puts `Starkit` on your `PATH`. A source install does not: the binary lives inside the
+bundle, at `/Applications/Starkit.app/Contents/MacOS/Starkit`, so alias it or symlink it yourself.
+`Paste` from a terminal needs the *terminal* to hold the Accessibility grant, not Starkit.
 
 ## Writing a Script
 
