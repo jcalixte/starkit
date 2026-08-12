@@ -39,10 +39,18 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// The gap between the **Keyword** chip and the **Input** typed after it.
     private static let gap: CGFloat = 10
 
+    /// The column at the end of the field for the home tag, when there is one. Wide enough for the
+    /// last two components of a path and no wider: the tag answers *which* home, and the field is
+    /// what the person is actually using.
+    private static let homeWidth: CGFloat = 200
+
     private let panel: KeyablePanel
     private let field: NSTextField
     /// The **Keyword** once it has been chosen, shown only in the **Input** stage.
     private let keywordChip = KeywordChip()
+    /// Which home the bar is serving, at the end of the field — and nothing at all on a machine
+    /// where that is `~/.starkit`. See `Toolchain.overriddenHome` for what it is protecting against.
+    private let homeTag = NSTextField(labelWithString: "")
     /// Starkit's own glyph at the head of the bar, and the spinner it becomes while a run is in
     /// flight.
     private let mark = Mark(box: SummonPanel.chip)
@@ -218,6 +226,31 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
 
         keywordChip.isHidden = true
         head.addSubview(keywordChip)
+
+        // Read once and placed once: `STARKIT_HOME` is the environment this process was launched
+        // with, so it cannot change under a panel that is built at launch and never rebuilt.
+        homeTag.isHidden = Toolchain.overriddenHome == nil
+        if let elsewhere = Toolchain.overriddenHome {
+            // Tilde-abbreviated and truncated from the *head*, for the same reason a row keeps its
+            // canonical **Keyword**: the end of the path is the part that distinguishes one home from
+            // another, and the beginning is the part every path on the machine shares. The whole path
+            // is in the tooltip, where a long one costs nothing.
+            homeTag.stringValue = (elsewhere.path as NSString).abbreviatingWithTildeInPath
+            homeTag.toolTip = elsewhere.path
+            homeTag.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+            // The same step back as a row's **Keyword** column: this is Starkit saying where it is
+            // looking, which must not read as something typed into the field beside it.
+            homeTag.textColor = Palette.aside
+            homeTag.alignment = .right
+            homeTag.lineBreakMode = .byTruncatingHead
+            centre(
+                homeTag,
+                x: Self.width - Self.margin - Self.homeWidth,
+                width: Self.homeWidth,
+                in: Self.header
+            )
+            head.addSubview(homeTag)
+        }
         background.addSubview(head)
 
         list = ListView(
@@ -686,6 +719,10 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// Where the field starts, which is after the **Keyword** chip when there is one. The chip takes
     /// the column the typed text was in, so the **Keyword** does not move when it stops being
     /// editable.
+    ///
+    /// What it *ends* before is the home tag, on the machines that have one: the field gives up that
+    /// column for the life of the process rather than per stage, so nothing typed can ever run under
+    /// the tag.
     private func placeField() {
         var x = Self.leading
         if case .input = stage {
@@ -694,7 +731,8 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
             )
             x += keywordChip.frame.width + Self.gap
         }
-        centre(field, x: x, width: Self.width - x - Self.margin, in: Self.header)
+        let right = homeTag.isHidden ? Self.margin : Self.margin + Self.homeWidth + Self.gap
+        centre(field, x: x, width: Self.width - x - right, in: Self.header)
     }
 
     /// The one piece of text in the bar that is Starkit talking rather than the person. In the

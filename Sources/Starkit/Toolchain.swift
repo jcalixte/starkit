@@ -23,6 +23,22 @@ extension Toolchain {
         return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".starkit")
     }
 
+    /// The home, but only when it is not the usual one — what C1 writes at the end of the bar, and
+    /// `nil` on an ordinary machine.
+    ///
+    /// A scratch `STARKIT_HOME` is inherited rather than chosen: `install.sh` exports it and ends by
+    /// `open`ing the bundle, and macOS hands an app the environment of whoever launched it. A bench
+    /// install therefore leaves the everyday Starkit serving a temp directory that looks exactly like
+    /// the real one — same rows, same builds, ⌥↩ editing a copy — until something says which home is
+    /// on screen. Nothing **Refuses** on this: serving another home is the point of the variable.
+    static var overriddenHome: URL? {
+        let usual = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".starkit")
+        // Compared as standardized paths rather than URLs, because `install.sh` exports
+        // `STARKIT_HOME=$HOME/.starkit` on every ordinary run: that is the usual home written the
+        // long way, and announcing it would make the tag mean "installed recently".
+        return home.standardizedFileURL.path == usual.standardizedFileURL.path ? nil : home
+    }
+
     static func resolve(home: URL = Toolchain.home) throws(Refusal) -> Toolchain {
         let overridden = overrides(in: home)
         // Asked only about what is left: overriding both is the case where the shell's answer is
