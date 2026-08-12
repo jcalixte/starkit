@@ -102,7 +102,14 @@ while IFS= read -r rel; do
 		vendored=$((vendored + 1))
 		;;
 	esac
-done < <(cd seed && find . -type f ! -name '.DS_Store' | sed 's|^\./||' | LC_ALL=C sort)
+# seed/build/ is pruned, and it is the one exception to "a file added to seed/ later is vendored
+# anyway". It is not seed content: `gleam build` puts it there when a measurement runs against seed/
+# as a scratch $STARKIT_HOME (DESIGN.md §8), and 3 MB of one machine's compiled artefacts and .cache
+# files would otherwise be copied straight over the build/ directory of the home being installed to.
+# That is how a **Script** comes to look built when it is not. Invisible to `git status` — the root
+# .gitignore's `build/` matches at any depth — so nothing else would have caught it.
+done < <(cd seed && find . -path './build' -prune -o -type f ! -name '.DS_Store' -print |
+	sed 's|^\./||' | LC_ALL=C sort)
 
 echo "= $STARKIT_HOME: $vendored vendored, $seeded seeded, $kept of yours left alone"
 
