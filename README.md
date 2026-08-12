@@ -11,6 +11,9 @@ silently. Scripts live in `~/.starkit`; this repo is only the Shelf.
 
 ## Documentation
 
+- [seed/SCRIPTING.md](./seed/SCRIPTING.md) — what a **Script** may do and may not, the four
+  **Effects**, and the save-to-**Keyword** loop. Vendored to `~/.starkit/SCRIPTING.md`, beside the
+  **Scripts** it describes
 - [tasks/todo.md](./tasks/todo.md) — the ordered task list, with checkpoints
 - [tasks/plan.md](./tasks/plan.md) — dependency graph, verification per task, and what would change the plan
 - [SPEC.md](./SPEC.md) — build order, acceptance criteria, commands, and boundaries
