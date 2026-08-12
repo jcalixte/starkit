@@ -979,7 +979,7 @@ private final class ListView: NSView {
     }
 }
 
-/// One matched **Manifest**: the name it is known by, and the **Keyword** that reaches it. The name
+/// One matched **Manifest**: the name it is known by, and the **Keywords** that reach it. The name
 /// lines up under the typed text rather than under the mark, so the column you read is the column
 /// you are typing into.
 private final class RowView: NSView {
@@ -987,8 +987,14 @@ private final class RowView: NSView {
     private let keyword = NSTextField(labelWithString: "")
     private var selected = false
 
-    /// How much of the row the **Keyword** may take before the name starts being truncated for it.
+    /// How much of the row the **Keywords** may take before the name starts being truncated for
+    /// them.
     private static let keywordWidth: CGFloat = 180
+
+    /// Between one **Keyword** and the next. A dot rather than a comma or a space: the column is a
+    /// list of things any one of which reaches the **Script**, and a space alone would read as one
+    /// **Keyword** with a space in it, which is the one thing a **Keyword** cannot be.
+    private static let between = " · "
 
     init(frame: NSRect, leading: CGFloat, margin: CGFloat) {
         super.init(frame: frame)
@@ -1000,10 +1006,12 @@ private final class RowView: NSView {
         keyword.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
         keyword.textColor = Palette.aside
         keyword.alignment = .right
-        for label in [name, keyword] {
-            label.lineBreakMode = .byTruncatingTail
-            addSubview(label)
-        }
+        name.lineBreakMode = .byTruncatingTail
+        // From the *head*, unlike the name: the canonical **Keyword** is last in the column, and it
+        // is the one that must survive a row too narrow for all of them — it is the **Script**'s
+        // module name, so it is the only one guaranteed to be there.
+        keyword.lineBreakMode = .byTruncatingHead
+        for label in [name, keyword] { addSubview(label) }
 
         let room = frame.width - leading - margin - Self.keywordWidth - 12
         centre(name, x: leading, width: room, in: frame.height)
@@ -1018,15 +1026,21 @@ private final class RowView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Starkit builds its views in code.") }
 
-    /// Both kinds of row are the same two columns: what it is called, and the **Keyword** that
-    /// reaches it. The offer says what pressing ↩ would *do* on the left, because unlike every other
+    /// Both kinds of row are the same two columns: what it is called, and the **Keywords** that
+    /// reach it. The offer says what pressing ↩ would *do* on the left, because unlike every other
     /// row it is not naming something that already exists.
+    ///
+    /// The further **Keywords** come *before* the canonical one in a column that is right-aligned,
+    /// so the canonical **Keyword** ends at the same x on every row whether a **Script** has others
+    /// or not — a row that gained `yt` must not push `youtube` out of the column its neighbours
+    /// keep.
     func show(_ choice: SummonPanel.Choice, selected: Bool) {
         switch choice {
         case .script(let manifest):
             name.stringValue = manifest.name
             name.textColor = .labelColor
-            keyword.stringValue = manifest.keyword
+            keyword.stringValue = (manifest.otherKeywords + [manifest.keyword])
+                .joined(separator: Self.between)
         case .create(let typed):
             name.stringValue = "Create “\(typed)”"
             // Dimmed to the same colour the **Keyword** column uses: this row is a way out of the bar
