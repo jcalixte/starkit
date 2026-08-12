@@ -197,4 +197,17 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       pass, because writing the registry is a change inside the watched tree, and it converges rather
       than being filtered by a name an editor chooses. Idle CPU did not move with the stream running,
       which closes the row T8.2 left open
-- [ ] **T9.3** C11 Scaffolder — `Create "<keyword>"`, template, open in Zed
+- [x] **T9.3** C11 Scaffolder — `Create "<keyword>"`, template, open in Zed. **"Never the default
+      selection" became a type**: the bar's selection is `Int?`, so with no match there is nothing
+      selected and ↩ has nothing to act on — as a guard against index zero it would have been a rule to
+      remember in three places, and its failure would be silent *and* would make misspelling a
+      **Keyword** the fastest way to write a file. A row is `.script(Manifest)` or `.create(String)`
+      rather than a **Manifest** with a flag, because a made-up **Manifest** reaching `run` is the bug
+      worth making unwriteable — and that change turned up a real one: `ask` emptied `matches` while the
+      panel's height now comes from `choices`, so the **Input** stage kept the list's height under a
+      question with no list. C11 **writes one file and stops** — C6 makes it real, which is why F11's
+      "0 registry edits" holds and why the bar and Zed are the same event — and it **never overwrites**,
+      since a **Script** that has never compiled is missing from the list while its file is right there.
+      The template was checked by letting C6 build the exact bytes it emits: listed 174 ms later, runs,
+      and `gleam format`-clean. **Four bar interactions still want a keypress**: the offer appearing, ↩
+      on a typo doing nothing, ↓ reaching it, ↩ writing and opening Zed

@@ -10,8 +10,7 @@ MVP is slices 0–5 plus 7 — the five existing **Scripts**, working from the b
 Slice 6 was outside MVP only because those five are seeded at install and need no authoring flow to
 exist. It was taken straight after: **Scripts** are always written in Zed, and the Watcher is the only
 thing that makes a new one visible, so without it every new **Script** cost a manual
-`Starkit registry`. C6 has landed, so saving is the whole flow; C11's `Create "<keyword>"` is what is
-left of the slice.
+`Starkit registry`. Both have landed: saving is the whole flow, and the bar offers to write the file.
 
 ## Objective
 
@@ -63,15 +62,16 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── LoginItem.swift           # C9  SMAppService — lift from cmd-tab verbatim
 │   ├── MenuBarStatus.swift       # C10 normal / red
 │   ├── Toolchain.swift           # C12 login-shell resolution
-│   ├── Watcher.swift             # C6  slice 6
-│   └── Scaffolder.swift          # C11 slice 6
+│   ├── Watcher.swift             # C6  FSEvents on src/, and the registry
+│   └── Scaffolder.swift          # C11 write a Script, open Zed
 ├── Sources/StarkitCore/          # everything with tests: SwiftPM cannot link an executable
 │   ├── Staleness.swift           # C5  the Stale rule — pure          into a test target, so
 │   ├── Effect.swift              # C4  the Effect vocabulary and       the split is forced by
 │   │                             #     reading a reply — pure          the tooling. It lands
 │   ├── Keyword.swift             # C2  parsing — pure                  where it belongs anyway:
 │   ├── Registry.swift            # C6  the generated module — pure     this design made the
-│   ├── Manifest.swift            #     what a Script declares — pure   risky decisions pure
+│   ├── Scaffold.swift            # C11 the template — pure             risky decisions pure
+│   ├── Manifest.swift            #     what a Script declares — pure
 │   ├── Refusal.swift             #     Starkit declining, in its own
 │   │                             #     voice
 │   └── TerminalColour.swift      #     stripping ANSI from borrowed output
@@ -80,6 +80,7 @@ starkit/                          # this repo — the Shelf, plus what it seeds
     ├── EffectTests.swift
     ├── KeywordTests.swift
     ├── RegistryTests.swift
+    ├── ScaffoldTests.swift
     └── TerminalColourTests.swift
 ```
 

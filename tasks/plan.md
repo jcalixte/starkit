@@ -909,11 +909,41 @@ Zed actually uses was simulated directly, because that shape is what produced th
 did RSS. The subscription costs nothing because it is a subscription; the poll that would have shown up
 there is not in this design.
 
+**"Never the default selection" turned out to be a type.** The bar's selection is `Int?` now: with no
+match there is nothing selected, ↩ has nothing to act on, and the offer is reached by a deliberate ↓.
+Written as a guard against index zero it would have been a rule to remember in three places — `accept`,
+`move`, `narrow` — and the failure would have been silent and fast, because it makes misspelling a
+**Keyword** the quickest way to write a file. ↑ from nothing selected does nothing either: the offer is
+below the field, and reaching it by pressing *up* is the same accident wearing another key.
+
+**A row became a case rather than a **Manifest** with a flag.** `.script(Manifest)` or
+`.create(String)` — because a **Manifest** describes a **Script** that exists, and the bug worth making
+unwriteable is a made-up one reaching `run`. That change found a real one on the way in: `ask` emptied
+`matches` but the panel's height now comes from `choices`, so the **Input** stage would have kept the
+list's height under a question with no list in it. Pre-existing in shape and newly reachable in
+practice, since C6 makes the **Catalogue** change while the bar is open.
+
+**C11 writes one file and stops.** No build, no registry, nothing handed to the bar — C6 is watching, so
+the file appearing *is* the **Script** appearing. That is what makes F11's "0 registry edits" true, and
+what makes the bar's flow and writing the same file in Zed the same event, which SPEC asks for. It also
+**never overwrites**: a file can exist while its **Keyword** matches nothing, because a **Script** that
+has never compiled is missing from `manifests.json` and therefore from the list, so the existing file is
+opened instead — almost certainly the one that would not compile.
+
+**The template was checked by letting C6 build it**, with the exact bytes `Scaffold` emits rather than a
+retyped copy: listed 174 ms later and it runs. `gleam format --check` passes on it too — the first
+attempt appeared to fail, and the extra newline was in the extraction rather than the template, which is
+the sort of thing that becomes a wrong fix if the check is trusted over the reading. The offer is
+**withheld rather than repaired** for anything Gleam would not take as a module name: `My Notes` is not
+offered, because quietly writing `my_notes` is a **Keyword** nobody can find again.
+
+**What is not verified by running: the four bar interactions.** Typing a name that matches nothing to
+see the offer, ↩ on it doing nothing, ↓ then ↩ writing the file and opening Zed. Those need a keypress,
+and SPEC already puts C1 under "not tested — verified by running it".
+
 ## Deferred (slice 6, specified but outside MVP)
 
-C11 Scaffolder — the `Create "<keyword>"` row, the template, and Zed. Everything under it now exists:
-a **Script** appearing on disk is already a **Script** Starkit lists, so C11 writes a file and gets out
-of the way. See `SPEC.md` for its acceptance criteria.
+Nothing. Slice 6 is built.
 
 ## What would change the plan
 

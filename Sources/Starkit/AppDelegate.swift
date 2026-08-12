@@ -30,6 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.run = { [weak self] manifest, input, run in
             self?.perform(manifest, input: input, started: run)
         }
+        panel.create = { [weak self] keyword in
+            self?.scaffold(keyword)
+        }
         // Before `prepare` because after this line nobody is waiting: the chord is taken and the bar
         // is built. What it buys is in C8.
         ContextGatherer.warm()
@@ -176,6 +179,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Not `.scripts`: nothing is wrong with the **Scripts**, and overwriting that **Concern**
             // would hide a real compile error behind a watcher problem.
             status.set(error.reason, for: .watcher)
+            report(error.reason)
+            if let detail = error.detail { report(detail) }
+        }
+    }
+
+    /// ↩ on `Create "<keyword>"` — C11 writes the file, and nothing here makes it real.
+    ///
+    /// No build, no registry, no handing anything to the bar: C6 is watching `src/`, so the file
+    /// appearing *is* the **Script** appearing. Doing it from here as well would be the second copy of
+    /// a sequence T9.2 deliberately has one of — and it would also make the bar's create flow behave
+    /// differently from writing the same file in Zed, which SPEC asks to be identical.
+    ///
+    /// On the main thread on purpose: this writes one small file and asks LaunchServices to open it,
+    /// where the equivalent work in `perform` blocks for as long as a cold Electron launch.
+    private func scaffold(_ keyword: String) {
+        do throws(Refusal) {
+            let file = try Scaffolder(home: Toolchain.home).create(keyword)
+            report("Created \(file.path) — Zed has it, and C6 will build it.")
+        } catch {
+            // The bar has already gone by the time this runs, so the menu bar is the only place left
+            // to say so.
+            status.set(error.reason, for: .scripts)
             report(error.reason)
             if let detail = error.detail { report(detail) }
         }

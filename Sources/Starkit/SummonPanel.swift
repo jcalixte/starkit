@@ -67,6 +67,11 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// the bar that came after it.
     var run: ((Manifest, String, Int) -> Void)?
 
+    /// What ↩ does with the offer to write a **Script** that does not exist yet (F11). The bar goes
+    /// away afterwards: all typing happens in the editor, and C6 makes the file real without being
+    /// asked.
+    var create: ((String) -> Void)?
+
     /// Every **Script** Starkit knows about, which is not the same as every **Script** it can run
     /// (F2). Narrowed on assignment so the panel is already the right height before the first
     /// **Summon** rather than resizing while someone is looking at it.
@@ -91,8 +96,24 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// What the **Keyword** typed so far selects, in the order it will be listed.
     private var matches: [Manifest] = []
 
-    /// Which of them ↩ runs. Moved by `move`, and never off the rows on screen.
-    private var selected = 0
+    /// The rows as they are on screen. Either the **Scripts** that matched, or — when none did and
+    /// what was typed could *be* a **Keyword** — the single offer to write one (F11).
+    ///
+    /// A case rather than a **Manifest** carrying a flag: a **Manifest** describes a **Script** that
+    /// exists, and handing a made-up one to `run` is exactly the bug this shape cannot express.
+    fileprivate enum Choice {
+        case script(Manifest)
+        case create(String)
+    }
+
+    private var choices: [Choice] = []
+
+    /// Which row ↩ acts on, or **nothing at all**.
+    ///
+    /// Optional because of one line of SPEC: `Create "<keyword>"` is never the default selection, so
+    /// ↩ on a typo must do nothing. With a plain `Int` the offer would sit under the cursor the moment
+    /// a **Keyword** stopped matching, and the fastest way to write a file would be to misspell one.
+    private var selected: Int?
 
     /// How many runs the bar has started. The current one is the only one allowed to speak —
     /// without this, a **Script** hung against its 5 s deadline could **Notify** into a bar
@@ -328,16 +349,24 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
 
         switch stage {
         case .keyword:
-            guard matches.indices.contains(selected) else { return }
-            let manifest = matches[selected]
-            let input = Keyword.split(field.stringValue).input
-            // A question already answered is not asked: typing the **Input** on the same line as the
-            // **Keyword** skips the stage entirely.
-            if let question = manifest.asks, input.isEmpty {
-                ask(manifest, question: question)
-                return
+            guard let selected, choices.indices.contains(selected) else { return }
+            switch choices[selected] {
+            case .create(let keyword):
+                // Away first: what happens next is a file opening in Zed, and a bar left on screen
+                // would be holding the keyboard away from it.
+                dismiss()
+                create?(keyword)
+
+            case .script(let manifest):
+                let input = Keyword.split(field.stringValue).input
+                // A question already answered is not asked: typing the **Input** on the same line as
+                // the **Keyword** skips the stage entirely.
+                if let question = manifest.asks, input.isEmpty {
+                    ask(manifest, question: question)
+                    return
+                }
+                run?(manifest, input, began())
             }
-            run?(manifest, input, began())
 
         case .input(let manifest):
             // Whole and verbatim: the field holds the **Input** alone here, so splitting it again
@@ -433,10 +462,15 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
 
         // Nothing matches in this stage, which takes the list away and shrinks the panel back to the
         // head. A message from an earlier run goes with it.
+        //
+        // `choices` has to be emptied and not just `matches`: the panel's height comes from the rows
+        // it would show, so leaving them here would keep the list's height under a question with no
+        // list in it — and with C6 running, the **Catalogue** now changes while the bar is open.
         message = nil
         matches = []
-        selected = 0
-        list.present([], selected: 0)
+        choices = []
+        selected = nil
+        list.present([], selected: nil)
         fit()
 
         report("   \(manifest.keyword) asks for \(question) — Seeded with \(seed.count) characters")
@@ -464,20 +498,44 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// would let ↩ run a **Script** whose name is not on screen. Stops at the ends rather than
     /// wrapping.
     private func move(by step: Int) {
-        let shown = min(matches.count, Self.mostRows)
+        let shown = min(choices.count, Self.mostRows)
+        guard shown > 0 else { return }
+
+        guard let selected else {
+            // Only reachable when the one row is an offer to write a **Script**. ↓ takes it, ↑ leaves
+            // it alone: the offer is below the field, and arriving on it by pressing *up* would be the
+            // accident this is written to prevent.
+            guard step > 0 else { return }
+            self.selected = 0
+            list.select(0)
+            return
+        }
+
         let next = min(max(selected + step, 0), shown - 1)
-        guard shown > 0, next != selected else { return }
-        selected = next
-        list.select(selected)
+        guard next != selected else { return }
+        self.selected = next
+        list.select(next)
     }
 
     /// Narrow the list to what has been typed, and grow or shrink the panel to hold the result (F3).
     /// Puts any message away — narrowing is choosing a different **Script**.
     private func narrow() {
         message = nil
-        matches = Keyword.matches(Keyword.split(field.stringValue).keyword, in: catalogue)
-        selected = 0
-        list.present(Array(matches.prefix(Self.mostRows)), selected: selected)
+        let keyword = Keyword.split(field.stringValue).keyword
+        matches = Keyword.matches(keyword, in: catalogue)
+
+        if matches.isEmpty {
+            // Offered only for something that could be a Gleam module name, and never for an empty
+            // field — nothing typed lists everything, and `Create ""` is not a thing to offer.
+            choices = Scaffold.isValid(keyword) ? [.create(keyword)] : []
+            // Nothing selected: reaching the offer is a deliberate ↓, so ↩ on a typo does nothing.
+            selected = nil
+        } else {
+            choices = matches.map(Choice.script)
+            selected = 0
+        }
+
+        list.present(Array(choices.prefix(Self.mostRows)), selected: selected)
         fit()
     }
 
@@ -501,7 +559,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// would offer ↩ two meanings at once.
     private func under() -> CGFloat {
         if message != nil { return messages.frame.height + Self.footer }
-        let shown = min(matches.count, Self.mostRows)
+        let shown = min(choices.count, Self.mostRows)
         return shown == 0 ? 0 : CGFloat(shown) * Self.row + Self.footer
     }
 
@@ -787,16 +845,16 @@ private final class ListView: NSView {
 
     override var isFlipped: Bool { true }
 
-    func present(_ manifests: [Manifest], selected: Int) {
+    func present(_ choices: [SummonPanel.Choice], selected: Int?) {
         for (index, row) in rows.enumerated() {
-            row.isHidden = index >= manifests.count
-            guard index < manifests.count else { continue }
-            row.show(manifests[index], selected: index == selected)
+            row.isHidden = index >= choices.count
+            guard index < choices.count else { continue }
+            row.show(choices[index], selected: index == selected)
         }
     }
 
     /// Move the band, leaving what the rows say alone — a different event from the list narrowing.
-    func select(_ selected: Int) {
+    func select(_ selected: Int?) {
         for (index, row) in rows.enumerated() { row.select(index == selected) }
     }
 
@@ -851,9 +909,22 @@ private final class RowView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Starkit builds its views in code.") }
 
-    func show(_ manifest: Manifest, selected: Bool) {
-        name.stringValue = manifest.name
-        keyword.stringValue = manifest.keyword
+    /// Both kinds of row are the same two columns: what it is called, and the **Keyword** that
+    /// reaches it. The offer says what pressing ↩ would *do* on the left, because unlike every other
+    /// row it is not naming something that already exists.
+    func show(_ choice: SummonPanel.Choice, selected: Bool) {
+        switch choice {
+        case .script(let manifest):
+            name.stringValue = manifest.name
+            name.textColor = .labelColor
+            keyword.stringValue = manifest.keyword
+        case .create(let typed):
+            name.stringValue = "Create “\(typed)”"
+            // Dimmed to the same colour the **Keyword** column uses: this row is a way out of the bar
+            // rather than one of the things in it.
+            name.textColor = Palette.aside
+            keyword.stringValue = "new Script"
+        }
         select(selected)
     }
 

@@ -68,7 +68,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
-| F11 | Turn an unmatched **Keyword** into a new **Script** | ↓ | 1 file touched, 0 registry edits, 1 deliberate confirmation |
+| F11 | Turn an unmatched **Keyword** into a new **Script** | ↓ | 1 file touched, 0 registry edits, 1 deliberate confirmation — all three built at T9.3 |
 
 ## 3. Competitive assessment
 
@@ -316,6 +316,30 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       directly in Zed registers itself too; that is the *only* path by which a new **Script**
       becomes visible, which makes the Watcher load-bearing rather than a convenience. The
       `Create "foo"` row is never the default selection, so Enter on a typo does nothing at all
+      - **"Never the default selection" is a type, not a check.** The bar's selection became
+        `Int?` at T9.3: with no match there is nothing selected, so ↩ has nothing to act on and the
+        offer is reached by a deliberate ↓. Held as an optional rather than as a guard against index
+        zero because the alternative puts the offer under the cursor the instant a **Keyword** stops
+        matching, which would make misspelling one the fastest way to write a file. ↑ from nothing
+        selected does nothing either — the offer sits below the field, and arriving on it by pressing
+        *up* is the same accident wearing a different key
+      - **A row is one of two things**, `.script(Manifest)` or `.create(String)`, rather than a
+        **Manifest** with a flag on it: a **Manifest** describes a **Script** that exists, and a
+        made-up one reaching `run` is the bug the case cannot express
+      - **The offer is withheld, never repaired.** It appears only for what Gleam would accept as a
+        module name — the file becomes `import scripts/<keyword>` — so `My Notes` is not offered at
+        all rather than quietly turned into `my_notes`, which would be a **Keyword** nobody can find
+        again. The name shown is derived (`daily_notes` → *Daily notes*), because one field to fill in
+        is the whole of this function and a wrong guess is one line to change
+      - **C11 never overwrites.** A file can exist while its **Keyword** matches nothing: a **Script**
+        that has never compiled is absent from `manifests.json` and therefore absent from the list, so
+        "nothing matched" and "nothing is there" are different questions. The existing file is opened
+        instead — almost certainly the one that would not compile
+      - **The template has to compile on arrival**, because C6 builds it within 200 ms of it landing
+        and a template with a hole in it would turn the menu bar red as its own welcome. Verified by
+        writing exactly the bytes `Scaffold` emits into a watched home: listed 174 ms later, and it
+        runs. It is `gleam format`-clean for the reason the registry is — the editor about to open it
+        may format on save
       - **Component**: C11 Scaffolder · C6 Watcher
   - **F13** Drive the whole bar from the home row _(also G1)_
     - **How**: handle Cocoa action selectors (`moveUp:`, `moveDown:`, `insertNewline:`,
