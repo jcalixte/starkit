@@ -1055,6 +1055,12 @@ shown — one line each, nothing else touched — and the wire name is pinned by
 property renamed without its `CodingKey` would decode to none and `yt` would quietly stop finding
 anything.
 
+**F18 confirmed from the bar, and it carried T5.5 with it.** Typing `yt` found Youtube, the **Seed**
+arrived from the clipboard, and the note was **Pasted** into the editor — which means the one
+permission-gated path in the system still holds after seven `install.sh` runs in a single session. T5.5
+argued that from the designated requirement; this is the same claim arriving as an observation, and the
+strongest evidence yet that the certificate is the only fragile term in it.
+
 **F17 was the cheapest key in the bar.** ⌥↩ *and* ⌃O both arrive as
 `insertNewlineIgnoringFieldEditor:`, which is the same free pair T2.5 found when ⌃N and ⌃P turned out to
 be `moveDown:` and `moveUp:` — and unlike ⌃D, taking it costs nothing, because inserting a newline

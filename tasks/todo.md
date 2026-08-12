@@ -268,7 +268,10 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       only legal home, since `SPEC.md` forbids per-**Script** configuration outside its **Manifest**.
       The five **Scripts** here were migrated one line each with the diff shown, and the wire name is
       pinned by a test — a Swift property renamed without its `CodingKey` decodes to none, and `yt`
-      would stop finding anything with nothing reporting why
+      would stop finding anything with nothing reporting why. **Confirmed by hand**, and it carried more
+      than itself: `yt` found Youtube, the **Seed** arrived, and the note was **Pasted** — so C7's
+      Accessibility grant survived seven reinstalls in one session, which is T5.5's claim being paid out
+      rather than re-argued
 - [x] **T9.5** `login` → `start-at-login`, because `Starkit login on` reads as a sentence about an
       account and Starkit has none. The menu has said **Start at Login** since T7.1; one thing, one name
 
