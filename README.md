@@ -1,5 +1,7 @@
 # Starkit
 
+[![CI](https://github.com/jcalixte/starkit/actions/workflows/ci.yml/badge.svg)](https://github.com/jcalixte/starkit/actions/workflows/ci.yml)
+
 A keyboard-summoned launcher for a handful of personal automations, written in Gleam. Starkit
 exists to replace the parts of Script Kit that get used, and nothing else.
 

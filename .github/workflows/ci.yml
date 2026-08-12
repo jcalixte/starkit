@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # One job rather than two: the seed's tests import `registry`, and only the Swift binary can
+  # generate that module — so the Gleam half cannot start before the Swift half has built.
+  build:
+    # macos-15, not macos-14: Package.swift declares swift-tools-version 6.0, which the Xcode 15
+    # that macos-14 defaults to cannot read. The platform floor the app ships with (macOS 14) is a
+    # separate thing and is not what is being tested here.
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Report the toolchain
+        run: swift --version
+
+      - name: Test the pure rules
+        run: swift test
+
+      # There is no "Starkit Self-Signed" certificate on a runner, so build.sh takes its ad-hoc
+      # branch and says so in the log. That is the right outcome to test: what CI can check is that
+      # the bundle assembles and its signature verifies, not that TCC would keep a grant across
+      # rebuilds — which is a property of one machine's keychain and cannot be checked here.
+      - name: Assemble the app
+        run: ./scripts/build.sh debug
+
+      - name: Verify the bundle
+        run: codesign --verify --strict --verbose=2 build/Starkit.app
+
+      # Unpinned on purpose, and the one place this repo wants to hear about a Gleam or bun release
+      # early: Starkit borrows both from the machine and pins neither (DESIGN.md §9, T10), so a
+      # release that breaks the seed should break CI rather than someone's Summon.
+      - name: Install the Toolchain
+        run: brew install gleam bun
+
+      # seed/src/registry.gleam is generated, never committed — entry.gleam imports it, so nothing
+      # under seed/ typechecks until this has run. install.sh does the same thing at the same point,
+      # for the same reason.
+      - name: Generate the registry
+        env:
+          STARKIT_HOME: ${{ github.workspace }}/seed
+        run: "$(swift build -c debug --show-bin-path)/Starkit registry"
+
+      - name: Check the Scripts are formatted
+        working-directory: seed
+        run: gleam format --check src test
+
+      - name: Test the Scripts
+        working-directory: seed
+        run: gleam test
