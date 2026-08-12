@@ -146,8 +146,30 @@ criteria per slice are in [SPEC.md](../SPEC.md).
 
 ## Phase 8 — Close the budget
 
-- [ ] **T8.1** `--bench` flag; record actuals for all 7 rows of `DESIGN.md` §8
-- [ ] **T8.2** Idle RSS and CPU for G4, recorded next to Script Kit's in `DESIGN.md` §3
+- [x] **T8.1** `--bench` flag; record actuals for all 7 rows of `DESIGN.md` §8 — four of them are the
+      flag's, and it performs no **Effects**, since twenty iterations of `work` would open eighty
+      applications. F1 starts at a keypress and C1 prints itself, F8 is not a duration, F9's whole
+      number is a launch: those three are quoted from the slices that took them. F14 came free — a
+      three-line `spin` in a scratch home dies at 5004–5007 ms, and the overshoot is the semaphore
+      wait before `SIGKILL`. **F5 has drifted to 27–29 ms and the spawn is innocent**: `registry.gleam`
+      imports every **Script**, so `work` loads `gleam_fetch` to open four applications, and taking
+      the two fetching **Scripts** out of a scratch registry brings back T1.4's number exactly. Left
+      unfixed on purpose — a lazy import per **Keyword** is a C4 decision. Also settled: the
+      `starkit.toml` override deletes C12's 330 ms rather than trimming it (0.063 ms), and **F7's
+      "≤ 10 ms otherwise" is withdrawn**, because an **Open** costs what LaunchServices costs and a
+      budget over what Starkit does not control can be neither met nor missed
+- [x] **T8.2** Idle RSS and CPU for G4, recorded next to Script Kit's in `DESIGN.md` §3 — 0 ms of CPU
+      across 300 s against a 0.47 s lifetime, all of it spent at launch, because nothing polls or
+      watches until the chord arrives. Memory is two numbers rather than one: 86 MB resident, mostly
+      AppKit pages shared with every application on the machine, and 21 MB phys footprint, which is
+      what quitting would give back. Script Kit's half stays blank — measuring it means launching it,
+      and its event tap would take ⌃⌘K off the machine being compared
+
+> **Every row carries a number, and one criterion is still owed.** Six of the seven budgets are met;
+> F5 is ~8 ms over, of which 4.7 is `gleam_fetch` loaded by **Scripts** that do not fetch, and the
+> judgement from T1.4 stands — this is a threshold about imperceptibility. The one thing outstanding
+> in the whole MVP is T7.1's criterion: a machine restarting and the item being there. The budget
+> behind it is answered; the reboot is not.
 
 ## Deferred — slice 6, specified, outside MVP
 

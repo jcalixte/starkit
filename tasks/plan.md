@@ -800,6 +800,52 @@ which is a machine restarting and the item being there. Owed.
 T8.2 fills the one blank in the competitive assessment: Script Kit's idle RSS was never measured
 because it wasn't running. Starkit's should not be a blank too.
 
+**Four of the seven rows are the flag's; three were never going to be.** `--bench` repeats what a
+process can repeat — F4, F5, F6, and the resolve and `describe` that F9's launch is mostly made of —
+and it performs no **Effects**, because twenty iterations of `work` would otherwise open eighty
+applications. F1 starts at a keypress and C1 already prints itself on every **Summon**, so its numbers
+come from the slices that pressed the key; asking for ⌃⌘K from a CLI would have succeeded and proved
+nothing, since Carbon does not arbitrate (T2.1). F8 is not a duration. F9's whole number is a launch.
+
+**F14 came free, which is the argument for putting the flag on the debug CLI rather than in a
+harness.** A **Script** that hangs is `spin`, three lines of Gleam in a scratch `STARKIT_HOME`, and
+`--bench=3` against it reports 5004–5007 ms with the **Refusal** naming the deadline. The 4–7 ms of
+overshoot is the semaphore wait before `SIGKILL`, and it is the same number three times, so the
+deadline is a deadline rather than a hope.
+
+**Numbers are ranges because one run's median is not a fact.** Five runs of 20 samples, and F5's median
+moved between 27.2 and 29.3 ms depending on what else the machine was doing; F6's *cold* read moved
+from 4.2 to 5.7 ms, which crosses its own 5 ms budget. So what is recorded in §8 is the spread of
+medians rather than whichever run read best. F6's overrun needs nothing done: `warm()` at launch pays
+that read where nobody is waiting, and this is the measurement that makes it load-bearing rather than
+tidy.
+
+**F5 has drifted ~5 ms since T1.4, and it is not the spawn.** 27–29 ms against 22.7 for the same cold
+`bun`, so the difference was hunted rather than assumed: `registry.gleam` imports every **Script**
+statically, `youtube` and `link` import `gleam_fetch` and `gleam_http`, and therefore `work` loads the
+whole HTTP stack in order to open four applications. Confirmed by taking those two out of a scratch
+registry — F5 falls to 23.1 ms, `describe` from 26.4 to 22.7 — which makes ~4.7 ms of every run
+modules the run cannot use, growing with each **Script** that fetches. **Not fixed here.** A lazy
+import per **Keyword** moves the **Keyword**-to-module mapping out of Gleam and into the vendored
+shim, which is a C4 decision and not a measurement.
+
+**Two parked numbers settled and one target withdrawn.** The `starkit.toml` override does not reduce
+C12's cost, it removes it: resolve goes from 324–354 ms to **0.063 ms**, since the spawn is skipped
+when nothing is left to ask about. **F7's "≤ 10 ms otherwise" is gone** — it had contradicted T1.5's
+~35 ms warm **Open** since T1.5, and the target was the wrong half, because an **Open** returns when
+LaunchServices has the launch under way and a budget over something Starkit does not control can be
+neither met nor missed. What is left of F7 is order and the **Kill** guarantee, neither a duration.
+The third, the **Paste** hand-back wait, needed no new measurement: T0.5's 23.1 ms with 19.4 of it
+waiting and T5.4's 18.9 ms total are the same wait with the hand-back already done, which is what that
+note predicted.
+
+**T8.2 is a zero, and the zero is the point.** 0.47 s of CPU across a 22-minute life, none of it in a
+300 s window — below what `ps` resolves — because after launch nothing runs until the chord arrives.
+Memory is two figures on purpose: 86 MB resident, most of it AppKit pages shared with every
+application on the machine, and 21 MB phys footprint, which is the part that is Starkit's alone. G4 is
+about the second. Script Kit's side stays blank deliberately: measuring it means launching it, and its
+event tap would take ⌃⌘K away from the system being compared.
+
 ## Deferred (slice 6, specified but outside MVP)
 
 C6 Watcher and C11 Scaffolder. Until they land, a new **Script** costs a manual

@@ -34,7 +34,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
-| F1  | Put the bar on screen                   |  ↓  | ≤ 50 ms from ⌃⌘K                 |
+| F1  | Put the bar on screen                   |  ↓  | ≤ 50 ms from ⌃⌘K — measured 7.4 ms |
 | F2  | Know the catalogue without building     |  ↓  | ≤ 5 ms, from cached **Manifests**    |
 | F3  | Narrow to a **Script** as you type      |  ↓  | ≤ 16 ms — measured 2.0 ms        |
 | F13 | Drive the whole bar from the home row   |  ↑  | 0 mouse, 0 arrow-key-only paths; ⌃N/⌃P work |
@@ -43,25 +43,25 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
-| F4  | Bring the **Artefact** up to date, or **Refuse** | ↓ | ≤ 40 ms — measured 26–33 ms   |
-| F5  | Execute the **Artefact**                |  ↓  | ≤ 20 ms — measured 6.7 ms warm   |
-| F6  | Gather only the declared **Context**    |  ↓  | ≤ 5 ms — vs 463 ms via `osascript` |
+| F4  | Bring the **Artefact** up to date, or **Refuse** | ↓ | ≤ 40 ms — measured 23–25 ms   |
+| F5  | Execute the **Artefact**                |  ↓  | ≤ 20 ms — measured 27–29 ms cold, which is the design (T3 dropped) |
+| F6  | Gather only the declared **Context**    |  ↓  | ≤ 5 ms — measured 0.013 ms, vs 463 ms via `osascript` |
 
 ### Act
 
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
-| F7  | Perform each **Effect** in order, restoring focus before **Paste** | ↓ | ≤ 200 ms for **Paste**, ≤ 10 ms otherwise |
+| F7  | Perform each **Effect** in order, restoring focus before **Paste** | ↓ | ≤ 200 ms for **Paste** — 18.9 ms measured; an **Open** takes what LaunchServices takes, ~35 ms warm and seconds cold |
 
 ### Survive
 
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F8  | Hold the chord, and be visibly broken when it can't | ↑ | 100 % held; failure shown, never silent |
-| F9  | Be ready after login                    |  ↓  | ≤ 3 s                            |
+| F9  | Be ready after login                    |  ↓  | ≤ 3 s — measured 734 ms; a reboot is owed |
 | F10 | Surface breakage at save time, not **Summon** time | ↓ | ≤ 500 ms after save   |
 | F12 | Report a run that failed at runtime     |  ↑  | message survives the bar closing |
-| F14 | Bound how long a run may hold the bar   |  ↓  | killed at 5 s; spinner shown while running |
+| F14 | Bound how long a run may hold the bar   |  ↓  | killed at 5 s — measured 5004–5007 ms; spinner shown while running |
 | F15 | Follow the **Toolchain** the shell reports, and notice when it moves | ↑ | 0 manual configuration; a missing runtime is red before it is needed |
 
 ### Author
@@ -77,20 +77,37 @@ machine; blanks are where nothing was measured.
 
 **Function benchmarks**
 
-| Function                     | Starkit (target)   | Script Kit (measured) |
+| Function                     | Starkit (measured) | Script Kit (measured) |
 | ---------------------------- | ------------------ | --------------------- |
-| F5 execute                   | ≤ 20 ms            | —                     |
-| F6 gather **Running Apps**   | ≤ 5 ms, in-process | 463 ms, `osascript`   |
+| F5 execute                   | 27–29 ms           | —                     |
+| F6 gather **Running Apps**   | 0.013–0.020 ms in-process, 4.2–5.7 ms on the first read | 463 ms, `osascript` |
 | **Vocabulary** size (G6)     | 10 bespoke names   | 356 injected globals  |
-| On-disk total (G4)           | ~4 MB              | ~1.86 GB              |
-| — the app                    | ~1 MB              | 717 MB (Electron)     |
-| — support directory          | ~3 MB              | 1.1 GB `~/.kit` + 42 MB `~/.kenv` |
+| On-disk total (G4)           | 3.9 MB             | 1.86 GB               |
+| — the app                    | 492 KB             | 717 MB (Electron)     |
+| — support directory          | 3.4 MB `~/.starkit`, of which 3.3 MB is Gleam's `build/` | 1.1 GB `~/.kit` + 42 MB `~/.kenv` |
+| Idle RSS (G4)                | 86 MB resident, 21 MB phys footprint | — |
+| Idle CPU (G4)                | 0 ms over 300 s    | — |
 
 **What this tells us.** The `osascript` figure is the single largest latency in the current
 system and disappears entirely by moving **Context** gathering in-process. The 356-to-10
 vocabulary ratio is what "real simplicity" meant, and it is already banked by the closed
-vocabularies in `CONTEXT.md` — so the design's job on G6 is not to erode it. Nothing about
-Script Kit's idle RSS was measured, because it was not running.
+vocabularies in `CONTEXT.md` — so the design's job on G6 is not to erode it.
+
+**Idle cost, measured at T8.2** against the installed bundle launched by `SMAppService` and left
+alone. The two memory figures are both true and answer different questions: 86 MB is what `ps`
+reports resident, most of it AppKit and CoreGraphics pages shared with every other application on the
+machine, and 21 MB is the phys footprint — the part that is Starkit's alone and would be returned if
+it quit. G4 is about the second. Script Kit's column stays a blank on both rows on purpose: measuring
+it means launching it, and it takes ⌃⌘K with a `CGEventTap` that consumes the chord before Carbon
+dispatch (§4 F8), so the measurement would cost the working system it is being compared against.
+
+**The CPU figure is a zero, and it is the design showing rather than a number worth celebrating.**
+0.47 s of CPU across a 22-minute life, none of it in the 300 s window — under the 10 ms `ps` resolves
+to, so what was measured is "nothing measurable" rather than a small quantity. All of it was spent at
+launch, because after launch nothing in Starkit runs until the chord arrives: no timer, no poll, no
+watch. **C6 is the first thing that changes this** — an `FSEvents` stream is a subscription rather
+than a poll, so the expectation is that it stays near zero, but it is the row to re-take when the
+Watcher lands, and this measurement exists to be compared against.
 
 ## 4. Cascade — Goals → Functions → How → Components
 
@@ -259,6 +276,16 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       - **TCC attributes to the responsible process**, so the same binary run from a shell rather
         than launched as a bundle is a different subject and prompts again. That bounds the debug
         CLI: `Starkit run youtube <url>` can paste only if the *terminal* holds the grant
+      - **"≤ 10 ms otherwise" is withdrawn** (T8.1). It had contradicted the ~35 ms warm above since
+        T1.5, and the target is what was wrong: it was written imagining an **Effect** is a function
+        call, when an **Open** is a request that LaunchServices start or raise an application and
+        returns once the launch is under way. That cost is macOS's and the application's, and a
+        budget over something Starkit does not control cannot be met or missed — which is why the
+        four warm **Opens** at ~440 ms of T2.4's 498 were a scheduling problem, answered by moving the
+        whole ↩ path off the main thread, and never a latency to shave. What remains Starkit's here is
+        performing them in order and holding the **Kill** guarantee, neither of which is a duration.
+        **Paste** keeps its 200 ms, because the wait inside it *is* ours to bound: 18.9 ms measured at
+        T5.4
       - **Component**: C7 Effector
 
 - **G3** A new automation is one file and one minute _W:7_
@@ -318,15 +345,60 @@ everything still works but silently goes **Stale**.
 
 ## 8. Critical performance budget
 
-| Rank | Function | Target | Watched on | If we miss it |
-| ---- | -------- | ------ | ---------- | ------------- |
-| 1 | F1 bar on screen | ≤ 50 ms from ⌃⌘K | manual feel, then a signpost trace | panel is pre-built; if still slow, drop the blur/material before dropping correctness |
-| 2 | F8 hold the chord | 100 % | menu bar turns red on registration failure | fall through to no-op rather than swallowing the chord; never fail silently |
-| 3 | F5 execute | ≤ 20 ms → **22.7 ms measured** (T1.4) | log per-run µs behind a debug flag | nothing to fall back to: cold spawn *is* the design now (T3 dropped). 3 ms over on a threshold about imperceptibility was judged not worth a process lifecycle. If it ever matters, T3 is written down and can be built |
-| 4 | F4 build | ≤ 40 ms | time each `gleam build` | if it regresses, trust the watcher's build and skip the **Summon**-time re-check |
-| 5 | F9 ready after login | ≤ 3 s → **82 ms to the chord, 734 ms to all five Scripts** (T7.1, from an empty environment; a reboot is still owed) | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
-| 6 | F14 run deadline | 5 s | the deadline itself | none needed — this *is* the fallback |
-| 7 | F6 gather **Context** | ≤ 5 ms | only if a slice ever needs more than `NSWorkspace` | any slice needing a subprocess must be declared, so the cost stays opt-in |
+| Rank | Function | Target | Measured (T8.1) | Watched on | If we miss it |
+| ---- | -------- | ------ | --------------- | ---------- | ------------- |
+| 1 | F1 bar on screen | ≤ 50 ms from ⌃⌘K | **7.4 ms on screen, 13.6 ms to key** — T2.2's medians; 4.5–14.4 and 9.1–18.6 across T5.4's session, one outlier at 33.3/44.1 | manual feel, then a signpost trace | panel is pre-built; if still slow, drop the blur/material before dropping correctness |
+| 2 | F8 hold the chord | 100 % | **every launch has taken it**, which is the only number this row can have: a chord eaten upstream is reported to nobody (§4 F8), so what is measurable is registration, and registration has never failed | menu bar turns red on registration failure | fall through to no-op rather than swallowing the chord; never fail silently |
+| 3 | F5 execute | ≤ 20 ms | **27.2–29.3 ms median** (23.2 min, 33.0 p90) — and **23.1 ms** with the fetch stack out of the registry, which is T1.4's 22.7 recovered | log per-run µs behind a debug flag | nothing to fall back to: cold spawn *is* the design now (T3 dropped). ~8 ms over on a threshold about imperceptibility, 4.7 of it an import graph rather than the spawn (below). If it ever matters, T3 is written down and can be built |
+| 4 | F4 build | ≤ 40 ms | **23.0–24.5 ms median** (20.0 min, 27.2 p90; 29–36 ms on a process's first build); **23.9–26.1 ms** for the whole staleness check, so hashing every shared module costs ~1 ms | time each `gleam build` | if it regresses, trust the watcher's build and skip the **Summon**-time re-check |
+| 5 | F9 ready after login | ≤ 3 s | **82 ms to the chord, 734 ms to all five Scripts** (T7.1, from an empty environment; a reboot is still owed). Its three costs here: resolve **325–354 ms**, build **23–25 ms**, `describe` **26–31 ms** | first ⌃⌘K after a reboot | if `starkit.toml` paths are wrong, go red immediately rather than failing on first run |
+| 6 | F14 run deadline | 5 s | **5004–5007 ms** — 4–7 ms of overshoot, against a **Script** that loops forever | the deadline itself | none needed — this *is* the fallback |
+| 7 | F6 gather **Context** | ≤ 5 ms | **0.013–0.020 ms** warm median (0.011 min, 0.019 p90); **4.2–5.7 ms** on the first read in a process, which crosses the budget on a busy machine | only if a slice ever needs more than `NSWorkspace` | any slice needing a subprocess must be declared, so the cost stays opt-in |
+
+**How these were taken.** `Starkit run <keyword> --bench[=N]`, five runs of 20 samples, release build,
+against the real `~/.starkit`. Ranges are of the *medians* across those runs, because one run's median
+moved by 2 ms depending on what else the machine was doing, and a single figure would have been a
+choice of which run to quote. The flag performs no **Effects** — twenty iterations of `work` would
+otherwise open eighty applications — and it reports the first sample apart from the median of the rest,
+because cold and warm are different numbers everywhere in this system.
+
+**Three rows are not the flag's to take.** F1 starts at a keypress and C1 already prints it on every
+**Summon**, so its numbers are quoted from the slices that pressed the key. F8 is not a duration. F9's
+whole number is a launch, which is why only its parts appear above. Everything is quoted from release
+builds because the difference is not small: the same
+**Summon** from a debug bundle measured 25.7 ms on screen and 36.4 ms to key against release's 10.8
+and 16.4 in one session (T5.5).
+
+**Naming both paths in `starkit.toml` deletes C12's cost rather than reducing it**: resolve falls from
+325–354 ms to **0.063 ms**, because `resolve` skips the login-shell spawn when nothing is left to ask
+about, and that is the whole of the 120–140 ms launch first seen at T1.2. It stays a debugging
+convenience and not the default — the file holds hard-coded paths, so it buys 330 ms by trading away
+the version manager's shim that F9 exists to resolve *to*.
+
+**F14 needed a **Script** that hangs**, and got one without a line of new code: the same flag pointed
+at a scratch `STARKIT_HOME` holding `spin`, which recurses forever. Every run came back at the
+deadline with the **Refusal** naming it, 4–7 ms late — `SIGKILL` after a semaphore wait, and the wait
+is what the overshoot measures.
+
+**F5's drift since T1.4 is an import graph, not the spawn.** 27–29 ms against 22.7 for what should be
+the same cold `bun`. `registry.gleam` imports every **Script** statically, so `entry.mjs` pulls in
+`youtube` and `link`, and they pull in `gleam_fetch` and `gleam_http` — which means `work` loads the
+whole HTTP stack in order to open four applications. Measured by removing those two from a scratch
+registry: F5 falls to 23.1 ms and `describe` from 26.4 to 22.7. So ~4.7 ms of every run is modules
+that run cannot use, and it grows with the number of **Scripts** that fetch. Fixing it means a lazy
+import per **Keyword**, which moves the **Keyword**-to-module mapping out of Gleam and into the shim —
+a C4 decision, not a measurement, so it is recorded rather than taken.
+
+**F6's cold read can miss its own budget**, at 5.7 ms on a busy machine against 4.2 quiet — inside
+C8's known 2.8–7.8 ms range for the first `runningApplications` read, and above the 5 ms this row
+allows. Nothing needs fixing, because no run pays it: `ContextGatherer.warm()` at launch spends it
+where nobody is waiting, and every read after it is three orders of magnitude cheaper. What the number
+says is that the warm call is load-bearing rather than tidy — remove it and the first **Clean** of a
+session is over budget on a machine under load.
+
+**C12's resolve is faster than T1.2 recorded**: 325–354 ms against 510. Same `-ilc` spawn, same
+profile; nothing in Starkit changed, so this is the machine and not the design. It is still the
+largest single cost in the system and still the reason F9's budget is in seconds.
 
 ## 9. Tradeoffs — Got / Paid / ADR
 
@@ -521,6 +593,9 @@ everything still works but silently goes **Stale**.
 ## How to keep this honest
 
 - When a new ADR lands → add its components to §7 and re-score affected rows.
-- When a spike or measurement returns numbers → update §3 benchmarks and §8 `Target` / `Watched on`.
+- When a spike or measurement returns numbers → update §3 benchmarks, §8 `Measured`, **and §2's
+  `Target (now)`**. §2 was left out of this rule until T8.1 and went stale for it: F5 still read
+  "measured 6.7 ms warm", which is the warm-process number from the alternative T3 *rejected*, so the
+  one line most people would read first described a design that was never built.
 - Goals change rarely; functions change with each release; matrices are recomputed when either side changes.
 - If a section becomes empty after edits, delete it — empty sections lie.

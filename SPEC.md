@@ -29,6 +29,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, turns **Start at Login** on, launches. Registering here rather than at first launch is deliberate: an install is when the whole promise was asked for, boot included, where an app that registered itself on every launch would overrule someone who had just turned it off. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app **Refusing** one **Script** beats no app at all. |
 | `./scripts/gen-registry.sh` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do. Graduates into the Watcher in slice 6. |
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
+| `Starkit run <keyword> --bench[=N]` | The numbers behind [DESIGN.md](./DESIGN.md) §8, taken N times (default 20) on this machine: F4, F5, F6, and the resolve and `describe` that F9's launch is mostly made of, each reported as its first sample and then the median of the rest. **Performs no Effects** — twenty iterations of `work` would otherwise open eighty applications. F1, F8 and F9 are not measurable from here and §8 says why. Point it at a scratch `$STARKIT_HOME` holding a **Script** that loops to measure F14's deadline. |
 | `Starkit login [on\|off]` | Starting at login, from a terminal — what the menu bar item's **Start at Login** does. Always prints the state macOS reports *afterwards*, never what was asked for, and exits non-zero when those differ. Run through the installed bundle: the registration belongs to the bundle the executable sits in. |
 | `swift test` | The pure Swift test suites. |
 | `cd ~/.starkit && gleam test` | The **Script** test suites. |
@@ -165,6 +166,8 @@ that spins, F12 against one that `panic`s.
 
 **Not tested — measured:** every target in [DESIGN.md](./DESIGN.md) §8, by hand, against a
 `--bench` flag on the debug CLI. Latency assertions in CI would be flaky and would not be trusted.
+Four of the seven rows are the flag's; the other three are a keypress, a registration and a launch,
+and §8 records where their numbers came from instead.
 
 ## Boundaries
 
