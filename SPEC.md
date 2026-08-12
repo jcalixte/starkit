@@ -34,6 +34,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
 | `Starkit run <keyword> --bench[=N]` | The numbers behind [DESIGN.md](./DESIGN.md) §8, taken N times (default 20) on this machine: F4, F5, F6, and the resolve and `describe` that F9's launch is mostly made of, each reported as its first sample and then the median of the rest. **Performs no Effects** — twenty iterations of `work` would otherwise open eighty applications. F1, F8 and F9 are not measurable from here and §8 says why. Point it at a scratch `$STARKIT_HOME` holding a **Script** that loops to measure F14's deadline. |
 | `Starkit start-at-login [on\|off]` | Starting at login, from a terminal — what the menu bar item's **Start at Login** does. Always prints the state macOS reports *afterwards*, never what was asked for, and exits non-zero when those differ. Run through the installed bundle: the registration belongs to the bundle the executable sits in. |
+| `Starkit icon <directory.iconset>` | Draws the app icon — the bar's cream fruit on its periwinkle plate — as the ten PNGs `iconutil` packs into `Contents/Resources/Starkit.icns`. `build.sh` calls it on every build, so the icon Finder shows cannot drift from the mark in the bar: both are the same `Carambola` path. The fruit is filled here rather than outlined, because Finder's list view asks for 16 pixels and an outline that small is a bruise. |
 | `swift test` | The pure Swift test suites. |
 | `cd ~/.starkit && gleam test` | The **Script** test suites. |
 
@@ -42,7 +43,7 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 ```
 starkit/                          # this repo — the Shelf, plus what it seeds
 ├── Package.swift                 # SwiftPM executable, no Xcode project
-├── Resources/Info.plist          # LSUIElement: true — menu bar, no Dock icon
+├── Resources/Info.plist          # LSUIElement: true — menu bar, no Dock icon; icon file for Finder
 ├── scripts/                      # the shell commands above
 ├── seed/                         # vendored into ~/.starkit by install.sh
 │   ├── gleam.toml                #   Shelf-owned — always overwritten

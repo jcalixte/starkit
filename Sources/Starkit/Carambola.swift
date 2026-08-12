@@ -28,6 +28,22 @@ enum Carambola {
         }
     }
 
+    /// The same fruit as solid ink, filling its box edge to edge — there is no stroke to leave room
+    /// for, so `pen` is zero.
+    ///
+    /// The outline is what the bar and the menu bar use, because both sit among text and system
+    /// symbols drawn the same way. This exists for the app icon, which has to survive the 16 pixels
+    /// Finder's list view asks for: at that size an outline is a bruise, and a filled shape is still
+    /// a star (`AppIcon`).
+    static func fill(box: CGFloat, colour: NSColor) -> NSImage {
+        let glyph = centred(path(in: box, pen: 0), in: box)
+        return NSImage(size: NSSize(width: box, height: box), flipped: false) { _ in
+            colour.setFill()
+            glyph.fill()
+            return true
+        }
+    }
+
     /// Centre the outline on its own ink rather than on the box it was authored in: Tabler's fruit
     /// sits low and slightly left inside its 24-unit box.
     private static func centred(_ path: NSBezierPath, in box: CGFloat) -> NSBezierPath {

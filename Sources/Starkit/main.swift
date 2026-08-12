@@ -42,6 +42,7 @@ private func command(_ arguments: [String]) -> Int32 {
     if words.first == "create" { return create(Array(words.dropFirst())) }
     if words.first == "delete" { return delete(Array(words.dropFirst())) }
     if words.first == "edit" { return edit(Array(words.dropFirst())) }
+    if words.first == "icon" { return icon(Array(words.dropFirst())) }
 
     guard words.count >= 2, words[0] == "run" else {
         report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
@@ -50,6 +51,7 @@ private func command(_ arguments: [String]) -> Int32 {
         report("       Starkit create <keyword>")
         report("       Starkit delete <keyword>")
         report("       Starkit edit <keyword>")
+        report("       Starkit icon <directory.iconset>")
         return 2
     }
     let keyword = words[1]
@@ -162,6 +164,27 @@ private func delete(_ words: [String]) -> Int32 {
     do throws(Refusal) {
         let trashed = try Scaffolder(home: Toolchain.home).trash(keyword)
         for file in trashed { print("→ Trash: \(file.path)") }
+        return 0
+    } catch {
+        report(error.reason)
+        if let detail = error.detail { report(detail) }
+        return 1
+    }
+}
+
+/// `Starkit icon <directory.iconset>` — draw the app icon's PNGs where `iconutil` can pack them.
+///
+/// Exists so `build.sh` can put an icon in the bundle without an asset catalog, and so the icon in
+/// Finder is rendered from the same `Carambola` path as the bar's mark on every build rather than
+/// being a `.icns` somebody exported once (`AppIcon`).
+private func icon(_ words: [String]) -> Int32 {
+    guard let directory = words.first, words.count == 1 else {
+        report("usage: Starkit icon <directory.iconset>")
+        return 2
+    }
+
+    do throws(Refusal) {
+        print("→ \(try AppIcon.iconset(at: URL(filePath: directory)).path)")
         return 0
     } catch {
         report(error.reason)

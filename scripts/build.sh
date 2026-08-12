@@ -25,6 +25,16 @@ cp "$BINARY" "$APP/Contents/MacOS/Starkit"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' >"$APP/Contents/PkgInfo"
 
+# The icon, drawn by the app itself from the same path the bar's mark uses, then packed by iconutil —
+# the only tool that writes .icns. Before codesign, because an unsigned file dropped into the bundle
+# afterwards invalidates the signature. The iconset goes away once packed: what matters is inside the
+# bundle, and a stale PNG left in build/ is a file nothing rebuilds.
+ICONSET="build/Starkit.iconset"
+rm -rf "$ICONSET"
+"$BINARY" icon "$ICONSET" >/dev/null
+iconutil --convert icns "$ICONSET" --output "$APP/Contents/Resources/Starkit.icns"
+rm -rf "$ICONSET"
+
 if security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
 	codesign --force --sign "$IDENTITY" --identifier "$BUNDLE_ID" --timestamp=none "$APP"
 	echo "✓ Signed with '$IDENTITY' — the Accessibility grant survives rebuilds."
