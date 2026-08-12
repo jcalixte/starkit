@@ -240,8 +240,11 @@ is the boundary working, not a gap in it.
 - ⌃⌘K **Summons** the bar in ≤ 50 ms; ⌃⌘K again **Dismisses** it, and so does Escape.
 - A click outside the bar **Dismisses** it too, including while a **Script** is still running: the
   run finishes and performs its **Effects** either way, because it was asked for before the click.
-  A **Script**'s own **Open** activating another application is *not* a **Dismissal** — that is the
-  case `hidesOnDeactivate = false` exists for, and the one a focus-based implementation gets wrong.
+- ⌘Tab away and the bar is gone when you look back — leaving is leaving, whether or not it came with
+  a click. A **Script**'s own **Open** activating another application is *not* a **Dismissal**,
+  which is why this is not `hidesOnDeactivate`: the bar stays through a run in flight, so the
+  spinner survives an **Open**, and it stays once a run has left a sentence on screen, because a
+  cold application reaching the front after the run settled must not take the sentence with it.
 - Typing `wo` selects Work; ↩ runs it and the bar disappears.
 - ⌃⌘K with nothing typed lists the whole **Catalogue** and selects none of it: ↩ there does nothing,
   because the first row is whichever **Keyword** sorts first rather than anything that was chosen.

@@ -296,6 +296,36 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
                 self.summonedAt = 0
             }
         }
+
+        // ⌘Tab away and the bar goes with you — the same **Dismissal** a click elsewhere performs,
+        // for the switch that never sends a click.
+        //
+        // Guarded rather than `hidesOnDeactivate`, which `SPEC.md` rules out by name: an **Open** a
+        // **Script** performs deactivates Starkit exactly like a person leaving, and a bar that left
+        // on that would take the spinner F14 asked for with it. Hence the two things this refuses to
+        // act on:
+        //
+        // - **A run in flight.** Its **Open**, and C7's hand-back before a **Paste**, both arrive
+        //   here as a resignation. F14 wants the bar on screen through them.
+        // - **A bar with something to say.** `NSWorkspace` activates an application when its *launch*
+        //   finishes, so a cold one can come to the front long after the run that asked for it
+        //   settled (T1.5) — the resignation arrives with `working` already false, and what it would
+        //   take off screen is the sentence the run left behind. A **Notify** eaten by an application
+        //   that was still starting up is the message this cannot afford to lose.
+        //
+        // Neither leaves the bar stranded: ⌃⌘K, Escape and a click all still put it away.
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.panel.isVisible, !self.working, self.message == nil else {
+                    return
+                }
+                self.dismiss()
+            }
+        }
     }
 
     /// Put the panel on screen once, invisibly, so the first real **Summon** is not what pays for it.
@@ -368,9 +398,9 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// bar itself never arrives here — "outside" is decided by the window server rather than by
     /// hit-testing a frame, which also puts the menu bar item inside.
     ///
-    /// Not `hidesOnDeactivate`: an **Open** a **Script** performs is the same lost focus as a click
-    /// and must not put the bar away. A mouse-down answers the *person*, so no "is a run in flight"
-    /// flag is needed to tell the two apart.
+    /// A mouse-down answers the *person*, which is what makes this the cheap half of leaving: it
+    /// needs none of the guards the resignation observer in `init` carries, because an **Open** a
+    /// **Script** performs takes focus without ever sending one.
     ///
     /// Installed only while the bar is up — a permanent monitor would put Starkit in the path of
     /// every click on the machine for the ~99% of the time it has nothing on screen (G4).
