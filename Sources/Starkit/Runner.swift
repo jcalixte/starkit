@@ -3,28 +3,22 @@ import StarkitCore
 
 /// C4 — run one **Artefact** and collect what it decided.
 ///
-/// A fresh `bun` per run, and nothing kept between runs — no lifecycle in it at all. 22.7 ms
-/// median, 3 ms over F5; the warm-process alternative (T3) and what it would have cost are in
-/// DESIGN.md §9. A cold spawn also keeps a fresh module cache every run, so an edited **Script**
-/// is always the one that runs, and 0 MB held while idle (G4).
+/// A fresh `bun` per run, nothing kept between runs: 22.7 ms median, 3 ms over F5. The warm-process
+/// alternative and its cost are in DESIGN.md §9. The cold spawn also guarantees a fresh module cache,
+/// so an edited **Script** is always the one that runs.
 struct Runner {
-    /// F14. A **Script** may not hold the bar longer than this, and SPEC lists outliving it among
-    /// the things Starkit never does — so the deadline is enforced with `SIGKILL` rather than by
-    /// asking. `terminate()` is `SIGTERM`, which is a request, and a request is not a guarantee.
+    /// F14. Enforced with `SIGKILL`, never `terminate()`: that is `SIGTERM`, which is a request, and
+    /// a request is not a guarantee.
     static let deadline: DispatchTimeInterval = .seconds(5)
 
     let toolchain: Toolchain
     let home: URL
 
-    /// The **Effects** this **Script** decided on, or a **Refusal** naming what happened instead.
-    ///
-    /// Every failure here is a **Refusal**, never a **Notify** — including a **Script** that
-    /// crashed or hung, since dying is not deciding. `entry.gleam` takes the same view from inside
-    /// the child: an unknown **Keyword** and an undecodable payload both come back as `refusal`.
+    /// Every failure here is a **Refusal**, never a **Notify** — a **Script** that crashed or hung
+    /// did not decide anything.
     func run(keyword: String, payload: Payload) throws(Refusal) -> [Effect] {
-        // The payload travels as one `argv` element with no shell between here and there, so a
-        // **Script** name or an **Input** containing quotes, spaces or a semicolon needs no escaping
-        // and cannot be read as anything but data.
+        // One `argv` element with no shell in between, so an **Input** containing quotes, spaces or
+        // a semicolon needs no escaping and cannot be read as anything but data.
         let (reply, diagnostics, status) = try execute(
             ["run.mjs", "run", keyword, try encoded(payload)],
             called: "The Script \"\(keyword)\""
@@ -37,11 +31,8 @@ struct Runner {
         )
     }
 
-    /// Every **Manifest**, which is the other verb `entry.gleam` answers and the only one that needs
-    /// no **Keyword**.
-    ///
-    /// Nothing is run by asking this. `describe` reads the registry, so it answers for **Scripts**
-    /// that would **Refuse** if they were reached for — which is what keeps a broken one listed (F2).
+    /// Runs no **Script**: `describe` reads the registry, so it still answers for **Scripts** that
+    /// would **Refuse** if they were reached for — which is what keeps a broken one listed (F2).
     func describe() throws(Refusal) -> [Manifest] {
         let (reply, diagnostics, status) = try execute(
             ["run.mjs", "describe"],
@@ -51,8 +42,7 @@ struct Runner {
     }
 
     /// - Parameter called: how this invocation is named in a **Refusal** about it, already worded to
-    ///   start a sentence — the deadline is the same clock either way, but the sentence a person
-    ///   reads should say what did not finish.
+    ///   start a sentence.
     private func execute(
         _ arguments: [String],
         called what: String
@@ -63,8 +53,8 @@ struct Runner {
         process.arguments = arguments
         process.currentDirectoryURL = home
 
-        // Kept apart, unlike C5's single pipe: stdout is the protocol and stderr is F12's channel,
-        // and a warning bun printed on the way through must never be parsed as a reply.
+        // Kept apart: stdout is the protocol, so a warning bun printed on the way through must never
+        // be parsed as a reply.
         let reply = Pipe()
         let diagnostics = Pipe()
         process.standardOutput = reply
@@ -81,11 +71,10 @@ struct Runner {
             )
         }
 
-        // Both pipes drained off this thread, and the deadline waited on separately. Reading to EOF
-        // here instead would hand the deadline to the child: a **Script** that hangs never closes
-        // its stdout, and a `readDataToEndOfFile` on the same thread as the timeout is a wait with
-        // no clock on it. Draining concurrently also means neither stream can deadlock the other by
-        // filling its 64 KB buffer while we read the wrong one.
+        // Both pipes must drain off this thread, with the deadline waited on separately. Reading to
+        // EOF here would hand the deadline to the child — a **Script** that hangs never closes its
+        // stdout. Draining concurrently also stops either stream deadlocking the other by filling
+        // its 64 KB buffer while we read the wrong one.
         let collected = Collected()
         let drained = DispatchGroup()
         DispatchQueue.global().async(group: drained) {
@@ -97,8 +86,7 @@ struct Runner {
 
         if exited.wait(timeout: .now() + Self.deadline) == .timedOut {
             kill(process.processIdentifier, SIGKILL)
-            // The kill closes both write ends, so the drains finish on their own and whatever the
-            // **Script** managed to say before it stopped is still worth showing.
+            // The kill closes both write ends, so the drains finish on their own.
             drained.wait()
             throw Refusal(
                 "\(what) was killed after 5 seconds.",
@@ -114,16 +102,15 @@ struct Runner {
         )
     }
 
-    /// Somewhere for two concurrent reads to land. Each queue writes only its own field and nothing
-    /// is read until `drained.wait()` has returned, which is the ordering that makes a lock
-    /// unnecessary rather than merely unlikely to be needed.
+    /// Somewhere for two concurrent reads to land. Lock-free only because of the ordering: each
+    /// queue writes only its own field, and nothing is read until `drained.wait()` has returned.
     private final class Collected {
         var reply = Data()
         var diagnostics = Data()
 
         /// bun ignores `NO_COLOR` (ADR 0003), so the escapes come out here or a stack trace reaches
-        /// the menu bar wearing them. Empty becomes `nil`, because "there was nothing to say" and
-        /// "here is an empty string" read differently at the other end.
+        /// the menu bar wearing them. Empty becomes `nil`: "nothing to say" and "an empty string"
+        /// read differently at the other end.
         func text(of data: Data) -> String? {
             let text = String(decoding: data, as: UTF8.self)
                 .withoutTerminalColour
@@ -132,13 +119,9 @@ struct Runner {
         }
     }
 
-    /// The payload `entry.gleam` decodes, as the one `argv` element it travels in.
-    ///
-    /// What goes in it is C8's decision and was made before this was called (`ContextGatherer`);
-    /// this only writes it down. Encoding cannot fail for a `Payload` — every field is a `String` or
-    /// a list of them — so the **Refusal** below is a sentence nobody should ever read, kept because
-    /// the alternative is a `try!` that would take the whole application with it if that ever
-    /// stopped being true.
+    /// Encoding cannot fail for a `Payload` — every field is a `String` or a list of them — so the
+    /// **Refusal** below is unreachable, kept only because the alternative is a `try!` that would
+    /// take the whole application with it if that stopped being true.
     private func encoded(_ payload: Payload) throws(Refusal) -> String {
         guard let json = try? JSONEncoder().encode(payload) else {
             throw Refusal("Starkit could not encode the payload it gathered.")

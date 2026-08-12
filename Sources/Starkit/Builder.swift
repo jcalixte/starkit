@@ -4,21 +4,16 @@ import StarkitCore
 
 /// C5 — bring the **Artefacts** up to date, or **Refuse**.
 ///
-/// Three jobs that look unrelated and are not. `build()` compiles the whole project, because there
-/// is only one; `remember()` writes down what that build compiled; `staleness(of:)` then decides, per
-/// **Script**, whether a *later* failed build is *this* **Script**'s problem. Without the last two,
-/// the first would make one broken **Script** take the other four down with it — see `Staleness` and
-/// ADR 0002.
+/// `build()` compiles the whole project, because there is only one; `remember()` writes down what
+/// that build compiled; `staleness(of:)` then decides, per **Script**, whether a *later* failed build
+/// is *this* **Script**'s problem. Without the last two the first would make one broken **Script**
+/// take the other four down with it — see `Staleness` and ADR 0002.
 struct Builder {
     let toolchain: Toolchain
     let home: URL
 
-    /// The **Shelf**-owned modules every **Script** is compiled against.
-    ///
-    /// `starkit.gleam` is the **Vocabulary**; `entry.gleam` is the protocol every run goes through;
-    /// `registry.gleam` names them all. A change to any one of them invalidates every **Artefact**.
-    /// Since T1.4 that means a change to their *contents*: vendoring a byte-identical file over one
-    /// of them, which `install.sh` does on every install, no longer marks anything **Stale**.
+    /// A change to the *contents* of any one of these invalidates every **Artefact**. Vendoring a
+    /// byte-identical file over one, which `install.sh` does on every install, does not.
     static let sharedModules = ["starkit.gleam", "entry.gleam", "registry.gleam"]
 
     func build() throws(Refusal) {
@@ -27,16 +22,15 @@ struct Builder {
         process.arguments = ["build"]
         process.currentDirectoryURL = home
 
-        // One pipe for both streams. Gleam writes progress to stdout and diagnostics to stderr, and
-        // a compile error reads as one message with its "Compiling starkit" line above it.
+        // One pipe for both streams: Gleam writes progress to stdout and diagnostics to stderr, and
+        // interleaving them is what makes a compile error read as one message.
         let output = Pipe()
         process.standardOutput = output
         process.standardError = output
 
-        // Not `waitUntilExit()`. Measured at T1.4: it costs 63–68 ms on this machine no matter how
-        // quickly the child exits, and it pays that even when the pipe has already reached EOF, so
-        // it is a polling loop rather than a wait. Against F4's 40 ms budget that overhead is larger
-        // than the build it was timing. `terminationHandler` fires on notification and is free.
+        // Not `waitUntilExit()`. Measured at T1.4: it costs 63–68 ms however quickly the child
+        // exits, even when the pipe has already reached EOF — it is a polling loop, and the overhead
+        // alone exceeds F4's 40 ms budget. `terminationHandler` fires on notification and is free.
         let exited = DispatchSemaphore(value: 0)
         process.terminationHandler = { _ in exited.signal() }
 
@@ -60,16 +54,11 @@ struct Builder {
         }
     }
 
-    /// Write down what a successful build compiled, so a later failed one can be attributed.
+    /// Call only after `build()` returns without **Refusing**: at that instant every **Artefact** on
+    /// disk matches the source beside it, and this records *which* source that was.
     ///
-    /// Called only after `build()` returns without **Refusing**, and the ordering is the point: at
-    /// that instant every **Artefact** on disk matches the source beside it, and this is the record
-    /// of *which* source that was.
-    ///
-    /// A failure to write is not a **Refusal**. The worst it costs is that the next failed build
-    /// cannot attribute blame and refuses **Scripts** it did not need to, which is the safe
-    /// direction, and the next successful build fixes it. Refusing to run over a file Starkit keeps
-    /// for its own bookkeeping would be worse than the problem.
+    /// A failure to write is deliberately not a **Refusal** — it costs only that the next failed
+    /// build over-refuses, which is the safe direction, and the next successful build fixes it.
     func remember() {
         var built: [String: String] = [:]
         for name in Self.sharedModules {
@@ -83,19 +72,15 @@ struct Builder {
         try? data.write(to: record)
     }
 
-    /// Bring the **Artefact** up to date, or **Refuse** — and **Refuse** only when it is *this*
-    /// **Script**'s problem.
+    /// Bring the **Artefact** up to date, and **Refuse** only when it is *this* **Script**'s problem
+    /// — see [ADR 0002](../../docs/adr/0002-one-project-with-per-script-staleness.md).
     ///
-    /// All five **Scripts** share one Gleam project, so a broken `youtube.gleam` fails the build that
-    /// `work` also needs. `Staleness` is what turns that into one **Refusal** instead of five — see
-    /// [ADR 0002](../../docs/adr/0002-one-project-with-per-script-staleness.md).
-    ///
-    /// The F4 path, and the only one: the bar reaches it at ↩ and the debug CLI reaches it per
-    /// invocation. Two copies of this would be two ways to decide whether a **Script** may run.
+    /// Must stay the single F4 path: both the bar's ↩ and the debug CLI reach it, and two copies
+    /// would be two ways to decide whether a **Script** may run.
     func ensureCurrent(_ keyword: String) throws(Refusal) {
-        // The build's own **Refusal** is held rather than thrown. A project that does not compile is
-        // only *this* **Script**'s problem if this **Script** changed since the project last
-        // compiled, and that question has not been asked yet.
+        // Held rather than thrown: a project that does not compile is only *this* **Script**'s
+        // problem if this **Script** changed since the project last compiled, and that question has
+        // not been asked yet.
         var failed: Refusal?
         do {
             try build()
@@ -114,19 +99,15 @@ struct Builder {
 
         throw Refusal(
             "Starkit cannot run \"\(keyword)\": \(why).",
-            // The compile error verbatim when there was one — it is the only thing here that says
-            // what to fix, and there is nothing Starkit could add to a Gleam diagnostic by rewording
-            // it. With no compile error, the build succeeded and the **Artefact** is still not where
-            // Starkit looks: that path is a layout Gleam never promised to keep (DESIGN.md §9), so
-            // name it rather than report this as a missing **Script**.
+            // With no compile error the build succeeded and the **Artefact** is still not where
+            // Starkit looks — a layout Gleam never promised to keep (DESIGN.md §9) — so name the
+            // path rather than report this as a missing **Script**.
             detail: failed?.detail ?? "Expected it at \(artefact(of: keyword).path)."
         )
     }
 
-    /// Whether this **Script**'s **Artefact** was built from the source on disk.
-    ///
-    /// Hashing the files is C5's job and comparing the hashes is not: the rule itself is pure and
-    /// lives in `StarkitCore`, where it is tested without a filesystem.
+    /// Hashing the files is C5's job; comparing them is `StarkitCore`'s, where the rule is tested
+    /// without a filesystem.
     func staleness(of keyword: String) throws(Refusal) -> Staleness {
         let source = source(of: keyword)
         guard let sourceHash = hash(source) else {
@@ -163,10 +144,8 @@ struct Builder {
         guard let data = try? Data(contentsOf: record),
             let built = try? JSONSerialization.jsonObject(with: data) as? [String: String]
         else {
-            // No record, or one nothing can read. Every hash then compares against `nil`, every
-            // **Script** is **Stale**, and the next successful build writes a good one. Failing
-            // closed is the only safe direction: the alternative is running an **Artefact** that
-            // might not be what is on disk.
+            // Fails closed: every hash then compares against `nil` and every **Script** is
+            // **Stale**. The alternative is running an **Artefact** that might not match its source.
             return [:]
         }
         return built
@@ -180,11 +159,8 @@ struct Builder {
             .map { String($0.dropLast(".gleam".count)) }
     }
 
-    /// SHA-256 of the bytes, or `nil` when there is no file to read.
-    ///
-    /// The same question Gleam asks of the same file, which is the whole reason this is a hash and
-    /// not an mtime (see `Staleness`). SHA-256 over five files of about a kilobyte each costs
-    /// nothing worth measuring, and CryptoKit is Apple's, so it adds no dependency.
+    /// SHA-256 of the bytes, or `nil` when there is no file to read. A hash and not an mtime because
+    /// it is the same question Gleam asks of the same file — see `Staleness`.
     private func hash(_ url: URL) -> String? {
         guard let data = try? Data(contentsOf: url) else { return nil }
         return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()

@@ -1,20 +1,12 @@
 import AppKit
 
-/// The star fruit, drawn rather than loaded.
+/// The star fruit, drawn rather than loaded. The shape is Tabler's `carambola` (MIT).
 ///
-/// The shape is Tabler's `carambola` (MIT), whose outline is one closed path of quadratic curves.
-/// `NSImage` cannot read an SVG unless it comes out of a compiled asset catalog, and this bundle is
-/// assembled by hand in `build.sh` with no `actool` step — so the path is transcribed here instead.
-/// That also keeps the menu bar's copy a template image, which is what lets AppKit tint it for a
-/// light or dark menu bar without a second asset.
-///
-/// Two places draw it now, which is why it is here rather than inside either: C10 needs it in the
-/// menu bar's own colour, C1 needs it in the palette's cream on a periwinkle chip.
+/// Transcribed as a path because `NSImage` cannot read an SVG unless it comes out of a compiled
+/// asset catalog, and this bundle is assembled by hand in `build.sh` with no `actool` step.
 enum Carambola {
-    /// For the menu bar: one colour, tinted by AppKit to suit a light or dark bar.
-    ///
-    /// 18pt inside a 24pt bar. The outline fills about four fifths of its own box, so this puts the
-    /// drawn glyph at roughly the height of the system symbols sitting next to it.
+    /// 18pt inside a 24pt bar: the outline fills about four fifths of its own box, which puts the
+    /// drawn glyph at roughly the height of the system symbols beside it.
     static func template(accessibilityDescription: String) -> NSImage {
         let image = image(box: 18, colour: .black)
         image.isTemplate = true
@@ -36,12 +28,8 @@ enum Carambola {
         }
     }
 
-    /// Centre the outline on its own ink rather than on the box it was authored in.
-    ///
-    /// Tabler's fruit does not fill its 24-unit box evenly — it sits low and slightly left inside it
-    /// — so a glyph drawn at the box's centre is visibly off centre in anything that centres the
-    /// image, which is every place Starkit puts it. Corrected here, once, rather than by nudging
-    /// each frame that holds it.
+    /// Centre the outline on its own ink rather than on the box it was authored in: Tabler's fruit
+    /// sits low and slightly left inside its 24-unit box.
     private static func centred(_ path: NSBezierPath, in box: CGFloat) -> NSBezierPath {
         let ink = path.bounds
         path.transform(
@@ -53,11 +41,10 @@ enum Carambola {
         return path
     }
 
-    /// Tabler's path data, verbatim in structure: one `move`, then its relative quadratic curves
-    /// and two short horizontal joins, closed.
+    /// Tabler's path data, verbatim in structure.
     ///
     /// `NSBezierPath` gained a quadratic curve only in macOS 14, so each is widened to the cubic it
-    /// is equal to — control points at two thirds of the way from each end towards the quadratic's
+    /// is equal to — control points two thirds of the way from each end towards the quadratic's
     /// single control point. Exact, not an approximation.
     private static func path(in box: CGFloat, pen: CGFloat) -> NSBezierPath {
         let path = NSBezierPath()

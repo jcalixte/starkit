@@ -2,18 +2,12 @@ import AppKit
 
 /// The menu bar item — the only ambient signal Starkit emits.
 ///
-/// There is no notification, no dock badge, and no window that appears on its own: if something
-/// is wrong, this icon is where it shows. That makes the broken state load-bearing rather than
-/// decorative, so it is deliberately a different *symbol* and not merely a tint — a red-tinted
-/// version of the same glyph is invisible at menu bar size and in a light menu bar.
+/// The broken state is a different *symbol*, never merely a tint: a red-tinted version of the same
+/// glyph is invisible at menu bar size and in a light menu bar.
 @MainActor
 final class MenuBarStatus {
-    /// The things that can be broken on their own, one per component that reports here.
-    ///
-    /// Kept apart rather than collapsed into a single reason, because they fail independently and
-    /// at the same moment: a machine with no `bun` on it can also be a machine where Script Kit
-    /// still holds ⌃⌘K, and whichever was written second would otherwise erase the first. Losing
-    /// the chord conflict that way is precisely the silence F8 exists to prevent.
+    /// Kept apart rather than collapsed into a single reason, because they fail independently and at
+    /// the same moment — whichever was written second would otherwise erase the first.
     ///
     /// `CaseIterable` so the menu is ordered by declaration and not by whatever a dictionary says.
     enum Concern: CaseIterable {
@@ -21,15 +15,8 @@ final class MenuBarStatus {
         case hotKey
         /// C12 or C5 gave way, so a **Script** will fail when it is reached for.
         case scripts
-        /// A **Script** the person ran **Refused** — **Stale**, crashed, killed at the deadline, or
-        /// an **Effect** C7 could not perform.
-        ///
-        /// Here *as well as* in the bar since T5.4, which is F12 read as the two questions it
-        /// actually asks. The bar holds the sentence while the person is still in front of it,
-        /// having watched the spinner stop; this holds it after the bar has gone, which is the half
-        /// F12 names — "the message survives the bar closing". It is the transient **Concern**,
-        /// cleared by the next run that works, because it is about the last run and not about the
-        /// machine.
+        /// A **Script** the person ran **Refused**. The transient **Concern**: cleared by the next
+        /// run that works, because it is about the last run and not about the machine.
         case run
     }
 
@@ -63,8 +50,8 @@ final class MenuBarStatus {
         rebuildMenu()
     }
 
-    /// Rebuilt on every state change rather than mutated, so the reason shown can never be a
-    /// stale copy of a problem that has since been fixed.
+    /// Rebuilt on every state change rather than mutated, so the reason shown can never be a stale
+    /// copy of a problem that has since been fixed.
     private func rebuildMenu() {
         let menu = NSMenu()
         for reason in reasons {
