@@ -21,15 +21,26 @@ application.run()
 /// One run, from a terminal. Exit code 1 for a **Refusal**, 2 for being asked the wrong thing.
 private func command(_ arguments: [String]) -> Int32 {
     var dryRun = false
+    var samples: Int?
     var words: [String] = []
     for argument in arguments {
-        if argument == "--dry-run" { dryRun = true } else { words.append(argument) }
+        switch argument {
+        case "--dry-run": dryRun = true
+        case "--bench": samples = 20
+        case let flag where flag.hasPrefix("--bench="):
+            guard let count = Int(flag.dropFirst("--bench=".count)), count > 0 else {
+                report("--bench takes a count of samples, at least 1.")
+                return 2
+            }
+            samples = count
+        default: words.append(argument)
+        }
     }
 
     if words.first == "login" { return login(Array(words.dropFirst())) }
 
     guard words.count >= 2, words[0] == "run" else {
-        report("usage: Starkit run <keyword> [input] [--dry-run]")
+        report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
         report("       Starkit login [on|off]")
         return 2
     }
@@ -37,6 +48,10 @@ private func command(_ arguments: [String]) -> Int32 {
     // Rejoined with the spaces the shell ate, so this path and the bar (C2) hand a **Script** the
     // same string.
     let input = words.dropFirst(2).joined(separator: " ")
+
+    // Before everything below, and not a variation on it: `--bench` resolves and builds on its own
+    // clock, and it must reach neither the `--dry-run` print nor the **Effector**.
+    if let samples { return bench(keyword: keyword, input: input, samples: samples) }
 
     do throws(Refusal) {
         let home = Toolchain.home
