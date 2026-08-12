@@ -23,6 +23,7 @@ pub fn script() -> Script {
   Fetching(
     keyword: "link",
     name: "Link from url",
+    other_keywords: [],
     needs: [],
     asks: Asks(for: "URL"),
     run: fn(input, _context) { decide(input) },

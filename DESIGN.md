@@ -37,6 +37,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | F1  | Put the bar on screen                   |  ↓  | ≤ 50 ms from ⌃⌘K — measured 7.4 ms |
 | F2  | Know the catalogue without building     |  ↓  | ≤ 5 ms, from cached **Manifests**    |
 | F3  | Narrow to a **Script** as you type      |  ↓  | ≤ 16 ms — measured 2.0 ms        |
+| F18 | Reach a **Script** by a shorthand it declares |  ↓  | `yt` finds `youtube`; a **Keyword** typed in full always wins |
 | F13 | Drive the whole bar from the home row   |  ↑  | 0 mouse, 0 arrow-key-only paths; ⌃N/⌃P work |
 
 ### Build & run
@@ -230,6 +231,24 @@ Each function sits under the goal it serves most; secondary goals are noted inli
     - **How**: `manifests.json`, rewritten by the watcher after each successful build. Reading a
       cache rather than describing on demand is also what keeps the bar usable while broken
       - **Component**: C2 Catalogue · C6 Watcher
+  - **F18** Reach a **Script** by a shorthand it declares
+    - **How**: a **Script** declares `other_keywords: ["yt"]` and the bar matches those as well as
+      its canonical **Keyword**, in four bands — canonical exactly, another exactly, canonical by
+      prefix, another by prefix
+      - **The bands exist so a shorthand cannot cost you a **Keyword**.** Two letters is the fastest
+        thing to type in this bar, and without an ordering `yt` would sit behind any **Script** whose
+        name merely starts with those letters. A **Keyword** typed in full still wins outright, and
+        the canonical one wins a tie, so nothing that worked before can be shadowed by a name added
+        afterwards
+      - **A new field on the `Script` constructor, which nothing can migrate for you** — the second
+        time this design has spent that (T5.1 was the first, for `asks`), because Gleam has no default
+        field values, so every **Script** gains a line or the project stops compiling. It is also the
+        only place it could go: `SPEC.md` forbids per-**Script** configuration outside its
+        **Manifest**, which rules out a config file, and `starkit.toml` is the **Toolchain**'s
+      - **It is not a new word.** `CONTEXT.md` bans "alias" and asserted one **Keyword** per
+        **Script**; by its own definition a shorthand typed into the same field *is* a **Keyword**, so
+        the cardinality moved instead of the vocabulary
+      - **Component**: C2 Catalogue
   - **F3** Narrow to a **Script** as you type
     - **How**: prefix match on **Keyword** over ~5 entries; no index worth building
       - **Measured at T2.4: 2.0 ms for the keystroke that changes the shape of the bar, 0.1 ms for

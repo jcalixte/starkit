@@ -972,6 +972,7 @@ tested — verified by running it".
 | -- | ---- | ------- | ----------- |
 | T9.4 | F16 — ⌃D twice on a selected **Script** moves it to the Trash; `Starkit delete <keyword>` | T9.3 | the **Keyword** leaves the list with nothing else run, the build stays clean, and both files are recoverable |
 | T9.6 | F17 — ⌥↩ opens the selected **Script** in Zed; `Starkit edit <keyword>` | T9.3 | one keystroke from the bar to the editor, and a **Refusal** when there is no file |
+| T9.7 | F18 — a **Script** declares `other_keywords`, and the bar matches them | T2.3 | `yt` finds `youtube`, and a **Keyword** typed in full is never pushed below a shorthand |
 | T9.5 | `login` → `start-at-login` | T7.1 | `install.sh` and the menu agree on one name for one thing |
 
 **Asked for as "a way to delete a Script from the home row", and the home row is the hard part.** Every
@@ -1002,6 +1003,33 @@ the missing module — which is the failure this cannot prevent without reading 
 **The Trash rather than `unlink`**, because `~/.starkit` is not a repository and a **Script** may have
 existed only there. It also puts the undo somewhere a person already knows to look, which no message in
 a bar can do.
+
+**"A shortcut like yt for youtube" was a **Vocabulary** change, and the glossary said no.**
+`CONTEXT.md` bans the word "alias" outright and asserted *exactly one **Keyword** per **Script***, which
+is the thing being asked for. Reversing that ban was the obvious move and the wrong one: by the
+glossary's own definition — "a space-free word that selects a **Script**" — a shorthand typed into the
+same field *is* a **Keyword**, so what was wrong was the **cardinality**, not the vocabulary. The
+invariant moved to "exactly one *canonical* **Keyword**, which is its module name, and any number more";
+the ban holds, because it was written to stop a **Keyword** being called something else rather than to
+forbid a second one; and the field is `other_keywords`, in the **Vocabulary**'s own word. It was named
+`aliases` for about twenty minutes first, which is exactly the drift `CONTEXT.md` exists to catch.
+
+**Matching is four bands, and the ordering is the whole feature.** Canonical **Keyword** exactly, another
+exactly, canonical by prefix, another by prefix — because two letters is the fastest thing to type here,
+and without an ordering `yt` would sit behind any **Script** whose name merely begins with those letters.
+A **Keyword** typed in full still wins outright, so no name added later can shadow one that already
+worked. A **Script** is ranked once however many of its names match, which is what keeps one **Script**
+from being listed twice.
+
+**The cost was a breaking constructor change, for the second time in this design.** T5.1 spent it on
+`asks` and recorded it as "the one upgrade this design cannot migrate for you" — Gleam has no default
+field values, so every **Script** gains a line or nothing compiles, and `install.sh` is forbidden from
+touching `src/scripts/`. It is also the only place the declaration could live: `SPEC.md` forbids
+per-**Script** configuration outside its **Manifest**, which rules out a config file, and `starkit.toml`
+belongs to the **Toolchain**. The five **Scripts** on this machine were migrated by hand with the diff
+shown — one line each, nothing else touched — and the wire name is pinned by a test, because a Swift
+property renamed without its `CodingKey` would decode to none and `yt` would quietly stop finding
+anything.
 
 **F17 was the cheapest key in the bar.** ⌥↩ *and* ⌃O both arrive as
 `insertNewlineIgnoringFieldEditor:`, which is the same free pair T2.5 found when ⌃N and ⌃P turned out to

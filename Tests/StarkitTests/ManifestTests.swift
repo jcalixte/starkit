@@ -44,4 +44,23 @@ struct ManifestTests {
         let scripts = try read(#"[{"keyword":"work","name":"Work","needs":[],"asks":""}]"#)
         #expect(scripts[0].asks == "")
     }
+
+    // Same promise as `asks`, one field later: an upgrade must not empty the bar on the launch that
+    // follows it. `other_keywords` arrives absent from every cache written before it existed.
+    @Test("a cache written before other Keywords existed decodes with none")
+    func olderCacheHasNoOtherKeywords() throws {
+        let scripts = try read(#"[{"keyword":"youtube","name":"Youtube","needs":[]}]"#)
+        #expect(scripts[0].otherKeywords.isEmpty)
+    }
+
+    // Pins the wire name as well as the value: the Gleam half writes the Vocabulary's snake_case, and
+    // a Swift property renamed without its CodingKey would silently decode to none — which is a bar
+    // where `yt` stops finding anything and nothing reports why.
+    @Test("other Keywords cross the wire in the order the Script declared them")
+    func otherKeywordsCrossTheWire() throws {
+        let scripts = try read(
+            #"[{"keyword":"youtube","name":"Youtube","needs":[],"other_keywords":["yt","tube"]}]"#
+        )
+        #expect(scripts[0].otherKeywords == ["yt", "tube"])
+    }
 }

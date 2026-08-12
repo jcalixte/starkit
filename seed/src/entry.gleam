@@ -64,6 +64,9 @@ fn answer(effects: List(Effect)) -> Json {
   json.object([#("effects", json.array(effects, of: effect))])
 }
 
+/// By the canonical Keyword only, deliberately. The Shelf resolves what was typed to a Keyword before
+/// it gets here (C2), so the Keyword rule lives in exactly one place; a second copy here would be a
+/// second thing to keep in step.
 fn find(keyword: String) -> Result(Script, String) {
   case list.find(registry.all(), fn(script) { script.keyword == keyword }) {
     Ok(script) -> Ok(script)
@@ -90,6 +93,7 @@ fn manifest(script: Script) -> Json {
   json.object([
     #("keyword", json.string(script.keyword)),
     #("name", json.string(script.name)),
+    #("other_keywords", json.array(script.other_keywords, of: json.string)),
     #("needs", json.array(script.needs, of: need)),
     #("asks", asks(script.asks)),
   ])

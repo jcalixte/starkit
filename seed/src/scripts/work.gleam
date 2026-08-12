@@ -10,6 +10,7 @@ pub fn script() -> Script {
   Script(
     keyword: "work",
     name: "Work",
+    other_keywords: [],
     needs: [],
     asks: Decides,
     run: fn(_input, _context) {

@@ -242,6 +242,20 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       guessed, which is how it came up that ⌘↩ is not a text binding at all and would have needed the
       keycodes T2.5 spent a slice avoiding. **Refuses** when the file is gone rather than writing a
       template over the question
+- [x] **T9.7** F18 — a **Script** declares `other_keywords: ["yt"]` and the bar matches them. **The
+      glossary said no first**: `CONTEXT.md` bans "alias" and asserted exactly one **Keyword** per
+      **Script**. Reversing the ban was the wrong fix — by its own definition a shorthand typed into the
+      same field *is* a **Keyword**, so the **cardinality** moved instead, to "exactly one *canonical*
+      **Keyword**, which is its module name, and any number more". It was called `aliases` for twenty
+      minutes first, which is the drift that document exists to catch. Matching is **four bands** —
+      canonical exact, other exact, canonical prefix, other prefix — because two letters is the fastest
+      thing to type and `yt` must not sit behind every **Script** merely starting with those letters,
+      while a **Keyword** typed in full still wins outright. **A breaking constructor change**, the
+      second this design has spent (T5.1 was `asks`): Gleam has no default field values, and it is the
+      only legal home, since `SPEC.md` forbids per-**Script** configuration outside its **Manifest**.
+      The five **Scripts** here were migrated one line each with the diff shown, and the wire name is
+      pinned by a test — a Swift property renamed without its `CodingKey` decodes to none, and `yt`
+      would stop finding anything with nothing reporting why
 - [x] **T9.5** `login` → `start-at-login`, because `Starkit login on` reads as a sentence about an
       account and Starkit has none. The menu has said **Start at Login** since T7.1; one thing, one name
 

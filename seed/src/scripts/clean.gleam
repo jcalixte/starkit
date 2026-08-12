@@ -14,6 +14,7 @@ pub fn script() -> Script {
   Script(
     keyword: "clean",
     name: "Clean",
+    other_keywords: [],
     needs: [RunningApps],
     asks: Decides,
     run: fn(_input, context) { kills(context.running_apps, keep) },

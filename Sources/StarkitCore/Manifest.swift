@@ -17,11 +17,42 @@ public struct Manifest: Equatable, Sendable, Codable {
     /// `asks` key, and a cache that fails to decode is an empty bar on the launch after an upgrade.
     public let asks: String?
 
-    public init(keyword: String, name: String, needs: [String] = [], asks: String? = nil) {
+    /// The further **Keywords** this **Script** answers to — `["yt"]` for `youtube`. Not file names:
+    /// only the canonical `keyword` is, because a **Script** is a Gleam module.
+    public let otherKeywords: [String]
+
+    public init(
+        keyword: String,
+        name: String,
+        needs: [String] = [],
+        asks: String? = nil,
+        otherKeywords: [String] = []
+    ) {
         self.keyword = keyword
         self.name = name
         self.needs = needs
         self.asks = asks
+        self.otherKeywords = otherKeywords
+    }
+
+    /// `other_keywords` on the wire, because `entry.gleam` writes the **Vocabulary**'s own snake_case
+    /// and the two halves of one field must not be spelled differently in the same system.
+    enum CodingKeys: String, CodingKey {
+        case keyword, name, needs, asks
+        case otherKeywords = "other_keywords"
+    }
+
+    /// Written out rather than synthesised, because Swift's generated decoder cannot default a field
+    /// that is not optional — and every field added here has to arrive absent from a `manifests.json`
+    /// some older Starkit wrote. `keyword` and `name` are the two that may not: a **Script** with
+    /// neither is not a **Script**, and a cache missing them is corrupt rather than old.
+    public init(from decoder: any Decoder) throws {
+        let fields = try decoder.container(keyedBy: CodingKeys.self)
+        keyword = try fields.decode(String.self, forKey: .keyword)
+        name = try fields.decode(String.self, forKey: .name)
+        needs = try fields.decodeIfPresent([String].self, forKey: .needs) ?? []
+        asks = try fields.decodeIfPresent(String.self, forKey: .asks)
+        otherKeywords = try fields.decodeIfPresent([String].self, forKey: .otherKeywords) ?? []
     }
 }
 

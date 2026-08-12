@@ -60,8 +60,8 @@ pub type Asking {
   Asks(for: String)
 }
 
-/// One Script: a Keyword to summon it by, a name to show, the Needs it declares, whether it Asks,
-/// and the decision itself.
+/// One Script: a Keyword to summon it by, the other Keywords it answers to, a name to show, the Needs it
+/// declares, whether it Asks, and the decision itself.
 ///
 /// `run` receives the Input typed after the Keyword — empty when nothing was typed — and returns
 /// the Effects to perform. It may reach the network on its own; it may never touch the machine.
@@ -72,6 +72,12 @@ pub type Script {
   Script(
     keyword: String,
     name: String,
+    /// Further Keywords this Script answers to, like `["yt"]` for `youtube` — shorthand, not a key
+    /// binding. The `keyword` above stays the canonical one because it is the module name; these are
+    /// not file names, so they may be anything you would type, and an empty list is the normal case.
+    /// Matching prefers an exact `keyword`, then an exact one of these, then a `keyword` prefix, then
+    /// a prefix of these — so a two-letter shorthand cannot shadow a Keyword someone typed in full.
+    other_keywords: List(String),
     needs: List(Need),
     asks: Asking,
     run: fn(String, Context) -> List(Effect),
@@ -83,6 +89,7 @@ pub type Script {
   Fetching(
     keyword: String,
     name: String,
+    other_keywords: List(String),
     needs: List(Need),
     asks: Asking,
     run: fn(String, Context) -> Promise(List(Effect)),

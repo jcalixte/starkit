@@ -23,6 +23,7 @@ pub fn script() -> Script {
   Fetching(
     keyword: "youtube",
     name: "Youtube",
+    other_keywords: ["yt"],
     needs: [],
     asks: Asks(for: "YouTube URL"),
     run: fn(input, _context) { decide(input) },

@@ -53,10 +53,14 @@ and no others.
 _Avoid_: environment, state, world, ambient data
 
 **Keyword**:
-The single space-free word that selects a **Script** in the **Shelf**. Everything typed after
-the first space is the **Input**.
-_Avoid_: alias, trigger, shortcut, hotkey — there are no per-**Script** key bindings; the only
-key binding in Starkit summons the **Shelf**.
+A space-free word that selects a **Script** in the **Shelf**. Everything typed after the first
+space is the **Input**. A **Script** answers to one *canonical* **Keyword** — its module name,
+so it is also its file name — and to any number of further **Keywords**, which are shorthand:
+`yt` reaches `youtube`. They are matched the same way and differ only in that the canonical one
+wins a tie.
+_Avoid_: alias, trigger, shortcut, hotkey — a second **Keyword** is still a **Keyword**, typed
+in the same field, and there are no per-**Script** key bindings; the only key binding in Starkit
+summons the **Shelf**.
 
 **Seed**:
 The clipboard text a **Script**'s **Input** starts out holding, selected, so that accepting it
@@ -77,7 +81,7 @@ can only ask.
 _Avoid_: command, action, side effect, intent
 
 **Manifest**:
-What a **Script** declares about itself, as against what it decides: its **Keyword**, the name
+What a **Script** declares about itself, as against what it decides: its **Keywords**, the name
 shown in the **Shelf**, and the **Context** slices it needs. Everything the **Shelf** must know
 to list a **Script** and gather for it — and nothing that requires building or running one,
 which is why a **Script** that no longer compiles still has a name in the bar. Declared in Gleam
@@ -156,7 +160,8 @@ _Avoid_: processes, open apps
 - The **Shelf** runs many **Scripts**; a **Script** never runs another **Script**
 - A **Script** declares zero or more **Context** slices and consumes at most one **Input**
 - A **Script** that **Asks** has its **Input** **Seeded**; one that **Decides** never is
-- Every **Script** has exactly one **Keyword**, and no **Keyword** contains a space
+- Every **Script** has exactly one *canonical* **Keyword**, which is its module name, and may
+  answer to further **Keywords**; no **Keyword** contains a space
 - A **Script** emits zero or more **Effects**, in order
 - Every **Effect** is performed by the **Shelf**; a **Script** performs none of them
 - Every **Script** has exactly one **Manifest**, and the **Shelf** knows them all without building
@@ -180,8 +185,14 @@ _Avoid_: processes, open apps
 - "context" is overloaded against `CONTEXT.md` itself, which is a glossary, not a **Context**.
   Kept anyway: **Context** is the right domain word, and the collision is only in file naming.
 - "shortcut" was used for both a typed alias and a per-**Script** global key chord — resolved:
-  only the typed alias exists, and it is called a **Keyword**. There is exactly one key chord in
+  only the typed one exists, and it is called a **Keyword**. There is exactly one key chord in
   Starkit and it **Summons** the **Shelf**.
+- **A second name for a **Script** was asked for as a "shortcut" — `yt` for `youtube`.** Resolved
+  *without* a new word: by the definition above it is a **Keyword**, so what was wrong was the
+  cardinality rather than the vocabulary, and the invariant moved from "exactly one **Keyword**"
+  to "exactly one canonical **Keyword**, and any number more". The ban on "alias" therefore holds
+  — it was written to stop a **Keyword** being called something else, not to forbid a second one —
+  and the field is `other_keywords`, which says what it holds in the **Vocabulary**'s own word.
 - **Paste** and **Seed** both touch the clipboard, so "restore the clipboard" was ambiguous
   between putting back the **Seed** and keeping the pasted text — resolved: keep the pasted
   text. The cost is that **Summoning** the same **Script** again **Seeds** from its own output,

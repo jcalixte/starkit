@@ -8,6 +8,7 @@ pub fn script() -> Script {
   Script(
     keyword: "personal",
     name: "Personal",
+    other_keywords: [],
     needs: [],
     asks: Decides,
     run: fn(_input, _context) {

@@ -285,6 +285,8 @@ is the boundary working, not a gap in it.
 
 ### Slice 6 — authoring _(not MVP, but wanted the day you write a sixth Script)_
 
+- A **Script** declaring `other_keywords: ["yt"]` is found by `yt` as well as by `youtube`, and a
+  **Keyword** typed in full is never pushed below a shorthand.
 - Typing a **Keyword** that matches nothing offers `Create "<keyword>"`, never as the default
   selection: pressing ↩ on a typo does nothing at all.
 - Choosing it writes `src/scripts/<keyword>.gleam` with a compiling `pub fn script()` and opens it

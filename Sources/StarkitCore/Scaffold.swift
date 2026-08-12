@@ -38,6 +38,7 @@ public enum Scaffold {
           Script(
             keyword: "\(keyword)",
             name: "\(name(for: keyword))",
+            other_keywords: [],
             needs: [],
             asks: Decides,
             run: fn(_input, _context) {
