@@ -937,6 +937,11 @@ the sort of thing that becomes a wrong fix if the check is trusted over the read
 **withheld rather than repaired** for anything Gleam would not take as a module name: `My Notes` is not
 offered, because quietly writing `my_notes` is a **Keyword** nobody can find again.
 
+**Verified once more against the installed app**, because every number above came from a scratch home:
+a file appearing in the real `~/.starkit` was listed **360 ms** later and removing it took it back out,
+with the registry returning to five imports. Slower than the scratch home's 201–238 ms over a larger
+tree, and 72 % of F10's budget — the row to watch as **Scripts** accumulate.
+
 **What is not verified by running: the four bar interactions.** Typing a name that matches nothing to
 see the offer, ↩ on it doing nothing, ↓ then ↩ writing the file and opening Zed. Those need a keypress,
 and SPEC already puts C1 under "not tested — verified by running it".

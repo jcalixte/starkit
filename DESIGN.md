@@ -59,7 +59,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F8  | Hold the chord, and be visibly broken when it can't | ↑ | 100 % held; failure shown, never silent |
 | F9  | Be ready after login                    |  ↓  | ≤ 3 s — measured 734 ms; a reboot is owed |
-| F10 | Surface breakage at save time, not **Summon** time | ↓ | ≤ 500 ms after save — measured 201–238 ms |
+| F10 | Surface breakage at save time, not **Summon** time | ↓ | ≤ 500 ms after save — measured 201–238 ms, and 360 ms against the installed app |
 | F12 | Report a run that failed at runtime     |  ↑  | message survives the bar closing |
 | F14 | Bound how long a run may hold the bar   |  ↓  | killed at 5 s — measured 5004–5007 ms; spinner shown while running |
 | F15 | Follow the **Toolchain** the shell reports, and notice when it moves | ↑ | 0 manual configuration; a missing runtime is red before it is needed |
@@ -164,7 +164,9 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         work — regenerate, `gleam build`, `describe`, write. A save that does not compile reaches the
         menu bar in 169 ms with the previous list still in the bar, which is F2 and F10 being the same
         mechanism seen from two sides. Two outliers at 594 and 628 ms were recorded under load, and
-        the excess in both was delivery rather than work
+        the excess in both was delivery rather than work. **360 ms against the installed bundle and the
+        real `~/.starkit`**, which is the number that counts and the one to watch: it is the same work
+        over a larger tree, and it is 72 % of the budget
       - **FSEvents' own latency window cannot be used for the coalescing.** Set to 100 ms it delivered
         the first event of a quiet period up to 509 ms late — `NoDefer` is documented to prevent
         exactly that and does not — which spent F10's entire budget before Starkit had been told
