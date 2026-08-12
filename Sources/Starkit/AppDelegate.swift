@@ -33,6 +33,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.create = { [weak self] keyword in
             self?.scaffold(keyword)
         }
+        panel.delete = { [weak self] manifest in
+            self?.trash(manifest)
+        }
+        panel.deletionQuestion = { manifest in
+            let files = Scaffolder(home: Toolchain.home).files(of: manifest.keyword)
+            guard !files.isEmpty else {
+                return "“\(manifest.name)” has no file left to delete."
+            }
+            let names = files.map(\.lastPathComponent).joined(separator: " and ")
+            return "Delete “\(manifest.name)”? ⌃D again moves \(names) to the Trash. Escape keeps it."
+        }
         // Before `prepare` because after this line nobody is waiting: the chord is taken and the bar
         // is built. What it buys is in C8.
         ContextGatherer.warm()
@@ -200,6 +211,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             // The bar has already gone by the time this runs, so the menu bar is the only place left
             // to say so.
+            status.set(error.reason, for: .scripts)
+            report(error.reason)
+            if let detail = error.detail { report(detail) }
+        }
+    }
+
+    /// The second ⌃D in the bar — C11 moves the **Script** to the Trash, and C6 notices it has gone.
+    ///
+    /// Nothing here regenerates the registry or rebuilds, for the same reason `scaffold` does not: the
+    /// file leaving `src/` *is* the **Script** leaving, so deleting from the bar and deleting in Finder
+    /// are the same event. The **Script** disappears from the list about 200 ms later because C6 said
+    /// so, not because the bar assumed it.
+    private func trash(_ manifest: Manifest) {
+        do throws(Refusal) {
+            let trashed = try Scaffolder(home: Toolchain.home).trash(manifest.keyword)
+            report(
+                "Deleted \(manifest.keyword) — in the Trash: "
+                    + trashed.map(\.lastPathComponent).joined(separator: ", ")
+            )
+        } catch {
+            // The bar has gone by now, so the menu bar carries it. A **Script** that could not be
+            // deleted is a **Script** still listed and still working, which is the safe half.
             status.set(error.reason, for: .scripts)
             report(error.reason)
             if let detail = error.detail { report(detail) }

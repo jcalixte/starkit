@@ -966,9 +966,49 @@ is listed 238 ms later and runs.
 behaviour rather than filesystem behaviour, they need a keypress, and SPEC already puts C1 under "not
 tested — verified by running it".
 
-## Deferred (slice 6, specified but outside MVP)
+## Phase 10 — Taking a Script away
 
-Nothing. Slice 6 is built.
+| ID | Task | Depends | Verify with |
+| -- | ---- | ------- | ----------- |
+| T9.4 | F16 — ⌃D twice on a selected **Script** moves it to the Trash; `Starkit delete <keyword>` | T9.3 | the **Keyword** leaves the list with nothing else run, the build stays clean, and both files are recoverable |
+| T9.5 | `login` → `start-at-login` | T7.1 | `install.sh` and the menu agree on one name for one thing |
+
+**Asked for as "a way to delete a Script from the home row", and the home row is the hard part.** Every
+candidate is already a text-editing binding — ⌃H is `deleteBackward:`, ⌃K is `deleteToEndOfParagraph:`,
+⌃D is `deleteForward:` — so there is no free key, only a choice about which one to spend. ⌃D was chosen
+knowing it stops deleting a character in the **Keyword** field, and the **Input** stage hands it back,
+because there the field holds an answer rather than a **Keyword**. It arrives as the selector Cocoa
+names for the key, so T2.5's rule survives: still no keycodes anywhere in the bar.
+
+**The friction is a question in the list's place, not a label on the row.** The first version dimmed the
+row and wrote *⌃D again to Trash it* into it — then the confirm moved into the message view, which is
+where it belongs, because the list and a message are already exclusive (`under`) and a warning that
+shares the screen with eight other rows is a warning that gets skipped. The row rendering was removed
+rather than left: `message != nil` hides the list, so it was a state that could not be reached.
+
+**The armed **Keyword** is held, never the row index.** Narrowing, moving the selection and a new
+**Catalogue** from C6 all disarm, and the second press has to find the same **Script** under the cursor.
+Deleting the wrong file is the only mistake here that pressing something else cannot undo, so the state
+is written to be lost easily rather than held onto.
+
+**A **Script**'s test is part of the **Script**, and deleting one proved it.** `gleam build` typechecks
+`test/`, so trashing `youtube.gleam` while `youtube_test.gleam` still imported it broke the whole
+project 200 ms later: the menu bar went red, and the other four **Scripts** kept working only because
+ADR 0002's isolation was already there. Both files move now, both are named in the question, and both
+are recoverable. A suite under another name still breaks the build, and that surfaces as Gleam naming
+the missing module — which is the failure this cannot prevent without reading every import.
+
+**The Trash rather than `unlink`**, because `~/.starkit` is not a repository and a **Script** may have
+existed only there. It also puts the undo somewhere a person already knows to look, which no message in
+a bar can do.
+
+**`login` became `start-at-login`** on the same reading: `Starkit login on` is a sentence about an
+account, and Starkit has no account. The menu item has said **Start at Login** since T7.1, so the verb
+now says it too — one thing, one name, which is the whole argument of `CONTEXT.md` applied to a CLI.
+
+## Deferred
+
+Nothing. Slice 6 is built, and F16 was added on top of it.
 
 ## What would change the plan
 

@@ -29,9 +29,10 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 | `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, turns **Start at Login** on, launches. Registering here rather than at first launch is deliberate: an install is when the whole promise was asked for, boot included, where an app that registered itself on every launch would overrule someone who had just turned it off. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app **Refusing** one **Script** beats no app at all. |
 | `Starkit registry` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do, which is what stops every **Script** looking **Stale**. C6 does this on every save; the verb is for `install.sh`, which needs a registry before its first build, and for getting the file back after deleting it. |
 | `Starkit create <keyword>` | C11 from a terminal: writes `src/scripts/<keyword>.gleam` from the template if it is not there, then opens it — exactly what ↩ on the bar's `Create` row does. It exists because its absence shipped a crash: C11 was the one component this CLI could not reach, so its only line that touches a filesystem was never executed until someone pressed ↩, and it trapped on the first try. |
+| `Starkit delete <keyword>` | Moves `src/scripts/<keyword>.gleam` and its `test/<keyword>_test.gleam` to the Trash — what ⌃D twice in the bar does. Here for the same reason `create` is, and because this is the one path that destroys something you wrote: it should not first execute because somebody pressed a key. |
 | `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. The debugging path; kept permanently. |
 | `Starkit run <keyword> --bench[=N]` | The numbers behind [DESIGN.md](./DESIGN.md) §8, taken N times (default 20) on this machine: F4, F5, F6, and the resolve and `describe` that F9's launch is mostly made of, each reported as its first sample and then the median of the rest. **Performs no Effects** — twenty iterations of `work` would otherwise open eighty applications. F1, F8 and F9 are not measurable from here and §8 says why. Point it at a scratch `$STARKIT_HOME` holding a **Script** that loops to measure F14's deadline. |
-| `Starkit login [on\|off]` | Starting at login, from a terminal — what the menu bar item's **Start at Login** does. Always prints the state macOS reports *afterwards*, never what was asked for, and exits non-zero when those differ. Run through the installed bundle: the registration belongs to the bundle the executable sits in. |
+| `Starkit start-at-login [on\|off]` | Starting at login, from a terminal — what the menu bar item's **Start at Login** does. Always prints the state macOS reports *afterwards*, never what was asked for, and exits non-zero when those differ. Run through the installed bundle: the registration belongs to the bundle the executable sits in. |
 | `swift test` | The pure Swift test suites. |
 | `cd ~/.starkit && gleam test` | The **Script** test suites. |
 
@@ -203,6 +204,10 @@ and §8 records where their numbers came from instead.
 - Let a **Script** run another **Script**, or outlive the 5 s deadline.
 - Overwrite a **Script** in `~/.starkit` during install.
 - Make `Create "<keyword>"` the default selection in the bar.
+- Delete a **Script** with one keystroke, or with `unlink`. Two presses, and the Trash, so a mistake
+  is recoverable without Starkit having to hold an undo of its own.
+- Delete a **Script**'s source and leave its test suite behind. `gleam build` typechecks `test/`, so
+  that is a broken project 200 ms later (T9.4).
 
 ## Slices and acceptance criteria
 
@@ -288,6 +293,9 @@ is the boundary working, not a gap in it.
 - Creating a file in Zed *without* going through the bar registers it identically.
 - A save that does not compile turns the menu bar icon red within 500 ms, and the previously built
   **Scripts** keep working.
+- ⌃D on a selected **Script** asks before doing anything, naming the files it would move; ⌃D again
+  moves them to the Trash and the **Keyword** leaves the list without anything else being run.
+  Escape, typing, and moving the selection all take the question back down.
 
 ### Slice 7 — boot
 

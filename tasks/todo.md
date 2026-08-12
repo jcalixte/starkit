@@ -219,3 +219,25 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       writes, refuses to overwrite an edited file, names an invalid **Keyword**, and C6 lists the
       result 238 ms later. **Three bar interactions still want a keypress**: the offer appearing, ↩ on
       a typo doing nothing, ↓ reaching it
+
+## Phase 10 — Taking a Script away
+
+- [x] **T9.4** F16 — ⌃D twice on a selected **Script** moves it to the Trash, plus `Starkit delete`.
+      **The home row is the hard part**: every candidate is already a text-editing binding, so ⌃D was
+      spent knowingly — it stops deleting a character in the **Keyword** field, and the **Input** stage
+      hands it back, since there the field holds an answer. It still arrives as the selector Cocoa
+      names, so T2.5's no-keycodes rule survives. The friction is a **question in the list's place**
+      rather than a label on the row: the two are already exclusive, and the row version was removed
+      instead of left, because `message != nil` hides the list and that state could not be reached. The
+      armed **Keyword** is held and never the row index, so narrowing, moving and a new **Catalogue**
+      all disarm — deleting the wrong file is the only mistake here that pressing something else cannot
+      undo. **A Script's test is part of it**, learned by deleting one: `gleam build` typechecks
+      `test/`, so trashing `youtube.gleam` while `youtube_test.gleam` still imported it broke the whole
+      project 200 ms later and turned the menu bar red. Both move now, both are named in the question,
+      both recoverable — the **Trash**, never `unlink`, because `~/.starkit` is not a repository
+- [x] **T9.5** `login` → `start-at-login`, because `Starkit login on` reads as a sentence about an
+      account and Starkit has none. The menu has said **Start at Login** since T7.1; one thing, one name
+
+> **Still owed: T7.1's reboot.** Everything else on this list is done, and slice 6 has nothing left
+> deferred behind it.
+

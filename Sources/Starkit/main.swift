@@ -37,15 +37,17 @@ private func command(_ arguments: [String]) -> Int32 {
         }
     }
 
-    if words.first == "login" { return login(Array(words.dropFirst())) }
+    if words.first == "start-at-login" { return startAtLogin(Array(words.dropFirst())) }
     if words.first == "registry" { return registry() }
     if words.first == "create" { return create(Array(words.dropFirst())) }
+    if words.first == "delete" { return delete(Array(words.dropFirst())) }
 
     guard words.count >= 2, words[0] == "run" else {
         report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
-        report("       Starkit login [on|off]")
+        report("       Starkit start-at-login [on|off]")
         report("       Starkit registry")
         report("       Starkit create <keyword>")
+        report("       Starkit delete <keyword>")
         return 2
     }
     let keyword = words[1]
@@ -126,6 +128,29 @@ private func create(_ words: [String]) -> Int32 {
     }
 }
 
+/// `Starkit delete <keyword>` — move a **Script** to the Trash, the same way ⌃D twice in the bar does.
+///
+/// Here for the reason `create` is: this is the one path in Starkit that destroys something a person
+/// wrote, so it is the last one that should first execute because somebody pressed a key twice. It
+/// takes no confirmation of its own — a terminal has already made typing the name the confirmation,
+/// and the file goes to the Trash either way.
+private func delete(_ words: [String]) -> Int32 {
+    guard let keyword = words.first, words.count == 1 else {
+        report("usage: Starkit delete <keyword>")
+        return 2
+    }
+
+    do throws(Refusal) {
+        let trashed = try Scaffolder(home: Toolchain.home).trash(keyword)
+        for file in trashed { print("→ Trash: \(file.path)") }
+        return 0
+    } catch {
+        report(error.reason)
+        if let detail = error.detail { report(detail) }
+        return 1
+    }
+}
+
 /// `Starkit registry` — write `src/registry.gleam` from the **Scripts** on disk, once.
 ///
 /// C6 does this on every save, so this verb exists for the two moments no Watcher is running:
@@ -147,8 +172,12 @@ private func registry() -> Int32 {
     }
 }
 
-/// `Starkit login [on|off]` — C9 from a terminal, since the registration belongs to the *bundle*
+/// `Starkit start-at-login [on|off]` — C9 from a terminal, since the registration belongs to the *bundle*
 /// this executable sits in and not to the running instance.
+///
+/// Named for the words already on the menu item rather than for what it does to `SMAppService`. The
+/// verb was `login` until it was read aloud: `Starkit login on` is a sentence about an account, and
+/// Starkit has no account and never will. One thing, one name — the menu says **Start at Login**.
 ///
 /// It exists for two callers. `install.sh`, because an install is the moment the whole promise was
 /// asked for, boot included; and T7.2, which has to read the state after moving that bundle around
@@ -156,14 +185,14 @@ private func registry() -> Int32 {
 ///
 /// Always prints the state macOS reports *after* the request, never what was requested. Exit 1 when
 /// those differ, so a caller can tell without parsing the sentence.
-private func login(_ words: [String]) -> Int32 {
+private func startAtLogin(_ words: [String]) -> Int32 {
     var wanted: Bool?
     switch words.first {
     case nil: break
     case "on": wanted = true
     case "off": wanted = false
     default:
-        report("usage: Starkit login [on|off]")
+        report("usage: Starkit start-at-login [on|off]")
         return 2
     }
 

@@ -72,6 +72,17 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// asked.
     var create: ((String) -> Void)?
 
+    /// What the *second* ⌃D does to the selected **Script** (F16). The bar stays open, because the
+    /// list going one row shorter a moment later is the only confirmation worth showing: it is C6
+    /// reporting the file is really gone rather than Starkit promising it.
+    var delete: ((Manifest) -> Void)?
+
+    /// The sentence the first ⌃D puts on screen, which has to name the files that would actually move
+    /// — a **Script**'s test is part of it (C11), and a confirm that said otherwise would be the kind
+    /// of surprise the Trash exists to survive rather than to excuse. Supplied from outside because C1
+    /// does not read the filesystem.
+    var deletionQuestion: ((Manifest) -> String)?
+
     /// Every **Script** Starkit knows about, which is not the same as every **Script** it can run
     /// (F2). Narrowed on assignment so the panel is already the right height before the first
     /// **Summon** rather than resizing while someone is looking at it.
@@ -114,6 +125,15 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// ↩ on a typo must do nothing. With a plain `Int` the offer would sit under the cursor the moment
     /// a **Keyword** stopped matching, and the fastest way to write a file would be to misspell one.
     private var selected: Int?
+
+    /// The **Keyword** that one more ⌃D would move to the Trash, or `nil` when nothing is armed.
+    ///
+    /// The **Keyword** and not the index, so that arming survives nothing: any narrowing, any move of
+    /// the selection and any new **Catalogue** from C6 clears it, and the second press has to find the
+    /// same **Script** still under the cursor. Deleting the wrong file is the only mistake in this
+    /// design that cannot be taken back by pressing something else, so the state is written to be lost
+    /// easily rather than held onto.
+    private var armed: String?
 
     /// How many runs the bar has started. The current one is the only one allowed to speak —
     /// without this, a **Script** hung against its 5 s deadline could **Notify** into a bar
@@ -470,6 +490,7 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         matches = []
         choices = []
         selected = nil
+        armed = nil
         list.present([], selected: nil)
         fit()
 
@@ -513,14 +534,60 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
 
         let next = min(max(selected + step, 0), shown - 1)
         guard next != selected else { return }
+        // Before the selection moves: a confirm naming one **Script** must not survive onto another.
+        disarm()
         self.selected = next
         list.select(next)
+    }
+
+    /// ⌃D once arms the selected **Script**, ⌃D again moves it to the Trash (F16).
+    ///
+    /// Two presses rather than one because this is the only thing the bar does that destroys a file
+    /// somebody wrote, and one keystroke away from that is the same distance as a typo. The second
+    /// press has to land on the **same** **Script**: `armed` holds a **Keyword**, so a selection that
+    /// moved or a list that narrowed in between disarms rather than retargets.
+    ///
+    /// - Returns: whether the bar took the key. `false` in the **Input** stage only, where the field
+    ///   holds an answer and forward-delete belongs to the text.
+    private func armOrDelete() -> Bool {
+        guard case .keyword = stage else { return false }
+
+        // Taken but ignored while a run is in flight, and on the offer to *create* a **Script** —
+        // there is no file behind either, and letting the key through would edit the field instead,
+        // which is a different thing happening for the same press.
+        guard !working, let selected, choices.indices.contains(selected),
+            case .script(let manifest) = choices[selected]
+        else { return true }
+
+        if armed == manifest.keyword {
+            armed = nil
+            // Away before the file moves, like the create row: what is left on screen would be a
+            // question about a **Script** that no longer exists, and C6 is about to say so anyway.
+            dismiss()
+            delete?(manifest)
+        } else {
+            armed = manifest.keyword
+            // In the list's place rather than beside the row, because the list and a message are
+            // exclusive by design (`under`) and this is the one question in the bar whose answer
+            // cannot be taken back. Escape is offered because it is what a person reaches for, and it
+            // works without being handled here: the field editor sends `cancelOperation:` up to the
+            // window, which **Dismisses** — and a bar that has gone has deleted nothing.
+            say(
+                deletionQuestion?(manifest)
+                    ?? "Delete “\(manifest.name)”? ⌃D again moves it to the Trash. Escape keeps it.",
+                inStarkitsVoice: true
+            )
+        }
+        return true
     }
 
     /// Narrow the list to what has been typed, and grow or shrink the panel to hold the result (F3).
     /// Puts any message away — narrowing is choosing a different **Script**.
     private func narrow() {
         message = nil
+        // Anything that can move a **Script** out from under the cursor disarms: a keystroke in the
+        // field, and a new **Catalogue** arriving from C6 while the bar is open.
+        armed = nil
         let keyword = Keyword.split(field.stringValue).keyword
         matches = Keyword.matches(keyword, in: catalogue)
 
@@ -535,8 +602,24 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
             selected = 0
         }
 
-        list.present(Array(choices.prefix(Self.mostRows)), selected: selected)
+        show()
         fit()
+    }
+
+    /// Put the confirm away and leave the **Script** alone.
+    ///
+    /// Called by anything that could have moved a different **Script** under the cursor, so that the
+    /// second ⌃D can only ever land on the one the question named.
+    private func disarm() {
+        guard armed != nil else { return }
+        armed = nil
+        message = nil
+        fit()
+    }
+
+    /// Everything the list draws, from the state that decides it.
+    private func show() {
+        list.present(Array(choices.prefix(Self.mostRows)), selected: selected)
     }
 
     /// Grow the panel downwards, keeping its top edge where it was: the field must not move while
@@ -653,6 +736,11 @@ extension SummonPanel {
         case #selector(NSResponder.insertNewline(_:)): accept()
         case #selector(NSResponder.moveUp(_:)): move(by: -1)
         case #selector(NSResponder.moveDown(_:)): move(by: 1)
+        // ⌃D — and the forward-delete key, which Cocoa gives the same name. Taking it means neither
+        // deletes a character in this field any more, which is the price F16 was given for staying on
+        // the home row; the **Input** stage hands it back, because there the field holds an answer
+        // rather than a **Keyword** and forward-delete is the text's again.
+        case #selector(NSResponder.deleteForward(_:)): return armOrDelete()
         // Everything else is the field editor's, including the arrows that move along the line.
         default: return false
         }

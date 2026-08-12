@@ -63,7 +63,7 @@ echo "→ $DEST (signature verified)"
 #
 # Through the *installed* bundle, never build/'s copy: SMAppService registers whichever bundle the
 # calling executable sits in, and that one is a build artefact this script deletes.
-if ! "$DEST/Contents/MacOS/Starkit" login on; then
+if ! "$DEST/Contents/MacOS/Starkit" start-at-login on; then
 	echo "! Starkit is installed, but it will not come back after a reboot." >&2
 	echo "  Turn 'Start at Login' on from the menu bar item, or allow it in" >&2
 	echo "  System Settings > General > Login Items." >&2

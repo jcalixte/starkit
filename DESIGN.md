@@ -69,6 +69,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | ID  | Function                                | Dir | Target (now)                     |
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F11 | Turn an unmatched **Keyword** into a new **Script** | ↓ | 1 file touched, 0 registry edits, 1 deliberate confirmation — all three built at T9.3 |
+| F16 | Take a **Script** away without leaving the home row | ↓ | 2 keystrokes, 0 registry edits, always recoverable |
 
 ## 3. Competitive assessment
 
@@ -343,6 +344,33 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         runs. It is `gleam format`-clean for the reason the registry is — the editor about to open it
         may format on save
       - **Component**: C11 Scaffolder · C6 Watcher
+  - **F16** Take a **Script** away without leaving the home row
+    - **How**: ⌃D on the selected **Script** asks, ⌃D again moves it to the Trash. C6 notices the
+      file has gone, so this edits `src/scripts/` and nothing else — deleting from the bar and
+      deleting in Finder are the same event, which is F11's argument run backwards
+      - **The Trash, never `unlink`.** The only thing in Starkit that destroys something a person
+        wrote, and `~/.starkit` is not a repository — a **Script** may have existed only there. The
+        difference between the two calls is whether a mistake is a mistake or a loss, and `trashItem`
+        also puts the undo where someone already knows to look, which no message in a bar can do
+      - **Two presses, and the question names the files.** The first ⌃D replaces the list with
+        *Delete “Youtube”? ⌃D again moves youtube.gleam and youtube_test.gleam to the Trash. Escape
+        keeps it.* — in the list's place because the two are exclusive by design and this is the one
+        question in the bar whose answer cannot be taken back. The armed **Keyword** is held rather
+        than the row index, so narrowing, moving the selection, or a new **Catalogue** from C6
+        disarms rather than retargets: the second press can only ever land on the **Script** the
+        question named
+      - **A **Script**'s test is part of it**, found by deleting one (T9.4). `gleam build` typechecks
+        `test/`, so removing `youtube.gleam` and leaving `youtube_test.gleam` importing it broke the
+        whole project 200 ms later and turned the menu bar red. Both files move, both are named in
+        the question, and both are recoverable. A suite under some other name still breaks the build
+        and shows up as Gleam naming the missing module — the honest failure this cannot prevent
+        without reading every import
+      - **⌃D costs `deleteForward:` in the field**, which is the price of staying on the home row and
+        was chosen knowingly: every home-row candidate is a text-editing binding (⌃H, ⌃K, ⌃D). It
+        arrives as the selector Cocoa names for the key, so F13's rule survives intact, and the
+        **Input** stage hands the key back to the text — there the field holds an answer rather than
+        a **Keyword**
+      - **Component**: C11 Scaffolder · C6 Watcher
   - **F13** Drive the whole bar from the home row _(also G1)_
     - **How**: handle Cocoa action selectors (`moveUp:`, `moveDown:`, `insertNewline:`,
       `cancelOperation:`) rather than keycodes, inheriting ⌃N/⌃P, the arrows, ⌃A/⌃E/⌃K and any
@@ -381,7 +409,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
 | C8  | ContextGatherer   | gather declared **Context** slices in-process                |          |
 | C9  | LoginItem         | `SMAppService` registration                                 |          |
 | C10 | MenuBarStatus     | normal / red, the only ambient signal Starkit emits          |          |
-| C11 | Scaffolder        | template a new **Script** from a **Keyword**                 |          |
+| C11 | Scaffolder        | write a new **Script** from a **Keyword**, or move one to the Trash |          |
 | C12 | Toolchain         | resolve `bun` and `gleam` paths from `starkit.toml`          |          |
 
 **Where the effort goes.** C4 and C7 carry the most risk: C4 owns process lifecycle and the

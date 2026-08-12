@@ -1,7 +1,7 @@
 import AppKit
 import StarkitCore
 
-/// C11 — turn a **Keyword** nothing answers to into a file, and get out of the way.
+/// C11 — the bar's two edits to `src/scripts/`: write a **Script**, or take one away.
 ///
 /// It writes one file and opens an editor. It does *not* regenerate the registry, build, or tell the
 /// bar anything: C6 is watching `src/`, so a **Script** appearing there is already a **Script**
@@ -47,6 +47,63 @@ struct Scaffolder {
 
         open(destination)
         return destination
+    }
+
+    /// Everything on disk that *is* this **Script**, in the order it would be deleted, and only what
+    /// exists.
+    ///
+    /// **Its test counts as part of it.** The seed establishes `test/<keyword>_test.gleam` as where a
+    /// **Script**'s suite lives, and `gleam build` typechecks `test/` — so deleting the source and
+    /// leaving the suite behind breaks the whole project within 200 ms, which is how this was found
+    /// (T9.4). A suite named something else still breaks it, and that surfaces as the menu bar going
+    /// red with Gleam naming the missing module, which is the honest failure this cannot prevent
+    /// without reading every import.
+    func files(of keyword: String) -> [URL] {
+        [file(for: keyword), home.appending(path: "test/\(keyword)_test.gleam")]
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    /// Move a **Script** to the Trash, and return where it went.
+    ///
+    /// **The Trash, never `unlink`.** This is the only thing in Starkit that destroys something a
+    /// person wrote, and the difference between the two is whether a mistake is a mistake or a loss:
+    /// `~/.starkit` is not a repository and a **Script** may have existed only there. `trashItem` also
+    /// puts the undo where someone already knows to look for it, which no message in a bar can do.
+    ///
+    /// Deletes the source and nothing else. The **Artefact** under `build/` and the entry in
+    /// `built.json` are left where they are, because C5 only ever asks about them *for a **Keyword***
+    /// and there is no longer one to ask about — and because a stale artefact costs a few kilobytes
+    /// while a hand-written cleanup path costs a way to delete the wrong file.
+    func trash(_ keyword: String) throws(Refusal) -> [URL] {
+        // Named rather than shrugged at: a **Keyword** in the bar with no file behind it means the
+        // list is describing a **Script** that has already gone, and saying so is more use than
+        // reporting a **Script** deleted twice.
+        guard FileManager.default.fileExists(atPath: file(for: keyword).path) else {
+            throw Refusal(
+                "There is no Script at \(file(for: keyword).path).",
+                detail: "Nothing was deleted."
+            )
+        }
+
+        var trashed: [URL] = []
+        for source in files(of: keyword) {
+            var moved: NSURL?
+            do {
+                try FileManager.default.trashItem(at: source, resultingItemURL: &moved)
+            } catch {
+                throw Refusal(
+                    "Starkit could not move \(source.lastPathComponent) to the Trash.",
+                    // What already moved is named, because the next build will fail on whatever is
+                    // left and the reason has to be readable from here rather than deduced.
+                    detail: trashed.isEmpty
+                        ? "\(error)"
+                        : "\(error)\nAlready in the Trash: "
+                            + trashed.map(\.lastPathComponent).joined(separator: ", ")
+                )
+            }
+            trashed.append(moved as URL? ?? source)
+        }
+        return trashed
     }
 
     /// Zed by bundle identifier, then whatever the machine opens `.gleam` with.
