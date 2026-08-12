@@ -1,6 +1,6 @@
 //// Opens everything you need outside work.
 ////
-//// Empty for the same reason as work.gleam: this is a stub, and your app list is yours.
+//// A stub, like work.gleam — fill in your own app list on your own machine.
 
 import starkit.{type Script, Decides, Script}
 

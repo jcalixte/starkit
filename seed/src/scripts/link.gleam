@@ -1,17 +1,13 @@
 //// Turns a URL into `[Title](url)` by reading the page's h1, and pastes it.
 ////
-//// The second Fetching Script, and the one that has to guess. Youtube asks oEmbed a question and
-//// is told the answer; there is no such endpoint for the rest of the web, so the title here is
-//// found by scanning HTML for the tag it is usually in — which is a stand-in for a DOM selector
-//// and gets some pages wrong. The pages it gets wrong are in the test suite, pinned rather than
-//// fixed: fixing them means an HTML parser, which is a dependency and a decision (SPEC, Ask
-//// first), and knowing exactly where the limit sits is worth more than pretending it is elsewhere.
+//// There is no oEmbed for the general web, so the title is found by **scanning** HTML rather than
+//// parsing it — a stand-in for a DOM selector that gets some pages wrong. Those pages are in the
+//// test suite, pinned rather than fixed: fixing them means an HTML parser, which is a dependency
+//// and a decision (SPEC, Ask first).
 ////
-//// Scanned rather than matched with a regexp, which is the word SPEC and plan both used. Gleam's
-//// stdlib has no regexp, so that word was a sixth dependency resolved on every install for three
-//// calls to `string.split_once` — and the pages that come out wrong are the same either way,
-//// because the limit is "not a DOM parser" rather than "not a regexp". Same technique youtube
-//// already uses to read six URL shapes.
+//// Not a regexp either, despite the word SPEC used: Gleam's stdlib has none, so it would be a sixth
+//// dependency for three calls to `string.split_once`, and the pages that come out wrong are the
+//// same either way — the limit is "not a DOM parser".
 
 import gleam/fetch
 import gleam/http/request
@@ -28,8 +24,6 @@ pub fn script() -> Script {
     keyword: "link",
     name: "Link from url",
     needs: [],
-    // Answered from the clipboard nearly always: a URL is the one thing that is already there when
-    // you reach for this Script, which is what the Seed arriving selected is for.
     asks: Asks(for: "URL"),
     run: fn(input, _context) { decide(input) },
   )
@@ -59,14 +53,12 @@ fn decide(input: String) -> Promise(List(Effect)) {
 
 /// The URL this Script will fetch, or the sentence saying why it will not.
 ///
-/// https and nothing else. A title read over cleartext is a title anything between you and the
-/// server can choose, and this Script's whole output is that title, written into a note verbatim
-/// and trusted from then on — there is no second look, and nothing downstream that could tell a
-/// page's own heading from one inserted on the way. Refusing is the only check available.
+/// **https and nothing else.** A title read over cleartext is a title anything between you and the
+/// server can choose, and it is written into a note verbatim and trusted from then on — nothing
+/// downstream can tell a page's own heading from one inserted on the way.
 ///
-/// The URL comes back exactly as it was typed, uppercase scheme and all. Schemes are
-/// case-insensitive so `HTTPS://` is judged the same as `https://`, but what goes into the note is
-/// what was copied — this Script is not the place a URL gets tidied.
+/// The URL comes back exactly as typed, uppercase scheme and all: `HTTPS://` is judged the same as
+/// `https://`, but what goes into the note is what was copied.
 pub fn fetchable(input: String) -> Result(String, String) {
   let url = string.trim(input)
 
@@ -82,8 +74,7 @@ pub fn fetchable(input: String) -> Result(String, String) {
 /// The scheme, lowercased, when there is one and it is spelled like a scheme.
 ///
 /// Letters, digits and `+-.` only, so `hello world://x` has no scheme rather than one named after
-/// the sentence — a refusal that quoted it back would be reporting the wrong problem. Something has
-/// to follow the `://` too: `https://` on its own is a scheme and no page.
+/// the sentence. Something must follow the `://` too: `https://` alone is a scheme and no page.
 fn scheme_of(url: String) -> Result(String, Nil) {
   use #(scheme, rest) <- result.try(string.split_once(url, "://"))
   let scheme = string.lowercase(scheme)
@@ -104,25 +95,20 @@ const scheme_characters = "abcdefghijklmnopqrstuvwxyz0123456789+-."
 
 /// The link a page is written down as.
 ///
-/// The URL goes in as it was given, not as the server finally answered it: a redirect is followed
-/// by the runtime and never surfaces here, so a shortened link pastes short. That is the honest
-/// answer anyway — what was copied is what gets pasted — and it is the only URL this Script is ever
-/// certain of.
+/// The URL goes in as it was given, not as the server finally answered it — a redirect is followed
+/// by the runtime and never surfaces here, so a shortened link pastes short.
 ///
-/// Brackets in a title are left alone, as they are in youtube's note. `[Guide] How to` pastes as
-/// `[[Guide] How to](url)`, which every Markdown reader takes as link text containing brackets so
-/// long as they are balanced; an unbalanced one breaks the link. Recorded as a limit rather than
-/// escaped, because a backslash in a note is a cost paid by every title to protect a rare one.
+/// Brackets in a title are left alone: `[Guide] How to` pastes as `[[Guide] How to](url)`, which
+/// Markdown readers accept while they are balanced and an unbalanced one breaks. A known limit, not
+/// escaped, because a backslash is a cost paid by every title to protect a rare one.
 pub fn markdown(title: String, url: String) -> String {
   "[" <> text.normalise(title) <> "](" <> url <> ")"
 }
 
 /// The text of the page's first h1, cleaned up the way a browser would show it.
 ///
-/// Public because this is the half worth testing, and the half that guesses. Nothing here is a
-/// parser: it finds `<h1`, takes what is between that tag and its closer, drops any tags inside,
-/// turns the handful of entities a title actually contains back into characters, and squeezes the
-/// whitespace HTML would have collapsed anyway.
+/// Nothing here is a parser: it finds `<h1`, takes what is between that tag and its closer, drops
+/// tags inside, decodes a handful of entities, and squeezes whitespace.
 pub fn title_in(html: String) -> Result(String, Nil) {
   use inside <- result.try(first_h1(html))
 
@@ -132,8 +118,7 @@ pub fn title_in(html: String) -> Result(String, Nil) {
     |> decoded
     |> squeezed
   {
-    // A h1 holding only a logo, or nothing at all. There is no title on this page, which is the
-    // same news as there being no h1 and gets the same answer.
+    // A h1 holding only a logo, or nothing at all — the same news as there being no h1.
     "" -> Error(Nil)
     title -> Ok(title)
   }
@@ -142,13 +127,12 @@ pub fn title_in(html: String) -> Result(String, Nil) {
 /// What sits between the first `<h1…>` and its `</h1`.
 ///
 /// The first, not the best: a page whose masthead is a h1 and whose article title is the second one
-/// pastes the site's name, and it looks like a success. That is the known limit of a scan standing
-/// in for a selector, and it is in the tests.
+/// pastes the site's name and looks like a success. A known limit, pinned in the tests.
 fn first_h1(html: String) -> Result(String, Nil) {
   use #(_, after_name) <- result.try(string.split_once(html, "<h1"))
 
   case ends_the_name(after_name) {
-    // `<h1group` and friends. Not this tag — keep looking, from just past the false start.
+    // `<h1group` and friends — keep looking, from just past the false start.
     False -> first_h1(after_name)
     True -> {
       use #(_attributes, inside) <- result.try(string.split_once(
@@ -184,14 +168,10 @@ fn without_tags(html: String) -> String {
   }
 }
 
-/// The entities a page title actually contains, and no more.
+/// The entities a page title actually contains, and no more. Anything else — `&mdash;`, `&eacute;`,
+/// a numeric escape — survives raw and is visible in the note.
 ///
-/// Six of them, because a title is a sentence rather than a document: an ampersand, the two angle
-/// brackets, two spellings of an apostrophe, a quote and a non-breaking space. Anything else —
-/// `&mdash;`, `&eacute;`, a numeric escape — survives raw and is visible in the note, which is the
-/// tell that this is a scan rather than a parser.
-///
-/// `&amp;` is decoded last on purpose. Doing it first turns `&amp;lt;` into `&lt;` and then into a
+/// **`&amp;` must be decoded last.** Doing it first turns `&amp;lt;` into `&lt;` and then into a
 /// literal `<`, which is a page's escaped text quietly becoming markup.
 fn decoded(text: String) -> String {
   text
@@ -204,11 +184,11 @@ fn decoded(text: String) -> String {
   |> string.replace("&amp;", "&")
 }
 
-/// The whitespace a browser collapses, collapsed. A title written across three indented lines is
+/// The whitespace a browser collapses, collapsed — a title written across three indented lines is
 /// one line on the page and has to be one line in the note.
 ///
-/// A literal non-breaking space goes with them. It looks like a space in the note and is not one,
-/// so a title pasted with it is a title you later fail to find by typing a space.
+/// A literal non-breaking space goes with them: it looks like a space and is not one, so a title
+/// pasted with it is a title you later fail to find by typing a space.
 fn squeezed(text: String) -> String {
   text
   |> string.replace("\n", " ")
@@ -226,22 +206,19 @@ fn single_spaced(text: String) -> String {
   }
 }
 
-/// Ask the page for itself.
-///
-/// Every failure arrives as a sentence rather than a code, because the only place it can be shown
-/// is a Notify in the bar and there is nowhere to look anything up from there.
+/// Ask the page for itself. Every failure arrives as a sentence rather than a code, because the
+/// only place it can be shown is a Notify in the bar.
 fn page_at(url: String) -> Promise(Result(String, String)) {
   case request.to(url) {
-    // Nearly unreachable since T6.2: `fetchable` has already refused anything without an https
-    // scheme. What is left is a URL with an https scheme and something wrong further along —
-    // a space in the host, a port that is not a number — and it is kept for those rather than
-    // trusting one check to be the only one.
+    // Nearly unreachable — `fetchable` has already refused anything without an https scheme. What
+    // is left is a URL with an https scheme and something wrong further along: a space in the host,
+    // a port that is not a number.
     Error(_) -> promise.resolve(Error("Starkit could not read that as a URL."))
     Ok(asked) -> {
       use sent <- promise.await(fetch.send(asked))
       case sent {
         // Offline, DNS, TLS, a captive portal, a server refusing a request with no browser behind
-        // it — indistinguishable from here, and the answer is the same in all of them.
+        // it — indistinguishable from here.
         Error(_) -> promise.resolve(Error("That page is not reachable."))
         Ok(response) -> {
           use read <- promise.await(fetch.read_text_body(response))

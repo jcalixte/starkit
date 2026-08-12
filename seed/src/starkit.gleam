@@ -12,9 +12,6 @@
 import gleam/javascript/promise.{type Promise}
 
 /// Something a Script asks the Shelf to do.
-///
-/// The Vocabulary is closed but not frozen: it may grow, and each addition is a decision rather
-/// than a convenience. Two Scripts wanting the same new Effect is coincidence; three is a signal.
 pub type Effect {
   /// Bring an application to the front, launching it if it is not running.
   Open(app: String)
@@ -32,11 +29,8 @@ pub type Effect {
   Notify(message: String)
 }
 
-/// A slice of machine state a Script needs in order to decide.
-///
-/// Scripts cannot read the machine themselves, so anything they need to know has to be declared
-/// up front and gathered by the Shelf. Declaring it also means the Shelf can skip the work when
-/// nothing asks for it.
+/// A slice of machine state a Script needs in order to decide. Scripts cannot read the machine
+/// themselves, so anything they need has to be declared up front and gathered by the Shelf.
 pub type Need {
   /// The applications currently running, as their names.
   RunningApps
@@ -44,8 +38,8 @@ pub type Need {
 
 /// What the Shelf gathered, for the Needs a Script declared.
 ///
-/// Fields for undeclared Needs hold their empty value rather than being absent — a Script that
-/// forgot to declare a Need sees nothing rather than failing to compile, which is why the Kill
+/// Fields for undeclared Needs hold their empty value rather than being absent, so a Script that
+/// forgot to declare a Need sees nothing rather than failing to compile — which is why the Kill
 /// list is tested (SPEC.md § Testing strategy).
 pub type Context {
   Context(running_apps: List(String))
@@ -55,12 +49,7 @@ pub type Context {
 ///
 /// Declared rather than inferred, because the Shelf has to know before the Script runs: a Script
 /// that Asks gets an Input stage in the bar, Seeded from the clipboard and arriving selected, and
-/// one that Decides never does. The bar cannot wait to find out.
-///
-/// Not a Need, which was the cheaper way to say this and the wrong one. A Need is a slice of the
-/// *machine* the Shelf gathers into a Context and hands over; an Input is what the *person* typed,
-/// and it crosses the wire in its own field for that reason. Putting it in the Need list would have
-/// been one word the ContextGatherer has to know not to gather.
+/// one that Decides never does.
 pub type Asking {
   /// Decides from the Context and nothing else. Never Seeded. `run` still receives an Input, and
   /// it is always empty unless someone typed one after the Keyword anyway.
@@ -77,19 +66,8 @@ pub type Asking {
 /// `run` receives the Input typed after the Keyword — empty when nothing was typed — and returns
 /// the Effects to perform. It may reach the network on its own; it may never touch the machine.
 ///
-/// Two constructors, because there is no synchronous HTTP on this target: a Script that fetches
-/// answers with a Promise, and one that does not should never have to mention one. Write `Script`
-/// unless you reach the network, which is the common case and the one that stays plain — Work and
-/// Clean decide from what they were given and nothing about them is asynchronous.
-///
-/// The alternative was one constructor returning a Promise always, which is more uniform and worse:
-/// every Script would import a concurrency primitive to wrap a list it already had (G5, G6). The
-/// asymmetry is the point. Decided at T5.2 with the first fetching Script in hand, as DESIGN.md §9
-/// said to.
-/// `asks` was added at T5.1, and adding a field to a constructor is the one change this type can
-/// make that every Script already written has to be edited for. It was taken now on purpose: the
-/// installer never overwrites src/scripts/, so the cost is one line per Script on every machine
-/// Starkit is on, and that number only grows. Five stubs is the cheapest it will ever be.
+/// Two constructors because there is no synchronous HTTP on this target. Write `Script` unless you
+/// reach the network.
 pub type Script {
   Script(
     keyword: String,

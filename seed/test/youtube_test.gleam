@@ -1,10 +1,8 @@
 //// What `youtube` gets right about a YouTube URL, and where it stops.
 ////
-//// Only the pure half is tested: extracting the ID and building the markdown. The fetch is not —
-//// a test that reaches YouTube fails on a train, and what it would be checking is oEmbed's
-//// behaviour rather than this Script's. What *is* worth pinning is the ID, because every shape
-//// below is one a person actually copies and a wrong ID pastes a link to the wrong video without
-//// ever looking like a failure.
+//// Only the pure half is tested: extracting the ID and building the markdown. The ID is what is
+//// worth pinning — every shape below is one a person actually copies, and a wrong ID pastes a link
+//// to the wrong video without ever looking like a failure.
 
 import scripts/youtube
 
@@ -92,8 +90,8 @@ pub fn v_after_other_parameters_test() {
     == Ok("dQw4w9WgXcQ")
 }
 
-// What it declines. Every one of these is a Notify rather than a paste, and the Script cannot tell
-// the difference between them — which is why the message says what it looked at.
+// What it declines. Every one is a Notify rather than a paste, and the Script cannot tell them
+// apart — which is why the message says what it looked at.
 
 pub fn empty_input_test() {
   assert youtube.video_id("") == Error(Nil)
@@ -121,9 +119,8 @@ pub fn eleven_characters_is_not_enough_test() {
   assert youtube.video_id("hello world") == Error(Nil)
 }
 
-// The note. Its shape is inherited from the Script Kit script this replaces, so these tests are
-// pinning a decision made elsewhere — which is exactly why they are worth having: notes written
-// before today and notes written after it have to read as one set.
+// The note. Its shape is inherited from the Script Kit script this replaces, so these pin a
+// decision made elsewhere — notes written before today and after it have to read as one set.
 
 pub fn markdown_is_an_embed_then_a_titled_line_test() {
   assert youtube.markdown(
@@ -145,8 +142,8 @@ pub fn a_title_keeps_its_own_brackets_test() {
     == "@[youtube](abc_-123XYZ)\n\n- [Official Video] Never | Rick Astley"
 }
 
-/// The title is normalised on its way into the note and the channel is not, which is what the
-/// Script Kit lib did — pinned here because it is the sort of asymmetry a later reader would tidy.
+/// The title is normalised on its way into the note and the channel is not, as the Script Kit lib
+/// had it — pinned because it is the sort of asymmetry a later reader would tidy away.
 pub fn the_title_is_normalised_and_the_channel_is_not_test() {
   assert youtube.markdown(
       "Don\u{2019}t Stop",

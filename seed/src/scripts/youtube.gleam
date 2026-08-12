@@ -1,17 +1,11 @@
 //// Turns a YouTube link into the note a video gets written down as, and pastes it.
 ////
-//// The first Fetching Script, and the reason that constructor exists: the title has to be asked
-//// for, and there is no synchronous HTTP on this target.
+//// The shape of the note is carried over from the Script Kit script this replaces, not designed
+//// here: notes written before today and after it have to read as one set. `@[youtube](<id>)` is an
+//// embed the note-taking side understands, which is why the ID appears alone rather than in a URL.
 ////
-//// The shape of the note is not a design decision made here — it is the one the Script Kit script
-//// this replaces already pasted, carried over deliberately, because notes written before today and
-//// notes written after it have to read as one set. `@[youtube](<id>)` is an embed the note-taking
-//// side understands, which is why the ID appears alone rather than inside a URL.
-////
-//// oEmbed rather than scraping the watch page. It is a documented endpoint that answers with JSON
-//// and needs no key, so the title arrives decoded instead of extracted from HTML — which is the
-//// thing `link` has to do at T6.1, and the reason that Script gets a test suite full of pages its
-//// scan gets wrong. This one has no such tests because it has no such guess.
+//// oEmbed rather than scraping the watch page — a documented endpoint answering JSON with no key,
+//// so the title arrives decoded rather than extracted from HTML.
 
 import gleam/dynamic/decode
 import gleam/fetch
@@ -30,8 +24,6 @@ pub fn script() -> Script {
     keyword: "youtube",
     name: "Youtube",
     needs: [],
-    // The question is what the empty field says, and it is answered from the clipboard nine times
-    // out of ten — which is the whole reason the Seed arrives selected rather than waiting.
     asks: Asks(for: "YouTube URL"),
     run: fn(input, _context) { decide(input) },
   )
@@ -82,14 +74,10 @@ pub fn video_id(input: String) -> Result(String, Nil) {
 
 /// The note a video is written down as: an embed, a blank line, then the title and the channel.
 ///
-/// Carried over from the Script Kit script this replaces rather than designed. The ID stands alone
-/// inside `@[youtube](…)` because that is what the note-taking side reads as an embed, and it is why
-/// every URL shape collapses to an ID: `shorts`, `youtu.be` and mobile links all name one video, and
-/// three spellings of it are three things to search for. What that costs is the timestamp — `?t=42`
-/// belongs to the moment somebody shared a video rather than to the video, and there is nowhere in
-/// this shape to put it.
+/// Every URL shape collapses to an ID because three spellings of one video are three things to
+/// search for. The cost is the timestamp — `?t=42` has nowhere to go in this shape.
 ///
-/// The title is normalised and the channel is not, which is also carried over rather than decided.
+/// The title is normalised and the channel is not, carried over rather than decided.
 pub fn markdown(title: String, channel: String, id: String) -> String {
   "@[youtube](" <> id <> ")\n\n- " <> text.normalise(title) <> " | " <> channel
 }
@@ -136,9 +124,9 @@ fn from_path(path: String) -> Result(String, Nil) {
 
 /// Only YouTube's own hosts, so `example.com/embed/<11 chars>` is not read as a video.
 ///
-/// Matched loosely on purpose — `youtu.be`, `youtube.com`, `m.`, `www.` and `music.` are all real,
-/// and enumerating them is a list that goes stale against a company that keeps adding subdomains.
-/// The ID is validated either way, which is the check that actually protects the paste.
+/// Matched loosely on purpose: `youtu.be`, `youtube.com`, `m.`, `www.` and `music.` are all real,
+/// and enumerating them goes stale. The ID is validated either way, which is the check that
+/// actually protects the paste.
 fn is_youtube(host: String) -> Bool {
   string.contains(host, "youtu")
 }
@@ -182,10 +170,8 @@ fn is_id(candidate: String) -> Bool {
   |> list.all(fn(character) { string.contains(id_characters, character) })
 }
 
-/// Ask YouTube what the video is and who made it.
-///
-/// Every failure arrives as a sentence rather than a code, because the only place it can be shown is
-/// a Notify in the bar and there is nowhere to look anything up from there.
+/// Ask YouTube what the video is and who made it. Every failure arrives as a sentence rather than a
+/// code, because the only place it can be shown is a Notify in the bar.
 fn video_of(id: String) -> Promise(Result(Video, String)) {
   case request.to(oembed_url(id)) {
     Error(_) ->
@@ -193,8 +179,7 @@ fn video_of(id: String) -> Promise(Result(Video, String)) {
     Ok(asked) -> {
       use sent <- promise.await(fetch.send(asked))
       case sent {
-        // Offline, DNS, TLS, a captive portal — indistinguishable from here, and the answer is the
-        // same in all of them.
+        // Offline, DNS, TLS, a captive portal — indistinguishable from here.
         Error(_) -> promise.resolve(Error("YouTube is not reachable."))
         Ok(response) -> {
           use read <- promise.await(fetch.read_text_body(response))
@@ -228,9 +213,8 @@ fn video_in(status: Int, body: String) -> Result(Video, String) {
     200 ->
       json.parse(body, video_decoder())
       |> result.replace_error("YouTube answered without a title.")
-    // What oEmbed returns for a video that is private, deleted, or never existed. It answers 400 to
-    // an ID that is the right shape and belongs to nothing, which is the same news as 404 from
-    // where a person is standing — and none of these say which, so neither does this.
+    // oEmbed answers 400 to an ID that is the right shape and belongs to nothing, which is the same
+    // news as 404 from where a person is standing. None of these say which, so neither does this.
     400 | 401 | 403 | 404 ->
       Error("That video is private, deleted, or not a video at all.")
     other -> Error("YouTube answered " <> int.to_string(other) <> ".")

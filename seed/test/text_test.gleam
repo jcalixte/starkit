@@ -1,8 +1,5 @@
-//// Normalisation, character for character as the Script Kit lib had it.
-////
-//// These arrived with `youtube` at T5.2 and moved here at T6.1, when `link` became the second
-//// caller. They test the same seven replacements they always did — what changed is that they now
-//// pin them for every Script rather than for one, which is the whole reason the module exists.
+//// Normalisation, character for character as the Script Kit lib had it. These pin the seven
+//// replacements for every Script that calls `text.normalise`, not just one.
 
 import text
 

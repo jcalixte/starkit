@@ -1,14 +1,11 @@
 //// What `link` gets right about a page, and — the point of this file — where it stops.
 ////
-//// Only the pure half is tested: finding the title in HTML and building the markdown. The fetch is
-//// not, for the same reason youtube's is not — a test that reaches the web fails on a train, and
-//// what it would check is a server's behaviour rather than this Script's.
+//// Only the pure half is tested: finding the title in HTML and building the markdown. A test that
+//// reaches the web fails on a train, and would check a server's behaviour rather than this one's.
 ////
-//// This is the one Script in the set that guesses. It has no oEmbed to ask, so it scans for the
-//// tag a title is usually in, and "usually" is a word with tests underneath it here. The last
-//// section is pages it gets wrong: they are pinned as they behave, not as they should behave, so
-//// the limit is a known shape rather than a rumour. Fixing them means an HTML parser, which SPEC
-//// puts behind Ask first — and until that is asked, this file is the answer to "how wrong is it".
+//// **The last section pins pages it gets wrong, as they behave rather than as they should.** Fixing
+//// them means an HTML parser, which SPEC puts behind Ask first; until then this file is the answer
+//// to "how wrong is it".
 
 import scripts/link
 
@@ -100,9 +97,8 @@ pub fn an_empty_page_test() {
   assert link.title_in("") == Error(Nil)
 }
 
-// The pages it gets wrong. Recorded, not fixed — every one of these is what a scan cannot know and
-// a DOM would. They assert the wrong answer on purpose: if one of them starts failing, the scan has
-// been changed and the change should be deliberate.
+// The pages it gets wrong. **These assert the wrong answer on purpose** — if one starts failing,
+// the scan has been changed and the change should be deliberate.
 
 /// **The one that matters.** A site whose masthead is a h1 and whose article title is the second
 /// one pastes the site's name, and nothing about the result looks like a failure — you find out
@@ -150,10 +146,8 @@ pub fn a_greater_than_inside_an_attribute_ends_the_tag_early_test() {
     == Ok("b\">Getting Started")
 }
 
-// What it will fetch (T6.2). https and nothing else: the output of this Script is a page's own
-// heading written into a note verbatim, and over cleartext that heading is whatever anything
-// between you and the server decided it should be. Nothing downstream can tell the difference, so
-// the refusal is the only check there is.
+// What it will fetch. https and nothing else: this Script writes a page's own heading into a note
+// verbatim, and over cleartext that heading is whatever sits between you and the server.
 
 pub fn an_https_url_is_fetchable_test() {
   assert link.fetchable("https://example.com/start")
@@ -236,9 +230,8 @@ pub fn a_url_with_parentheses_is_pasted_as_it_came_test() {
     == "[Mercury](https://en.wikipedia.org/wiki/Mercury_(planet))"
 }
 
-/// Brackets in a title are left alone, as they are in youtube's note. Balanced ones read as link
-/// text and an unbalanced one would break the link — recorded rather than escaped, because a
-/// backslash in every note is a price paid by every title to protect a rare one.
+/// Brackets in a title are left alone. Balanced ones read as link text and an unbalanced one breaks
+/// the link — recorded rather than escaped.
 pub fn a_title_keeps_its_own_brackets_test() {
   assert link.markdown("[Guide] Getting Started", "https://example.com")
     == "[[Guide] Getting Started](https://example.com)"

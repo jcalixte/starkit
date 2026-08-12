@@ -1,15 +1,11 @@
 //// Which applications Clean closes, given what is running.
 ////
-//// Written before the filter it tests, which is true of nothing else in this project. Kill never
-//// asks: an application that should have been kept is closed with whatever was unsaved in it, and
-//// there is no dialog on the way and no undo afterwards. Everywhere else a bug is a wrong result
-//// you can look at; here it is a result you cannot get back. So the list is pinned first and the
-//// Script is written to match it.
+//// Written before the filter it tests, because Kill never asks: an application that should have
+//// been kept is closed with whatever was unsaved in it, with no dialog and no undo.
 ////
-//// The tests pass their own keep list rather than reading the shipped one, because that list is
-//// yours to edit and a suite that asserted its contents would fail on every machine but this one.
-//// What is asserted about the shipped Script is only what must hold on all of them: Starkit
-//// survives, and the Need is declared.
+//// These pass their own keep list rather than reading the shipped one, which is yours to edit. Of
+//// the shipped Script only what must hold on every machine is asserted: Starkit survives, and the
+//// Need is declared.
 
 import scripts/clean
 import starkit.{Context, Kill, RunningApps, Script}
@@ -58,10 +54,9 @@ pub fn a_kept_name_written_with_stray_spaces_still_keeps_test() {
   assert clean.kills(["Safari"], [" Safari "]) == []
 }
 
-/// Whole names, not prefixes. `Safari` does not keep `Safari Technology Preview`, and by the same
-/// rule `Chrome` does not keep `Google Chrome` — write the name macOS shows for the application.
-/// A rule that matched loosely would be kinder to a typo and would also mean nobody can predict
-/// what a keep list keeps, which is a bad trade for the one Effect that cannot be undone.
+/// Whole names, not prefixes. `Safari` does not keep `Safari Technology Preview`, and `Chrome` does
+/// not keep `Google Chrome`. Loose matching would be kinder to a typo and would also mean nobody
+/// can predict what a keep list keeps — a bad trade for the one Effect that cannot be undone.
 pub fn a_longer_name_is_a_different_application_test() {
   assert clean.kills(["Safari Technology Preview"], ["Safari"])
     == [Kill("Safari Technology Preview")]
