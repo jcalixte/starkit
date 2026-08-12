@@ -15,6 +15,11 @@ final class MenuBarStatus: NSObject, NSMenuDelegate {
         case hotKey
         /// C12 or C5 gave way, so a **Script** will fail when it is reached for.
         case scripts
+        /// C6 is not watching, so a **Script** saved in Zed will not become real on its own. Kept
+        /// apart from `scripts` because nothing is wrong with the **Scripts**: every one already built
+        /// still runs, and collapsing the two would hide a compile error behind a stream that failed
+        /// to start.
+        case watcher
         /// A **Script** the person ran **Refused**. The transient **Concern**: cleared by the next
         /// run that works, because it is about the last run and not about the machine.
         case run

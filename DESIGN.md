@@ -59,7 +59,7 @@ that is merely quick, because the absence costs a whole trip to diagnose.
 | --- | --------------------------------------- | :-: | -------------------------------- |
 | F8  | Hold the chord, and be visibly broken when it can't | ↑ | 100 % held; failure shown, never silent |
 | F9  | Be ready after login                    |  ↓  | ≤ 3 s — measured 734 ms; a reboot is owed |
-| F10 | Surface breakage at save time, not **Summon** time | ↓ | ≤ 500 ms after save   |
+| F10 | Surface breakage at save time, not **Summon** time | ↓ | ≤ 500 ms after save — measured 201–238 ms |
 | F12 | Report a run that failed at runtime     |  ↑  | message survives the bar closing |
 | F14 | Bound how long a run may hold the bar   |  ↓  | killed at 5 s — measured 5004–5007 ms; spinner shown while running |
 | F15 | Follow the **Toolchain** the shell reports, and notice when it moves | ↑ | 0 manual configuration; a missing runtime is red before it is needed |
@@ -86,7 +86,7 @@ machine; blanks are where nothing was measured.
 | — the app                    | 492 KB             | 717 MB (Electron)     |
 | — support directory          | 3.4 MB `~/.starkit`, of which 3.3 MB is Gleam's `build/` | 1.1 GB `~/.kit` + 42 MB `~/.kenv` |
 | Idle RSS (G4)                | 86 MB resident, 21 MB phys footprint | — |
-| Idle CPU (G4)                | 0 ms over 300 s    | — |
+| Idle CPU (G4)                | 0 ms over 300 s, and 0 again over 60 s with C6 watching | — |
 
 **What this tells us.** The `osascript` figure is the single largest latency in the current
 system and disappears entirely by moving **Context** gathering in-process. The 356-to-10
@@ -105,9 +105,10 @@ dispatch (§4 F8), so the measurement would cost the working system it is being 
 0.47 s of CPU across a 22-minute life, none of it in the 300 s window — under the 10 ms `ps` resolves
 to, so what was measured is "nothing measurable" rather than a small quantity. All of it was spent at
 launch, because after launch nothing in Starkit runs until the chord arrives: no timer, no poll, no
-watch. **C6 is the first thing that changes this** — an `FSEvents` stream is a subscription rather
-than a poll, so the expectation is that it stays near zero, but it is the row to re-take when the
-Watcher lands, and this measurement exists to be compared against.
+watch. **C6 was the one thing expected to change this, and it did not** — re-taken at T9.2 with the
+stream running, the CPU time did not move across 60 s and the resident size did not either. An
+`FSEvents` stream is a subscription: the process is told, it does not ask. What would have shown up
+here is the poll this design does not contain.
 
 ## 4. Cascade — Goals → Functions → How → Components
 
@@ -154,7 +155,26 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         so neither silently unregisters
       - **Component**: C9 LoginItem · C12 Toolchain
   - **F10** Surface breakage at save time, not **Summon** time
-    - **How**: `FSEventStream` on `~/.starkit/src` → build, then set the menu bar state
+    - **How**: `FSEventStream` on `~/.starkit/src` → regenerate the registry, build, rewrite the
+      **Manifests**, then set the menu bar state. The whole of `src/` rather than `src/scripts/`,
+      because an install vendors `starkit.gleam`, `entry.gleam` and `text.gleam` into that same tree
+      and C5 already treats the first two as shared modules — the **Vocabulary** changing under
+      someone's feet has to invalidate their **Artefacts** like a **Script** changing does
+      - **Measured at T9.2: 201–238 ms from save to rebuilt**, of which 73–87 ms is Starkit's own
+        work — regenerate, `gleam build`, `describe`, write. A save that does not compile reaches the
+        menu bar in 169 ms with the previous list still in the bar, which is F2 and F10 being the same
+        mechanism seen from two sides. Two outliers at 594 and 628 ms were recorded under load, and
+        the excess in both was delivery rather than work
+      - **FSEvents' own latency window cannot be used for the coalescing.** Set to 100 ms it delivered
+        the first event of a quiet period up to 509 ms late — `NoDefer` is documented to prevent
+        exactly that and does not — which spent F10's entire budget before Starkit had been told
+        anything. So the window is asked for 0 and the burst is coalesced in a 50 ms timer of our own,
+        because an editor save is several events: Zed writes a sibling temporary and renames it, which
+        measured as two rebuilds at zero latency, the second of them wasted
+      - **Writing the registry is itself a change inside the watched tree**, so adding or removing a
+        **Script** costs one extra pass. It terminates because the second finds the file already
+        correct and writes nothing — convergence rather than a path filter, since an editor's
+        temporary is a name this code would have to guess at
       - **Component**: C6 Watcher · C10 MenuBarStatus
   - **F4** Bring the **Artefact** up to date, or **Refuse** _(also G1)_
     - **How**: watcher builds on save, so **Summon** usually finds the work already done; the

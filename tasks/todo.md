@@ -184,5 +184,17 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       writes for five **Scripts** and for none, which is the mtime claim checked instead of asserted;
       and a home with no **Scripts** compiles, because `[]` alone cannot typecheck in Gleam and the
       annotation has to go on a binding. `install.sh` asks the installed bundle for it now
-- [ ] **T9.2** C6 Watcher — `FSEvents` on `src/` → regenerate, build, rewrite manifests, menu bar state
+- [x] **T9.2** C6 Watcher — `FSEvents` on `src/` → regenerate, build, rewrite manifests, menu bar state,
+      with a launch and a save running **one** sequence rather than two that could drift: the registry
+      goes before the build, since the build compiles what the registry imports, and that order now
+      exists once. **FSEvents' own latency window is unusable here** — at 100 ms it delivered the first
+      event of a quiet period up to 509 ms late, spending F10's whole budget before Starkit was told
+      anything, and `NoDefer` is documented to prevent exactly that. A zero window fixed the latency
+      and broke the coalescing, because Zed saves by writing a temporary and renaming it, which
+      measured as two rebuilds — so the coalescing is a 50 ms timer of ours. **201–238 ms save to
+      rebuilt**, 73–87 ms of it Starkit's own work; a broken save reaches the menu bar in 169 ms with
+      the other **Scripts** still running from the last good build. Adding a **Script** costs one extra
+      pass, because writing the registry is a change inside the watched tree, and it converges rather
+      than being filtered by a name an editor chooses. Idle CPU did not move with the stream running,
+      which closes the row T8.2 left open
 - [ ] **T9.3** C11 Scaffolder — `Create "<keyword>"`, template, open in Zed

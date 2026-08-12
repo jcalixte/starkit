@@ -7,10 +7,11 @@ acceptance criteria.
 
 MVP is slices 0–5 plus 7 — the five existing **Scripts**, working from the bar, starting at login.
 
-Slice 6 is outside MVP only because those five are seeded at install and need no authoring flow to
-exist. It is not comfortably deferrable beyond that: **Scripts** are always written in Zed, and the
-Watcher is the only thing that makes a new one visible, so until slice 6 lands every new **Script**
-costs a manual `Starkit registry`. Expect to want it the day you write a sixth.
+Slice 6 was outside MVP only because those five are seeded at install and need no authoring flow to
+exist. It was taken straight after: **Scripts** are always written in Zed, and the Watcher is the only
+thing that makes a new one visible, so without it every new **Script** cost a manual
+`Starkit registry`. C6 has landed, so saving is the whole flow; C11's `Create "<keyword>"` is what is
+left of the slice.
 
 ## Objective
 

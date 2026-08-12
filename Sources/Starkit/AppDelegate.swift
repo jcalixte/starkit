@@ -9,6 +9,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var toolchain: Toolchain?
     private var builder: Builder?
 
+    /// Held for the life of the process: releasing it stops the stream, and nothing here ever wants
+    /// to stop watching.
+    private var watcher: Watcher.Stream?
+
     /// Watches from launch rather than from the first **Summon**: what it has to know — which
     /// application the bar will take the keyboard from — happened before either.
     private let focus = Focus()
@@ -56,35 +60,124 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     ///
     /// The cache is read before any of it and replaced only if all of it works (F2).
     private func prepare() {
-        let catalogue = Catalogue(home: Toolchain.home)
+        let home = Toolchain.home
         // Handed to the bar before anything here can fail, and again if a `describe` improves on it,
         // so the panel's height is settled before the first **Summon** rather than in front of
         // someone.
-        var scripts = catalogue.cached()
-        panel.catalogue = scripts
+        let cached = Catalogue(home: home).cached()
+        panel.catalogue = cached
 
         do {
-            let toolchain = try Toolchain.resolve()
+            let toolchain = try Toolchain.resolve(home: home)
             self.toolchain = toolchain
+            self.builder = Builder(toolchain: toolchain, home: home)
             report("Toolchain: bun \(toolchain.bun.path), gleam \(toolchain.gleam.path)")
 
-            let builder = Builder(toolchain: toolchain, home: Toolchain.home)
-            self.builder = builder
-            try builder.build()
-            builder.remember()
-            report("Scripts compile.")
-
-            let runner = Runner(toolchain: toolchain, home: Toolchain.home)
-            scripts = try catalogue.refresh(using: runner)
-            panel.catalogue = scripts
-            report("\(scripts.count) Scripts: \(scripts.map(\.keyword).joined(separator: ", "))")
+            settle(Self.rebuild(toolchain: toolchain, home: home), listing: cached)
+            // Only once the **Toolchain** resolved: every step a save leads to needs `gleam` and
+            // `bun`, so watching without them would report the same **Refusal** on every keystroke
+            // in Zed. A machine in that state is red already and needs its `PATH` fixed, not a
+            // rebuild.
+            watch(home: home, using: toolchain)
         } catch {
             status.set(error.reason, for: .scripts)
             report(error.reason)
             if let detail = error.detail { report(detail) }
-            if !scripts.isEmpty {
-                report("Listing \(scripts.count) Scripts from the last build that worked.")
+            if !cached.isEmpty {
+                report("Listing \(cached.count) Scripts from the last build that worked.")
             }
+        }
+    }
+
+    /// What a launch and a save both do: make the **Artefacts** match the source, and write down what
+    /// the bar may list.
+    ///
+    /// One sequence, deliberately. C6 could have known it too, and then a change to the order — the
+    /// registry *before* the build, since the build compiles what the registry imports — would have
+    /// had to be made in two places, with the second failure being silent.
+    ///
+    /// `nonisolated` so the watcher's queue can run it without a hop; the main actor calls it directly
+    /// at launch, where the chord and the bar are already up and nobody is waiting.
+    private nonisolated static func rebuild(
+        toolchain: Toolchain,
+        home: URL
+    ) -> Result<[Manifest], Refusal> {
+        do throws(Refusal) {
+            // First: a **Script** that has just appeared is not in the registry yet, and the build
+            // compiles what the registry imports.
+            if try Watcher.regenerate(home: home) {
+                report("registry.gleam rewritten.")
+            }
+
+            let builder = Builder(toolchain: toolchain, home: home)
+            try builder.build()
+            builder.remember()
+
+            let runner = Runner(toolchain: toolchain, home: home)
+            return .success(try Catalogue(home: home).refresh(using: runner))
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    /// Apply what `rebuild` decided. The **Refusal** keeps the previous list on screen (F2): a
+    /// **Script** that stopped compiling is a red menu bar, not a bar with nothing in it.
+    private func settle(_ outcome: Result<[Manifest], Refusal>, listing previous: [Manifest]) {
+        switch outcome {
+        case .success(let scripts):
+            status.set(nil, for: .scripts)
+            panel.catalogue = scripts
+            report("\(scripts.count) Scripts: \(scripts.map(\.keyword).joined(separator: ", "))")
+        case .failure(let refusal):
+            status.set(refusal.reason, for: .scripts)
+            report(refusal.reason)
+            if let detail = refusal.detail { report(detail) }
+            if !previous.isEmpty {
+                report("Listing \(previous.count) Scripts from the last build that worked.")
+            }
+        }
+    }
+
+    /// C6 — after this, saving in Zed is the only step a new **Script** needs (F10, F11).
+    ///
+    /// The **Toolchain** is captured rather than read back on each event, because it is resolved once
+    /// per launch and the callback arrives on a queue that cannot touch this actor's state.
+    private func watch(home: URL, using toolchain: Toolchain) {
+        let stream = Watcher.Stream { [weak self] in
+            let started = CFAbsoluteTimeGetCurrent()
+            // Already off the main thread — the stream's own queue — which is where this belongs:
+            // `gleam build` and the `bun` spawn both block, and on the main thread that is the whole
+            // application frozen, menu bar included.
+            //
+            // Writing `registry.gleam` is itself a change inside the watched tree, so adding or
+            // removing a **Script** costs one extra pass. It terminates because the second pass finds
+            // the file already correct and writes nothing: convergence rather than a path filter,
+            // since an editor writing a temporary and renaming it produces events for names this
+            // code would have to guess at.
+            let outcome = Self.rebuild(toolchain: toolchain, home: home)
+            let elapsed = (CFAbsoluteTimeGetCurrent() - started) * 1000
+
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    report(String(format: "Saved — rebuilt in %.1f ms", elapsed))
+                    // The list to fall back to is read here rather than captured: it is whatever the
+                    // bar is listing *now*, which a save several edits ago may have changed.
+                    self.settle(outcome, listing: self.panel.catalogue)
+                }
+            }
+        }
+
+        do {
+            try stream.watch(home.appending(path: "src"))
+            watcher = stream
+            report("Watching \(home.appending(path: "src").path).")
+        } catch {
+            // Not `.scripts`: nothing is wrong with the **Scripts**, and overwriting that **Concern**
+            // would hide a real compile error behind a watcher problem.
+            status.set(error.reason, for: .watcher)
+            report(error.reason)
+            if let detail = error.detail { report(detail) }
         }
     }
 

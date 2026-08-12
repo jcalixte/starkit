@@ -876,11 +876,44 @@ Gleam would reformat is a file something else rewrites later, and that is the mt
 generated module binds `let scripts: List(starkit.Script) = []`. Deleting your last **Script** should
 leave a bar with nothing in it, not a menu bar going red about a home that is merely empty.
 
+**A launch and a save now run one sequence, not two.** C6 could have owned regenerate-build-describe
+itself, and then the order — the registry *before* the build, since the build compiles what the registry
+imports — would have existed in two places with the second one failing silently. So the sequence is one
+`nonisolated` function both callers run: the main actor calls it directly at launch, where the chord and
+the bar are already up, and the stream's queue calls it on a save. What the delegate keeps is the half
+that must happen on the main actor — hand the list to the bar, set the menu bar — and the **Refusal**
+path leaves the previous list where it was, which is F2 and F10 turning out to be one mechanism seen
+from two sides.
+
+**FSEvents' latency window cost more than the budget it was meant to protect.** Set to 100 ms it
+delivered the first event of a quiet period up to **509 ms** late, so F10's whole 500 ms was gone before
+Starkit had been told anything — and `kFSEventStreamCreateFlagNoDefer` is documented to prevent exactly
+that. Asking for a zero window fixed the latency and broke the coalescing instead: an editor save is
+several events, because Zed writes a sibling temporary and renames it, and that measured as **two
+rebuilds**, the second compiling bytes the first had already compiled. So the window is 0 and the
+coalescing is a 50 ms timer of our own, which is a number that can be reasoned about rather than a hint
+the framework is free to interpret. **201–238 ms save to rebuilt** after that, across six saves and three
+restarts, of which 73–87 ms is Starkit's work; two outliers at 594 and 628 ms were recorded under load,
+and in both the excess was delivery and not work.
+
+**Writing the registry is a change inside the watched tree**, so adding a **Script** costs one extra
+pass. Left to converge rather than filtered by path: the second pass finds the file already correct and
+writes nothing, whereas a filter would have to name an editor's temporary files, which is guessing.
+
+**The verifications were run by moving files, not by using Zed** — a sixth **Script** copied in was
+listed 143 ms later with nothing else run, a broken save reached the menu bar in 169 ms with the other
+five still running from the last good build, and fixing it brought it back. The temp-and-rename shape
+Zed actually uses was simulated directly, because that shape is what produced the double rebuild.
+
+**T8.2's open row is closed.** Idle CPU did not move across 60 s with the stream running, and neither
+did RSS. The subscription costs nothing because it is a subscription; the poll that would have shown up
+there is not in this design.
+
 ## Deferred (slice 6, specified but outside MVP)
 
-C11 Scaffolder, and C6 Watcher until T9.2 lands. Since **Scripts** are always written in Zed and the
-Watcher is the only thing that makes a new one visible, expect to want this immediately after MVP —
-see `SPEC.md` for its acceptance criteria.
+C11 Scaffolder — the `Create "<keyword>"` row, the template, and Zed. Everything under it now exists:
+a **Script** appearing on disk is already a **Script** Starkit lists, so C11 writes a file and gets out
+of the way. See `SPEC.md` for its acceptance criteria.
 
 ## What would change the plan
 
