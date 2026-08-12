@@ -111,4 +111,61 @@ struct KeywordTests {
         #expect(Keyword.matches("wo", in: catalogue).map(\.keyword) == ["work"])
         #expect(Keyword.matches("zzz", in: catalogue).isEmpty)
     }
+
+    // What `Starkit run <keyword>` resolves before it builds anything. Everything below the resolution
+    // is addressed by the canonical Keyword, because that is the module name on disk.
+
+    @Test("a second Keyword resolves to the module that declares it")
+    func resolvesShorthand() {
+        #expect(Keyword.resolve("yt", in: catalogue) == .one("youtube"))
+    }
+
+    @Test("a canonical Keyword resolves to itself")
+    func resolvesCanonical() {
+        #expect(Keyword.resolve("work", in: catalogue) == .one("work"))
+    }
+
+    @Test("resolving ignores case, as the bar does")
+    func resolveIgnoresCase() {
+        #expect(Keyword.resolve("YT", in: catalogue) == .one("youtube"))
+    }
+
+    // The whole reason this is not just `matches().first`. In the bar a prefix is safe because the row
+    // it picked is on screen before ↩ reaches it; at a terminal `run c` would be Clean force-quitting
+    // every application on the machine with nothing shown in between.
+    @Test("a prefix does not resolve, though the bar matches on it")
+    func prefixDoesNotResolve() {
+        #expect(Keyword.resolve("y", in: catalogue) == .unknown)
+        #expect(Keyword.resolve("wo", in: catalogue) == .unknown)
+        #expect(Keyword.matches("wo", in: catalogue).map(\.keyword) == ["work"])
+    }
+
+    // Unknown rather than a refusal, so the caller keeps the word and C5 refuses it against a real
+    // path: an empty manifests.json is a home that has never been listed, not a home with no Scripts.
+    @Test("a word no Script answers to stays unresolved, and so does an empty Catalogue")
+    func unknownStaysUnknown() {
+        #expect(Keyword.resolve("zzz", in: catalogue) == .unknown)
+        #expect(Keyword.resolve("work", in: []) == .unknown)
+        #expect(Keyword.resolve("", in: catalogue) == .unknown)
+    }
+
+    // The band order decides this rather than a tie being declared — the same rule that makes the bar
+    // list `yt` above Youtube when both answer to it.
+    @Test("a canonical Keyword beats another Script's shorthand instead of being ambiguous")
+    func canonicalWinsOverShorthand() {
+        let catalogue = self.catalogue + [Manifest(keyword: "yt", name: "Something else")]
+        #expect(Keyword.resolve("yt", in: catalogue) == .one("yt"))
+    }
+
+    // Two Scripts can declare the same shorthand — nothing stops them, since only the canonical
+    // Keyword has to be unique. The bar picks the first row; a terminal has no row to show, so it says
+    // so and runs neither.
+    @Test("two Scripts sharing a shorthand is named, not silently picked")
+    func sharedShorthandIsAmbiguous() {
+        let catalogue = [
+            Manifest(keyword: "youtube", name: "Youtube", otherKeywords: ["yt"]),
+            Manifest(keyword: "ytdlp", name: "Download with yt-dlp", otherKeywords: ["yt"]),
+        ]
+        #expect(Keyword.resolve("yt", in: catalogue) == .several(["youtube", "ytdlp"]))
+    }
 }

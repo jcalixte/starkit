@@ -54,10 +54,32 @@ private func command(_ arguments: [String]) -> Int32 {
         report("       Starkit icon <directory.iconset>")
         return 2
     }
-    let keyword = words[1]
+    let typed = words[1]
     // Rejoined with the spaces the shell ate, so this path and the bar (C2) hand a **Script** the
     // same string.
     let input = words.dropFirst(2).joined(separator: " ")
+
+    // A second **Keyword** reaches its **Script** from here too, and not only from the bar. Resolved
+    // against the cached **Catalogue** — no build, no `bun`, and the same stale cache the bar reads,
+    // so a terminal run reproduces what ↩ does (`Catalogue`). Above the `--bench` line on purpose:
+    // benching `yt` should bench the same **Script** running it would.
+    let keyword: String
+    switch Keyword.resolve(typed, in: Catalogue(home: Toolchain.home).cached()) {
+    case .one(let canonical):
+        keyword = canonical
+        // Only when they differ, and to stderr, where stdout still carries the **Effects** alone: a
+        // run that went somewhere other than the word typed should say where.
+        if canonical != typed { report("→ \(typed) is \(canonical)") }
+    // Carried through as typed, which is what this path did before any of this existed: a home whose
+    // Scripts have never been listed has no cache, and the sentence saying a **Script** does not
+    // exist is C5's to write against a real path.
+    case .unknown:
+        keyword = typed
+    case .several(let candidates):
+        report("\"\(typed)\" is a Keyword of \(candidates.joined(separator: " and ")).")
+        report("Name the one you mean — a Script's own Keyword is its module name and always unique.")
+        return 2
+    }
 
     // Before everything below, and not a variation on it: `--bench` resolves and builds on its own
     // clock, and it must reach neither the `--dry-run` print nor the **Effector**.
