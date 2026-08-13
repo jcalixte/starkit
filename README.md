@@ -40,6 +40,7 @@ employer's tooling ends up in it. See [seed/src/scripts/work.gleam](./seed/src/s
 - macOS 14 or later
 - `gleam` and `bun` on your `PATH`
 - Xcode Command Line Tools (`xcode-select --install`), only to build it yourself
+- `just` and `gh`, only to cut a release
 
 Starkit borrows the toolchain from your machine instead of shipping one, and resolves it at every
 launch. `brew upgrade gleam` is a non-event; there is no pinned version to bump. If your login shell
@@ -118,6 +119,43 @@ a terminal needs the *terminal* to hold the Accessibility grant, not Starkit.
 `~/.starkit/SCRIPTING.md` so it sits beside the Scripts it describes. The loop is short: save a file
 in `src/scripts/`, and the keyword works at the next summon with nothing else run. A file that does
 not compile turns the menu bar icon red and leaves every other Script working.
+
+## Releasing
+
+The author's runbook. `just` is the front door, and `just` on its own lists the rest.
+
+Bump `CFBundleShortVersionString` in `Resources/Info.plist`, commit it, push it. One command does
+the rest:
+
+```sh
+just publish 0.4.0
+```
+
+It builds, signs with the Developer ID, notarizes, staples, tags, creates the GitHub Release with
+the zip attached, and points the cask at the sha256 GitHub is really serving rather than the one
+sitting on this disk. The notes are written from the commit subjects since the last tag, since the
+subjects here are sentences already; hand it a file when a release has more to say than a list.
+
+```sh
+just publish 0.4.0 notes.md
+```
+
+Nothing is built, tagged or uploaded until every refusal has been made: the branch has to be `main`,
+the tree clean, the tag free, `HEAD` pushed, and `Info.plist` already carrying the version you asked
+for. That last one is checked and never edited, because the version bump is a commit somebody
+writes.
+
+Apple's notary queue has no SLA, and the first submission from this repo waited seven hours. If the
+wait ends before the answer does, the accepted build is still in `build/` and must not be rebuilt —
+a rebuild re-signs with a new timestamp, which is no longer the app the ticket was issued against.
+
+```sh
+just staple      # attach the ticket to build/Starkit.app
+just ship 0.4.0  # tag, release, cask
+```
+
+The cask lives in [jcalixte/homebrew-tap](https://github.com/jcalixte/homebrew-tap), expected as a
+sibling checkout at `../homebrew-tap`, or wherever `STARKIT_TAP` points.
 
 ## By design
 
