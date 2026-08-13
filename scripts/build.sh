@@ -1,14 +1,46 @@
 #!/usr/bin/env bash
 # Compiles Starkit and assembles build/Starkit.app.
 #
-# Set STARKIT_IDENTITY to sign with a different identity, e.g. an "Apple Development: …"
-# certificate you already have. Any stable identity works; the only thing that matters is that it
-# does not change between builds, so TCC keeps the Accessibility grant that Paste needs.
+# Signs with a Developer ID Application identity if the keychain holds one, and with the self-signed
+# certificate from setup-signing.sh otherwise. Set STARKIT_IDENTITY to override both, e.g. with an
+# "Apple Development: …" certificate you already have. Any stable identity works; the only thing that
+# matters is that it does not change between builds, so TCC keeps the Accessibility grant that Paste
+# needs — and changing which identity signs costs one re-tick in System Settings.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-IDENTITY="${STARKIT_IDENTITY:-Starkit Self-Signed}"
+IDENTITY="${STARKIT_IDENTITY:-}"
+if [ -z "$IDENTITY" ]; then
+	# A Developer ID when the machine has one, because its designated requirement is the same on
+	# every machine and across every release, where "Starkit Self-Signed" is one keychain's only.
+	# Never required: finding none is the ordinary case for anyone who is not the author, and the
+	# self-signed path below is what they get.
+	#
+	# `find-identity -v` rather than `find-certificate`, because a Developer ID is trusted and shows
+	# up there — which is exactly what the self-signed certificate does not do (see
+	# setup-signing.sh), and why the two are looked for in different ways.
+	found="$(security find-identity -v -p codesigning 2>/dev/null |
+		sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p')"
+	if [ "$(printf '%s' "$found" | grep -c . || true)" -gt 1 ]; then
+		echo "! This keychain holds more than one Developer ID Application identity:" >&2
+		echo "$found" | sed 's/^/    /' >&2
+		echo "  Set STARKIT_IDENTITY to the one that signs Starkit. Picking for you would risk" >&2
+		echo "  changing the app's designated requirement, which drops the Accessibility grant." >&2
+		exit 1
+	fi
+	IDENTITY="${found:-Starkit Self-Signed}"
+fi
+
+# What notarization requires and the self-signed path cannot have: a secure timestamp, so the
+# signature outlives the certificate, and the hardened runtime. Kept off the self-signed path
+# deliberately — there is no timestamp authority a self-signed certificate can reach, and turning
+# the runtime on there would change the designated requirement for nothing gained.
+case "$IDENTITY" in
+"Developer ID Application:"*) SIGN_OPTIONS=(--options runtime --timestamp) ;;
+*) SIGN_OPTIONS=(--timestamp=none) ;;
+esac
+
 APP="build/Starkit.app"
 CONFIGURATION="${1:-release}"
 # Read from Info.plist rather than repeated here: the bundle identifier appears in the app's
@@ -36,7 +68,7 @@ iconutil --convert icns "$ICONSET" --output "$APP/Contents/Resources/Starkit.icn
 rm -rf "$ICONSET"
 
 if security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
-	codesign --force --sign "$IDENTITY" --identifier "$BUNDLE_ID" --timestamp=none "$APP"
+	codesign --force --sign "$IDENTITY" --identifier "$BUNDLE_ID" "${SIGN_OPTIONS[@]}" "$APP"
 	echo "✓ Signed with '$IDENTITY' — the Accessibility grant survives rebuilds."
 else
 	codesign --force --sign - --identifier "$BUNDLE_ID" "$APP"
