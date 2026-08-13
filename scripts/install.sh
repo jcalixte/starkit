@@ -69,49 +69,14 @@ if ! "$DEST/Contents/MacOS/Starkit" start-at-login on; then
 	echo "  System Settings > General > Login Items." >&2
 fi
 
-# One rule, applied by path: src/scripts/ is yours, everything else under seed/ is the Shelf's.
-# Derived from the directory rather than a list, so a file added to seed/ later is vendored anyway.
+# One rule, applied by path: src/scripts/ is yours, everything else under seed/ is the Shelf's. It
+# used to live here as a `case` in a loop, and now lives in Swift where the app can reach it too — a
+# Cask drops the .app and runs nothing, so first launch has to be able to do this with no script
+# involved (Slice 8, StarkitCore/Seeding.swift).
 #
-# Vendored files are compared before being written, so an identical file keeps its mtime. No longer
-# load-bearing — the Stale rule compares content now (ADR 0002) — but kept so an install does not
-# touch what it did not change. Same reasoning as the registry's write-only-on-a-difference rule.
-vendored=0
-kept=0
-seeded=0
-while IFS= read -r rel; do
-	src="seed/$rel"
-	dst="$STARKIT_HOME/$rel"
-	mkdir -p "$(dirname "$dst")"
-
-	case "$rel" in
-	src/scripts/*)
-		if [ -e "$dst" ]; then
-			kept=$((kept + 1))
-			continue
-		fi
-		cp "$src" "$dst"
-		echo "+ $rel seeded"
-		seeded=$((seeded + 1))
-		;;
-	*)
-		if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
-			continue
-		fi
-		cp "$src" "$dst"
-		echo "→ $rel vendored"
-		vendored=$((vendored + 1))
-		;;
-	esac
-# seed/build/ is pruned, and it is the one exception to "a file added to seed/ later is vendored
-# anyway". It is not seed content: `gleam build` puts it there when a measurement runs against seed/
-# as a scratch $STARKIT_HOME (DESIGN.md §8), and 3 MB of one machine's compiled artefacts and .cache
-# files would otherwise be copied straight over the build/ directory of the home being installed to.
-# That is how a **Script** comes to look built when it is not. Invisible to `git status` — the root
-# .gitignore's `build/` matches at any depth — so nothing else would have caught it.
-done < <(cd seed && find . -path './build' -prune -o -type f ! -name '.DS_Store' -print |
-	sed 's|^\./||' | LC_ALL=C sort)
-
-echo "= $STARKIT_HOME: $vendored vendored, $seeded seeded, $kept of yours left alone"
+# Through the *installed* bundle, and from the seed content inside it rather than from seed/ here:
+# that is the copy a Cask would have, so this exercises the same path anyone else's install takes.
+"$DEST/Contents/MacOS/Starkit" seed
 
 # Through the installed bundle, and before the first build, because a fresh $STARKIT_HOME has no
 # registry.gleam at all and `gleam build` would fail on the missing module. C6 does this on every save

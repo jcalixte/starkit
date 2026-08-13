@@ -57,6 +57,19 @@ cp "$BINARY" "$APP/Contents/MacOS/Starkit"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 printf 'APPL????' >"$APP/Contents/PkgInfo"
 
+# The seed content, carried inside the bundle so a copy nobody ran install.sh for can still set up a
+# home (Slice 8). Before codesign for the same reason the icon is: a file dropped in afterwards
+# invalidates the signature.
+#
+# `build/` is excluded here rather than by Seeding's rule alone, so 3 MB of one machine's Artefacts
+# never reaches a signed bundle in the first place — the rule is the guarantee, this is the size.
+#
+# src/registry.gleam is excluded for a different reason: it is generated per home, not committed, and
+# a copy of one machine's would name Scripts the home being set up does not have. Seeding skips it
+# too, so a bundle that somehow carried one would still not vendor it.
+rsync -a --delete --exclude 'build/' --exclude '.DS_Store' --exclude 'src/registry.gleam' \
+	seed/ "$APP/Contents/Resources/seed/"
+
 # The icon, drawn by the app itself from the same path the bar's mark uses, then packed by iconutil —
 # the only tool that writes .icns. Before codesign, because an unsigned file dropped into the bundle
 # afterwards invalidates the signature. The iconset goes away once packed: what matters is inside the

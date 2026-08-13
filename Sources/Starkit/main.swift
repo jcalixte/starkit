@@ -39,6 +39,7 @@ private func command(_ arguments: [String]) -> Int32 {
 
     if words.first == "start-at-login" { return startAtLogin(Array(words.dropFirst())) }
     if words.first == "registry" { return registry() }
+    if words.first == "seed" { return seed() }
     if words.first == "create" { return create(Array(words.dropFirst())) }
     if words.first == "delete" { return delete(Array(words.dropFirst())) }
     if words.first == "edit" { return edit(Array(words.dropFirst())) }
@@ -48,6 +49,7 @@ private func command(_ arguments: [String]) -> Int32 {
         report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
         report("       Starkit start-at-login [on|off]")
         report("       Starkit registry")
+        report("       Starkit seed")
         report("       Starkit create <keyword>")
         report("       Starkit delete <keyword>")
         report("       Starkit edit <keyword>")
@@ -228,6 +230,24 @@ private func registry() -> Int32 {
         // Says which of the two happened, because "unchanged" is the interesting answer: it means
         // every **Artefact** is still valid, and a rewrite would have marked them all **Stale**.
         print("\(changed ? "→" : "=") \(Watcher.registry(in: home).path)\(changed ? "" : " unchanged")")
+        return 0
+    } catch {
+        report(error.reason)
+        if let detail = error.detail { report(detail) }
+        return 1
+    }
+}
+
+/// `Starkit seed` — set up `$STARKIT_HOME` from the seed content this bundle carries.
+///
+/// For `install.sh`, which used to hold this rule in bash, and for a first launch out of a **Cask**,
+/// which has no script to hold it at all. Safe to run again and again: that is the rule, not a
+/// property of the caller.
+private func seed() -> Int32 {
+    let home = Toolchain.home
+    do throws(Refusal) {
+        let summary = try Seeder(home: home).seed(from: try Seeder.vendored())
+        print("= \(home.path): \(summary.line)")
         return 0
     } catch {
         report(error.reason)
