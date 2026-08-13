@@ -2,9 +2,13 @@
 
 **Cascade:** [I Goals × Functions](./house-1-goals-functions.md) → **II Functions × Components** → [III Components × Operations](./house-3-components-operations.md) → [IV Operations × Controls](./house-4-operations-controls.md) · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
 
-Part deployment: the functions, carrying the weight House I computed, against the components that realise them.
+Part deployment: the functions, carrying the weight House I computed, against the components that
+realise them.
 
-[`DESIGN.md` §7](../../DESIGN.md#7-components--function--component-map) holds the component list and the relation cells this renders. The importance column *is* [House I](./house-1-goals-functions.md)'s relative weight, so component priority is derived here rather than asserted.
+[`DESIGN.md` §7](../../DESIGN.md#7-components--function--component-map) holds the component list and
+the relation cells this renders. The importance column *is*
+[House I](./house-1-goals-functions.md)'s relative weight, so component priority is derived here
+rather than asserted.
 
 <!-- Rendered from the tables named above. A house is a rendering, not a source: change the
      table first, then redraw this. -->
@@ -394,10 +398,21 @@ Part deployment: the functions, carrying the weight House I computed, against th
 \end{document}
 ```
 
-The two bottom rows are the point of drawing it. **Risk and weight rank differently**, and §7's prose only ever named the risk one. C7 Effector is the joint-riskiest component in the system and ranks **9th of 12** by weight, at 4.4 %; C1 SummonPanel ranks **1st** at 15.6 % on a risk of 3. Both readings are correct and they answer different questions: risk says where a mistake costs most, weight says where the goals actually land. What no column here shows is whether anything *checks* a component — that is [House III](./house-3-components-operations.md), and C1 and C6 come out of it with an almost empty row.
+The two bottom rows are the point of drawing it. **Risk and weight rank differently**, and §7's
+prose only ever named the risk one. C7 Effector is the joint-riskiest component in the system and
+ranks **9th of 12** by weight, at 4.4 %; C1 SummonPanel ranks **1st** at 15.6 % on a risk of 3. Both
+readings are correct and they answer different questions: risk says where a mistake costs most,
+weight says where the goals actually land. What no column here shows is whether anything *checks* a
+component — that is [House III](./house-3-components-operations.md), and C1 and C6 come out of it
+with an almost empty row.
 
 ---
 
-**Carried from [House I](./house-1-goals-functions.md), carries into [House III](./house-3-components-operations.md).** The importance column came from House I's Rel %; this basement's Rel % becomes House III's, where the **Operations** that build each **Component** inherit its weight.
+**Carried from [House I](./house-1-goals-functions.md), carries into
+[House III](./house-3-components-operations.md).** The importance column came from House I's Rel %;
+this basement's Rel % becomes House III's, where the **Operations** that build each **Component**
+inherit its weight.
 
-Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of order silently mixes generations — the rule is in [`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".
+Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of
+order silently mixes generations — the rule is in
+[`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".

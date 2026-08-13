@@ -4,7 +4,9 @@
 
 Process control: the operations against the gates that would catch a regression in one.
 
-[`DESIGN.md` §11](../../DESIGN.md#11-the-deployment-cascade--houses-iii-and-iv) holds the relation cells this renders. The importance column is [House III](./house-3-components-operations.md)'s relative weight.
+[`DESIGN.md` §11](../../DESIGN.md#11-the-deployment-cascade--houses-iii-and-iv) holds the relation
+cells this renders. The importance column is [House III](./house-3-components-operations.md)'s
+relative weight.
 
 <!-- Rendered from the tables named above. A house is a rendering, not a source: change the
      table first, then redraw this. -->
@@ -362,14 +364,29 @@ Process control: the operations against the gates that would catch a regression 
 \end{document}
 ```
 
-**CI (50.1 %) and `swift test` (23.7 %) carry three-quarters of the control weight in this system**, and the third-ranked control is the `--bench` protocol at 10.3 % — by hand, on one machine, five runs of twenty samples, medians quoted. `SPEC.md` argues for that ("latency assertions in CI would be flaky and would not be trusted") and §8 records the protocol, so the position is held deliberately. The number is new: a tenth of the control weight is a person running a flag.
+**CI (50.1 %) and `swift test` (23.7 %) carry three-quarters of the control weight in this system**,
+and the third-ranked control is the `--bench` protocol at 10.3 % — by hand, on one machine, five
+runs of twenty samples, medians quoted. `SPEC.md` argues for that ("latency assertions in CI would
+be flaky and would not be trusted") and §8 records the protocol, so the position is held
+deliberately. The number is new: a tenth of the control weight is a person running a flag.
 
-**K7, the menu bar going red, is the most automatic control in the system and is not in CI at all** — it fires within 200 ms of a save, on the machine, forever. K9 ranks last at 0.5 %, which is right: it guards one operation that runs at most once per release.
+**K7, the menu bar going red, is the most automatic control in the system and is not in CI at all**
+— it fires within 200 ms of a save, on the machine, forever. K9 ranks last at 0.5 %, which is right:
+it guards one operation that runs at most once per release.
 
-**And the cascade stops here.** No control in this house reaches C1 or C6, because [House III](./house-3-components-operations.md) gave them no operation to be controlled through, and [House II](./house-2-functions-components.md) ranked them 1st and 2nd of twelve. G → F → C → O → K terminates at `swift build` for the two heaviest components in the design. That sentence is the whole reason to draw four houses instead of one.
+**And the cascade stops here.** No control in this house reaches C1 or C6, because
+[House III](./house-3-components-operations.md) gave them no operation to be controlled through, and
+[House II](./house-2-functions-components.md) ranked them 1st and 2nd of twelve. G → F → C → O → K
+terminates at `swift build` for the two heaviest components in the design. That sentence is the
+whole reason to draw four houses instead of one.
 
 ---
 
-**Carried from [House III](./house-3-components-operations.md). Nothing carries on from here** — **Controls** are the last phase of the cascade, so this basement feeds no further house. Read the chain backwards from any weight in it and you reach a **Goal** in [House I](./house-1-goals-functions.md) with a number beside it.
+**Carried from [House III](./house-3-components-operations.md). Nothing carries on from here** —
+**Controls** are the last phase of the cascade, so this basement feeds no further house. Read the
+chain backwards from any weight in it and you reach a **Goal** in
+[House I](./house-1-goals-functions.md) with a number beside it.
 
-Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of order silently mixes generations — the rule is in [`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".
+Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of
+order silently mixes generations — the rule is in
+[`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".

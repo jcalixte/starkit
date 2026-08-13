@@ -4,7 +4,10 @@
 
 Process planning: the components against the commands that produce or verify them.
 
-[`DESIGN.md` §11](../../DESIGN.md#11-the-deployment-cascade--houses-iii-and-iv) holds the relation cells this renders. The operations are `SPEC.md`'s commands and `.github/workflows/ci.yml`'s steps, not a list invented for the house. The importance column is [House II](./house-2-functions-components.md)'s relative weight.
+[`DESIGN.md` §11](../../DESIGN.md#11-the-deployment-cascade--houses-iii-and-iv) holds the relation
+cells this renders. The operations are `SPEC.md`'s commands and `.github/workflows/ci.yml`'s steps,
+not a list invented for the house. The importance column is
+[House II](./house-2-functions-components.md)'s relative weight.
 
 <!-- Rendered from the tables named above. A house is a rendering, not a source: change the
      table first, then redraw this. -->
@@ -367,14 +370,29 @@ Process planning: the components against the commands that produce or verify the
 \end{document}
 ```
 
-**O1 `swift build` at 48.4 % is a degenerate first place** — it produces every component, so it was always going to carry half the house, and it tells you nothing. The informative ranking starts below it: `swift test` (15.9 %) and `run --bench` (14.8 %) are the two verification operations that carry real weight, and between them they reach C2, C4, C5, C7, C8, C10 and C12.
+**O1 `swift build` at 48.4 % is a degenerate first place** — it produces every component, so it was
+always going to carry half the house, and it tells you nothing. The informative ranking starts below
+it: `swift test` (15.9 %) and `run --bench` (14.8 %) are the two verification operations that carry
+real weight, and between them they reach C2, C4, C5, C7, C8, C10 and C12.
 
-**What they do not reach is C1 and C6** — 29.3 % of the component weight, and rows 1 and 6 of this house hold `swift build` and almost nothing else. `SPEC.md` names both as deliberately untested ("a mock would pass while the app was broken"), so this is an argued position and not an oversight. The house is what puts a number on what the position costs.
+**What they do not reach is C1 and C6** — 29.3 % of the component weight, and rows 1 and 6 of this
+house hold `swift build` and almost nothing else. `SPEC.md` names both as deliberately untested ("a
+mock would pass while the app was broken"), so this is an argued position and not an oversight. The
+house is what puts a number on what the position costs.
 
-The two fail differently, and [`DESIGN.md` §11](../../DESIGN.md#component--operation) works out how: C1 fails loudly, C6 fails *quietly* rather than silently, and repairing a dead watcher takes one command while nothing in the system reports that it stopped. Their weights arrive from [House II](./house-2-functions-components.md); what happens to them next is [House IV](./house-4-operations-controls.md), which is nothing.
+The two fail differently, and [`DESIGN.md` §11](../../DESIGN.md#component--operation) works out how:
+C1 fails loudly, C6 fails *quietly* rather than silently, and repairing a dead watcher takes one
+command while nothing in the system reports that it stopped. Their weights arrive from
+[House II](./house-2-functions-components.md); what happens to them next is
+[House IV](./house-4-operations-controls.md), which is nothing.
 
 ---
 
-**Carried from [House II](./house-2-functions-components.md), carries into [House IV](./house-4-operations-controls.md).** This basement's Rel % becomes House IV's importance column, so a **Control** is weighted by the **Operations** it guards and, through them, by the **Goals** at the top of the chain.
+**Carried from [House II](./house-2-functions-components.md), carries into
+[House IV](./house-4-operations-controls.md).** This basement's Rel % becomes House IV's importance
+column, so a **Control** is weighted by the **Operations** it guards and, through them, by the
+**Goals** at the top of the chain.
 
-Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of order silently mixes generations — the rule is in [`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".
+Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of
+order silently mixes generations — the rule is in
+[`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".
