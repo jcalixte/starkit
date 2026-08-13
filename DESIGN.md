@@ -11,6 +11,38 @@ Strength weights used in matrices: **9** strong, **3** medium, **1** weak, blank
 
 ---
 
+## Houses of Quality
+
+Four houses, cascaded, each one's importance column carried down from the one before: **Goals** set
+the weight, **Functions** inherit it, **Components** inherit theirs from the functions, **Operations**
+from the components, and **Controls** from the operations. Nothing in a basement is asserted.
+
+The diagrams live in their own files because each carries the TikZ preamble in full — there is no
+project-level one — and 240 lines of LaTeX ahead of §1 would bury the document they describe.
+
+| House | Renders | Drawn in | Table behind it |
+| ----- | ------- | -------- | --------------- |
+| **I** | Goals × Functions | [house-1-goals-functions.md](./docs/houses/house-1-goals-functions.md) | §1, §2, §5, §6 |
+| **II** | Functions × Components | [house-2-functions-components.md](./docs/houses/house-2-functions-components.md) | §7 |
+| **III** | Components × Operations | [house-3-components-operations.md](./docs/houses/house-3-components-operations.md) | §11 |
+| **IV** | Operations × Controls | [house-4-operations-controls.md](./docs/houses/house-4-operations-controls.md) | §11 |
+
+Start with [House I](./docs/houses/house-1-goals-functions.md): it is the whole design on one page.
+
+No house draws the perception zone. §3 holds measured function benchmarks and no 0–5 goal ratings,
+and inventing seven of them for Script Kit would be the guess §3 refuses on the record.
+
+**What the four of them found**, in one place, with the detail in §5, §7, §11 and §10:
+
+- **F10 and F2 rank first and second**, which is C6 and C2. §7 had argued that about C6 already.
+- **C1 ranks first among components** at 15.6 % and had never been singled out at all.
+- **C7 is joint-riskiest and 9th by weight.** §7 was ranking by risk and calling it effort.
+- **G4 is weight 8 and has no function.** Footprint is met by trades, not by anything §2 holds.
+- **The cascade stops at `swift build` for C1 and C6** — 29.3 % of the component weight reaches no
+  operation and therefore no control. Deliberate, per `SPEC.md`, and now sized.
+
+---
+
 ## 1. Goals — the WHATs
 
 One user, so weights are asserted directly instead of derived from segments.
