@@ -35,12 +35,15 @@ fi
 # timestamp and the hardened runtime, and nothing else. build.sh already decides which identity
 # signs, so this only reads back what it chose — an ad-hoc or self-signed build is a mistake worth
 # catching before a five-minute round trip.
-AUTHORITY="$(codesign -dv "$APP" 2>&1 | sed -n 's/^Authority=//p' | head -1)"
+# -dvvv, not -dv: the Authority lines only appear at verbose=4, and reading them from a quieter run
+# finds nothing at all — which looks exactly like a signature this refuses.
+AUTHORITY="$(codesign -dvvv "$APP" 2>&1 | sed -n 's/^Authority=//p' | head -1)"
 case "$AUTHORITY" in
 "Developer ID Application:"*) ;;
 *)
-	echo "! $APP is signed by '$AUTHORITY', which notarization will not accept." >&2
-	echo "  A Developer ID Application certificate has to be in the keychain — see build.sh." >&2
+	echo "! $APP is signed by '${AUTHORITY:-nothing that names an authority}', which" >&2
+	echo "  notarization will not accept. A Developer ID Application certificate has to be in" >&2
+	echo "  the keychain — see build.sh." >&2
 	exit 1
 	;;
 esac
