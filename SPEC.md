@@ -2,10 +2,10 @@
 
 What to build, in what order, and how to know each part works. The vocabulary is in
 [CONTEXT.md](./CONTEXT.md); the goals, measured targets and trade-offs are in
-[DESIGN.md](./DESIGN.md). Neither is repeated here — this document is the build order and the
+[DESIGN.md](./DESIGN.md). Neither is repeated here. This document is the build order and the
 acceptance criteria.
 
-MVP is slices 0–5 plus 7 — the five existing **Scripts**, working from the bar, starting at login.
+MVP is slices 0–5 plus 7: the five existing **Scripts**, working from the bar, starting at login.
 
 Slice 6 was outside MVP only because those five are seeded at install and need no authoring flow to
 exist. It was taken straight after: **Scripts** are always written in Zed, and the Watcher is the only
@@ -24,17 +24,17 @@ One user. No preferences window, no themes, no per-**Script** configuration beyo
 
 | Command | Does |
 | ------- | ---- |
-| `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else — Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. Asks for the login keychain password once, so that signing never waits on a dialog afterwards. |
+| `./scripts/setup-signing.sh` | Creates the self-signed certificate, once per machine. Run before anything else: Accessibility grants are bound to the signature, and an ad-hoc signature changes on every build. Asks for the login keychain password once, so that signing never waits on a dialog afterwards. |
 | `./scripts/build.sh [debug\|release]` | Compiles and assembles `build/Starkit.app`. |
-| `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, turns **Start at Login** on, launches. Registering here rather than at first launch is deliberate: an install is when the whole promise was asked for, boot included, where an app that registered itself on every launch would overrule someone who had just turned it off. A **Script** that does not compile still installs and launches — it reports the error and exits non-zero, because a menu bar app **Refusing** one **Script** beats no app at all. |
-| `Starkit registry` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged — so the mtime only moves when the contents do, which is what stops every **Script** looking **Stale**. C6 does this on every save; the verb is for `install.sh`, which needs a registry before its first build, and for getting the file back after deleting it. |
-| `Starkit create <keyword>` | C11 from a terminal: writes `src/scripts/<keyword>.gleam` from the template if it is not there, then opens it — exactly what ↩ on the bar's `Create` row does. It exists because its absence shipped a crash: C11 was the one component this CLI could not reach, so its only line that touches a filesystem was never executed until someone pressed ↩, and it trapped on the first try. |
-| `Starkit edit <keyword>` | Opens `src/scripts/<keyword>.gleam` in Zed — what ⌥↩ (or ⌃O) on a selected **Script** does in the bar. **Refuses** when the file is not there rather than writing a template over the question. |
-| `Starkit delete <keyword>` | Moves `src/scripts/<keyword>.gleam` and its `test/<keyword>_test.gleam` to the Trash — what ⌃D twice in the bar does. Here for the same reason `create` is, and because this is the one path that destroys something you wrote: it should not first execute because somebody pressed a key. |
-| `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. Takes any **Keyword** a **Script** answers to, canonical or not, and says so on stderr when the two differ — but only spelled in full, where the bar also matches prefixes: the bar shows you the row it picked before ↩ reaches it, and a terminal shows nothing between the word and the **Effects**. The debugging path; kept permanently. |
-| `Starkit run <keyword> --bench[=N]` | The numbers behind [DESIGN.md](./DESIGN.md) §8, taken N times (default 20) on this machine: F4, F5, F6, and the resolve and `describe` that F9's launch is mostly made of, each reported as its first sample and then the median of the rest. **Performs no Effects** — twenty iterations of `work` would otherwise open eighty applications. F1, F8 and F9 are not measurable from here and §8 says why. Point it at a scratch `$STARKIT_HOME` holding a **Script** that loops to measure F14's deadline. |
-| `Starkit start-at-login [on\|off]` | Starting at login, from a terminal — what the menu bar item's **Start at Login** does. Always prints the state macOS reports *afterwards*, never what was asked for, and exits non-zero when those differ. Run through the installed bundle: the registration belongs to the bundle the executable sits in. |
-| `Starkit icon <directory.iconset>` | Draws the app icon — the bar's cream fruit on its periwinkle plate — as the ten PNGs `iconutil` packs into `Contents/Resources/Starkit.icns`. `build.sh` calls it on every build, so the icon Finder shows cannot drift from the mark in the bar: both are the same `Carambola` path. The fruit is filled here rather than outlined, because Finder's list view asks for 16 pixels and an outline that small is a bruise. |
+| `./scripts/install.sh` | Builds, copies to `/Applications`, seeds `$STARKIT_HOME` (default `~/.starkit`) without clobbering edited **Scripts**, runs the first `gleam build`, turns **Start at Login** on, launches. Registering here rather than at first launch is deliberate: an install is when the whole promise was asked for, boot included, where an app that registered itself on every launch would overrule someone who had just turned it off. A **Script** that does not compile still installs and launches, reporting the error and exiting non-zero, because a menu bar app **Refusing** one **Script** is better than no app at all. |
+| `Starkit registry` | Regenerates `$STARKIT_HOME/src/registry.gleam` (default `~/.starkit`) from `src/scripts/*.gleam`. Output is sorted and already `gleam format`-clean, and the file is left untouched when unchanged, so the mtime only moves when the contents do, which is what stops every **Script** looking **Stale**. C6 does this on every save; the verb is for `install.sh`, which needs a registry before its first build, and for getting the file back after deleting it. |
+| `Starkit create <keyword>` | C11 from a terminal: writes `src/scripts/<keyword>.gleam` from the template if it is not there, then opens it, exactly what ↩ on the bar's `Create` row does. It exists because its absence shipped a crash. C11 was the one component this CLI could not reach, so its only line that touches a filesystem was never executed until someone pressed ↩, and it trapped on the first try. |
+| `Starkit edit <keyword>` | Opens `src/scripts/<keyword>.gleam` in Zed, which is what ⌥↩ (or ⌃O) on a selected **Script** does in the bar. **Refuses** when the file is not there instead of writing a template over the question. |
+| `Starkit delete <keyword>` | Moves `src/scripts/<keyword>.gleam` and its `test/<keyword>_test.gleam` to the Trash, which is what ⌃D twice in the bar does. Here for the same reason `create` is, and because this is the one path that destroys something you wrote: it should not first execute because somebody pressed a key. |
+| `Starkit run <keyword> [input]` | Runs one **Script** from a terminal, printing its **Effects** instead of performing them with `--dry-run`. Takes any **Keyword** a **Script** answers to, canonical or not, and says so on stderr when the two differ, but only spelled in full, where the bar also matches prefixes. The debugging path; kept permanently. |
+| `Starkit run <keyword> --bench[=N]` | The numbers behind [DESIGN.md](./DESIGN.md) §8, taken N times (default 20) on this machine: F4, F5, F6, and the resolve and `describe` that F9's launch is mostly made of, each reported as its first sample and then the median of the rest. **Performs no Effects**, since twenty iterations of `work` would otherwise open eighty applications. F1, F8 and F9 are not measurable from here and §8 says why. Point it at a scratch `$STARKIT_HOME` holding a **Script** that loops to measure F14's deadline. |
+| `Starkit start-at-login [on\|off]` | Starting at login, from a terminal, which is what the menu bar item's **Start at Login** does. Always prints the state macOS reports *afterwards*, never what was asked for, and exits non-zero when those differ. Run through the installed bundle: the registration belongs to the bundle the executable sits in. |
+| `Starkit icon <directory.iconset>` | Draws the app icon, the bar's cream fruit on its periwinkle plate, as the ten PNGs `iconutil` packs into `Contents/Resources/Starkit.icns`. `build.sh` calls it on every build, so the icon Finder shows cannot drift from the mark in the bar: both are the same `Carambola` path. The fruit is filled here rather than outlined, because Finder's list view asks for 16 pixels and an outline is illegible at that size. |
 | `swift test` | The pure Swift test suites. |
 | `cd ~/.starkit && gleam test` | The **Script** test suites. |
 
@@ -108,15 +108,15 @@ Only `src/scripts/` is yours; everything else is vendored from `seed/` and repla
 install, so the **Vocabulary** can be upgraded without asking you to merge it by hand.
 
 The **Shelf** runs `bun run.mjs`, never `gleam run`. Gleam's `entry.mjs` exports `main` without
-calling it, and the file that does the calling is named `gleam@@private_main_v<version>.mjs` — it is
-private and it is renamed by every Gleam upgrade, which G7 rules out depending on. `run.mjs` is
+calling it, and the file that does the calling is named `gleam@@private_main_v<version>.mjs`, which
+is private and is renamed by every Gleam upgrade, and G7 rules out depending on that. `run.mjs` is
 ours, so the only assumption left is that `entry.mjs` exports a function, and it fails at import
 rather than silently. This is also why `entry.gleam` need not match the package name: nothing
 resolves it as a package entry point.
 
 `src/starkit.gleam` is the **Vocabulary**, not the entry point, so a **Script** reads
 `import starkit.{type Effect, Open, Paste}`. The entry point is `entry.gleam`, which the **Shelf**
-invokes as a built `.mjs` directly — so its module name is free and need not match the package.
+invokes as a built `.mjs` directly, so its module name is free and need not match the package.
 
 ## Code style
 
@@ -124,14 +124,14 @@ Match `cmd-tab`, which is the house style for this kind of app:
 
 - SwiftPM executable, `swiftLanguageMode(.v5)`, no Xcode project, no third-party dependencies.
 - Doc comments explain **why**, not what. `cmd-tab`'s `Config.swift` is the reference: every
-  non-obvious default carries the reasoning that produced it. Comments that restate the code are
-  worse than none.
+  non-obvious default carries the reasoning that produced it. A comment that restates the code is
+  not worth writing.
 - One component per file, named after the component in [DESIGN.md](./DESIGN.md) §7.
 - The **Vocabulary** appears verbatim in type and function names. A `Script`, an `Effect`, a
   `Keyword`. If code needs a word that `CONTEXT.md` does not define, either the word is wrong or
-  the glossary is incomplete — resolve it, don't invent a synonym locally.
-- Gleam: standard `gleam format`. **Scripts** contain no `@external` — zero FFI is a measured
-  property of the design (G5), not an aspiration.
+  the glossary is incomplete. Resolve it; don't invent a synonym locally.
+- Gleam: standard `gleam format`. **Scripts** contain no `@external`, since zero FFI is a measured
+  property of the design (G5).
 
 ## Testing strategy
 
@@ -141,34 +141,35 @@ that this design made the risky decisions pure.
 
 **Tested — Gleam, via `gleeunit`:**
 
-- `clean` — which apps it **Kills**, given a **Running Apps** list. The only destructive path in
+- `clean`, for which apps it **Kills**, given a **Running Apps** list. The only destructive path in
   the system, and **Kill** never asks. Written before Clean runs for real, not after.
-- `youtube` — ID extraction across all six URL shapes, plus a bare 11-character ID.
-- `link` — `h1` extraction, including the pages where the scan standing in for a DOM selector gives
-  the wrong answer. Those cases are recorded as the known limit, not fixed. A scan rather than a
-  regexp because Gleam's stdlib has none and the wrong answers are the same either way (T6.1).
-- `text` — the normalisation every note shares, tested once for both **Scripts** that paste one.
+- `youtube`, for ID extraction across all six URL shapes, plus a bare 11-character ID.
+- `link`, for `h1` extraction, including the pages where the scan standing in for a DOM selector
+  gives the wrong answer. Those cases are recorded as the known limit and left unfixed. A scan
+  rather than a regexp because Gleam's stdlib has none and the wrong answers are the same either
+  way (T6.1).
+- `text`, for the normalisation every note shares, tested once for both **Scripts** that paste one.
 
 **Tested — Swift, via `swift test`:**
 
-- `Staleness` — source changed since the last successful build, source unchanged, a shared module
+- `Staleness`, for source changed since the last successful build, source unchanged, a shared module
   changed, **Artefact** missing entirely. Plus the case that caught the mtime version out at T1.4: a
   source *touched* but not changed is **Current**.
-- `Keyword` — first token splits from **Input**; no match; a **Keyword** that is a prefix of
-  another.
-- `Effect` — reading a reply from `entry.gleam`: the four words of the **Vocabulary** under the
+- `Keyword`, for the first token splitting from **Input**; no match; a **Keyword** that is a prefix
+  of another.
+- `Effect`, for reading a reply from `entry.gleam`: the four words of the **Vocabulary** under the
   field names it gave them, in order; awkward text through the **Paste** path; a **Refusal** the
   child wrote itself, including the non-zero exit that accompanies it; a **Script** that crashed,
   with and without stderr; and an **Effect** this Starkit does not know, which must be a loud
-  **Refusal** naming the word rather than one the **Effector** silently skips.
-- `TerminalColour` — a real `gleam` diagnostic comes out readable, with its box-drawing kept.
-- `Manifest` — reading `manifests.json`, which is the one file that outlives the version of Starkit
-  that wrote it: a cache written before `asks` existed still lists every **Script**, and an empty
-  question is a question rather than the absence of one. A decode that throws here is a bar with no
-  **Scripts** in it, which looks exactly like the machine F2 exists to keep working.
+  **Refusal** naming the word instead of one the **Effector** silently skips.
+- `TerminalColour`, for a real `gleam` diagnostic coming out readable, with its box-drawing kept.
+- `Manifest`, for reading `manifests.json`, which is the one file that outlives the version of
+  Starkit that wrote it: a cache written before `asks` existed still lists every **Script**, and an
+  empty question is a question rather than the absence of one. A decode that throws here is a bar
+  with no **Scripts** in it, which looks exactly like the machine F2 exists to keep working.
 
 **Not tested:** HotKey, Effector, SummonPanel, Watcher, LoginItem, ContextGatherer, and C4's process
-half — spawning `bun`, the deadline, draining two pipes. Each is a thin call into a framework, and a
+half: spawning `bun`, the deadline, draining two pipes. Each is a thin call into a framework, and a
 mock would pass while the app was broken. Verified by running it: the deadline against a **Script**
 that spins, F12 against one that `panic`s.
 
@@ -194,10 +195,11 @@ and §8 records where their numbers came from instead.
   two **Scripts** wanting the same one is coincidence; three is a signal.
 - Anything requiring a permission beyond Accessibility. One grant is a property worth keeping.
 - Adding a dependency to `gleam.toml`, or any Swift dependency at all.
-- Turning on notarization or Homebrew distribution — that decides whether the repo goes public.
-  **Scripts** live in `~/.starkit`, not here, so this repo carries no personal app lists; keep it
-  that way. Anything naming an employer, a client or a private hostname belongs in a **Script**,
-  which is never committed to this repo.
+- Anything that puts personal content in this repo. It is public now, and notarized releases go out
+  under a Developer ID, so both decisions this line used to guard have been taken. **Scripts** live
+  in `~/.starkit`, not here, so this repo carries no personal app lists; keep it that way. Anything
+  naming an employer, a client or a private hostname belongs in a **Script**, which is never
+  committed to this repo.
 
 **Never**
 
@@ -206,7 +208,7 @@ and §8 records where their numbers came from instead.
 - Let a **Script** run another **Script**, or outlive the 5 s deadline.
 - Overwrite a **Script** in `~/.starkit` during install.
 - Make `Create "<keyword>"` the default selection in the bar, or put a selection on a list nobody has
-  narrowed or arrived on — an empty field selects nothing, whatever sorts first.
+  narrowed or arrived on. An empty field selects nothing, whatever sorts first.
 - Delete a **Script** with one keystroke, or with `unlink`. Two presses, and the Trash, so a mistake
   is recoverable without Starkit having to hold an undo of its own.
 - Delete a **Script**'s source and leave its test suite behind. `gleam build` typechecks `test/`, so
@@ -224,9 +226,9 @@ and §8 records where their numbers came from instead.
 
 ### Slice 1 — the spine, without any UI
 
-The seeded `work.gleam` opens nothing, because the repo carries no app lists — so the first two
-criteria are met by filling in your own `~/.starkit/src/scripts/work.gleam`, not by the seed. That
-is the boundary working, not a gap in it.
+The seeded `work.gleam` opens nothing, because the repo carries no app lists, so the first two
+criteria are met by filling in your own `~/.starkit/src/scripts/work.gleam` and not by the seed.
+That is the boundary working, not a gap in it.
 
 - `Starkit run work` opens ghostty, Slack, Notion and Zen.
 - `Starkit run work --dry-run` prints four `Open` **Effects** and opens nothing.
@@ -240,18 +242,19 @@ is the boundary working, not a gap in it.
 - ⌃⌘K **Summons** the bar in ≤ 50 ms; ⌃⌘K again **Dismisses** it, and so does Escape.
 - A click outside the bar **Dismisses** it too, including while a **Script** is still running: the
   run finishes and performs its **Effects** either way, because it was asked for before the click.
-- ⌘Tab away and the bar is gone when you look back — leaving is leaving, whether or not it came with
-  a click. A **Script**'s own **Open** activating another application is *not* a **Dismissal**,
-  which is why this is not `hidesOnDeactivate`: the bar stays through a run in flight, so the
-  spinner survives an **Open**, and it stays once a run has left a sentence on screen, because a
-  cold application reaching the front after the run settled must not take the sentence with it.
+- ⌘Tab away and the bar is gone when you look back. Leaving the application dismisses it, with or
+  without a click. A **Script**'s own **Open** activating another application is *not* a
+  **Dismissal**, which is why this is not `hidesOnDeactivate`: the bar stays through a run in
+  flight, so the spinner survives an **Open**, and it stays once a run has left a sentence on
+  screen, because a cold application reaching the front after the run settled must not take the
+  sentence with it.
 - Typing `wo` selects Work; ↩ runs it and the bar disappears.
 - ⌃⌘K with nothing typed lists the whole **Catalogue** and selects none of it: ↩ there does nothing,
   because the first row is whichever **Keyword** sorts first rather than anything that was chosen.
-- ⌃N and ⌃P move the selection, as do ↓ and ↑. It stops at the first and last row rather than
+- ⌃N and ⌃P move the selection, as do ↓ and ↑. It stops at the first and last row instead of
   wrapping, and it never leaves the rows on screen: with more matches than the bar lists, the way
   past the last one is to type, so ↩ cannot run a **Script** whose name is not visible.
-- With Script Kit running, ⌃⌘K reaches Script Kit and Starkit stays quiet — the chord is never
+- With Script Kit running, ⌃⌘K reaches Script Kit and Starkit stays quiet. The chord is never
   taken from whoever else is listening for it. The red icon this criterion also asked for is
   **withdrawn**: measured at T2.1, macOS tells an application nothing about another one claiming
   the same chord, so there is no failure for C10 to report (`DESIGN.md` §4, F8).
@@ -261,7 +264,7 @@ is the boundary working, not a gap in it.
 
 - `gleam test` covers the **Kill** list before Clean is ever run for real.
 - Clean **Kills** every regular app except the untouchable list, and Starkit survives.
-- Clean gathers **Running Apps** in ≤ 5 ms, with no `osascript` process spawned — verifiable by
+- Clean gathers **Running Apps** in ≤ 5 ms, with no `osascript` process spawned, verifiable by
   watching for one.
 
 ### Slice 4 — Youtube
@@ -269,15 +272,15 @@ is the boundary working, not a gap in it.
 - With a YouTube URL on the clipboard, ⌃⌘K → `yt` → ↩ → ↩ pastes the markdown into the app that
   was frontmost before the bar appeared.
 - The **Input** arrives **Seeded** and selected: typing replaces it without clearing first.
-- With an empty clipboard the **Input** stage still arrives — empty, not absent — and a URL or a
+- With an empty clipboard the **Input** stage still arrives, empty and not absent, and a URL or a
   bare 11-character ID typed into it works the same way. The **Seed** is what the **Input** starts
   out *holding*, so there is nothing conditional about the stage itself.
 - A clipboard holding something that is not a URL **Seeds** anyway, and that is not a defect: it
   arrives selected, so replacing it costs no keystrokes. Deciding what looks like a YouTube URL is
   the **Script**'s job, and it is what **Notify** is for when the answer is no.
-- Typing the **Input** on the **Keyword**'s own line — `youtube <url>` — runs on one ↩ and no stage
-  appears. A question already answered is not asked, and this is what ↩ did before the stage
-  existed. The stage is what the **Seed** is for: the case where nothing was typed.
+- Typing the **Input** on the **Keyword**'s own line (`youtube <url>`) runs on one ↩ and no stage
+  appears, which is what ↩ did before the stage existed. The stage exists for the case where
+  nothing was typed, which is also the case the **Seed** is for.
 - Escape in the **Input** stage goes back to the **Keyword** stage with what was typed still there,
   and only **Dismisses** from the first stage. ↩ on the wrong **Script** costs one keystroke.
 - After the paste, the clipboard holds the markdown, so ⌘V again repeats it.
@@ -299,7 +302,7 @@ is the boundary working, not a gap in it.
 - Choosing it writes `src/scripts/<keyword>.gleam` with a compiling `pub fn script()` and opens it
   in Zed. All typing happens in the editor; the bar only scaffolds.
 - Saving a **Script** in Zed regenerates the registry, rebuilds, and rewrites `manifests.json`
-  within 500 ms — so the new **Keyword** works at the next **Summon** with nothing else run.
+  within 500 ms, so the new **Keyword** works at the next **Summon** with nothing else run.
 - Creating a file in Zed *without* going through the bar registers it identically.
 - A save that does not compile turns the menu bar icon red within 500 ms, and the previously built
   **Scripts** keep working.
@@ -312,11 +315,32 @@ is the boundary working, not a gap in it.
 ### Slice 7 — boot
 
 - Starkit is in the menu bar after a reboot with no login, and ⌃⌘K works within 3 s.
-- Moving the bundle out of `/Applications` and back does not silently unregister it — the state
+- Moving the bundle out of `/Applications` and back does not silently unregister it. The state
   shown in the menu is the state `SMAppService` reports, never a cached assumption.
+
+### Slice 8 — a bundle nobody installed
+
+A notarized download and a Homebrew cask both drop the `.app` and run nothing, where `install.sh`
+did the seeding, the registry and the first build. So the app has to be able to set up a home it has
+never seen, from content carried inside itself.
+
+- `Starkit seed` vendors the **Shelf**-owned half of `$STARKIT_HOME` and seeds the half you write
+  only where a file is absent, so an edited **Script** survives it. It is the same rule `install.sh`
+  applies, and `install.sh` calls it rather than repeating it.
+- A first launch with no `$STARKIT_HOME` at all reaches a working bar: seeded, registry written,
+  **Scripts** built, and the item in the menu the whole time rather than after.
+- A first launch on a machine with no **Toolchain** shows red and names what is missing, and the
+  menu bar item is still there.
+- A second launch seeds nothing and asks `SMAppService` for nothing. Registering at every launch
+  would overrule someone who had just turned Start at Login off (F9).
+- The bundle carries `seed/` in `Contents/Resources`, and `codesign --verify --strict` still passes
+  with it there.
 
 ## Out of scope
 
-Dynamic pick-lists, a second key chord, notarized distribution, notifications outside the bar,
-running a **Script** on a schedule, and syncing `~/.starkit` between machines. Each is recorded
-with its revisit trigger in [DESIGN.md](./DESIGN.md) §9 where a decision was actually taken.
+Dynamic pick-lists, a second key chord, notifications outside the bar, running a **Script** on a
+schedule, and syncing `~/.starkit` between machines. Each is recorded with its revisit trigger in
+[DESIGN.md](./DESIGN.md) §9 where a decision was actually taken.
+
+Notarized distribution has left this list: `release.sh` signs with a Developer ID, submits, and
+staples, and Slice 8 covers what that asks of the app.

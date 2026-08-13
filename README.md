@@ -5,15 +5,15 @@
 A keyboard-summoned launcher for a handful of personal automations, written in Gleam. Starkit
 exists to replace the parts of Script Kit that get used, and nothing else.
 
-⌃⌘K summons it — the same chord Script Kit used, so the muscle memory carries over. Script Kit
-must be quit first: whichever app registers the chord first keeps it, and the loser fails
-silently. Scripts live in `~/.starkit`; this repo is only the Shelf.
+⌃⌘K summons it, the same chord Script Kit used, so the muscle memory carries over. Script Kit must
+be quit first: whichever app registers the chord first keeps it, and the loser fails silently.
+Scripts live in `~/.starkit`; this repo is only the Shelf.
 
 ## What a Script is
 
 One Gleam module in `~/.starkit/src/scripts/`. It turns an **Input** and a **Context** into a list
-of **Effects** — `Open`, `Kill`, `Paste`, `Notify` — and Starkit performs them. A Script decides
-what should happen; it never touches the machine itself, which is why it is a pure function you can
+of **Effects** (`Open`, `Kill`, `Paste`, `Notify`) and Starkit performs them. A Script decides what
+should happen; it never touches the machine itself, which is why it is a pure function you can
 unit-test with `gleam test`.
 
 Five are seeded on install:
@@ -27,15 +27,15 @@ Five are seeded on install:
 | `personal` | The same, for everything else |
 
 `work` and `personal` are stubs on purpose. This repo carries no app lists, so nothing about your
-employer's tooling ends up in it — see [seed/src/scripts/work.gleam](./seed/src/scripts/work.gleam).
+employer's tooling ends up in it. See [seed/src/scripts/work.gleam](./seed/src/scripts/work.gleam).
 
 ## Requirements
 
 - macOS 14 or later
-- Xcode Command Line Tools (`xcode-select --install`) — Starkit builds from source
+- Xcode Command Line Tools (`xcode-select --install`), since Starkit builds from source
 - `gleam` and `bun` on your `PATH`
 
-Starkit borrows the toolchain from your machine rather than shipping one, and resolves it at every
+Starkit borrows the toolchain from your machine instead of shipping one, and resolves it at every
 launch. `brew upgrade gleam` is a non-event; there is no pinned version to bump. If your login shell
 hides either tool, `~/.starkit/starkit.toml` takes an explicit path.
 
@@ -57,20 +57,22 @@ cd starkit
 ./scripts/install.sh
 ```
 
-`setup-signing.sh` creates a self-signed code-signing identity in your login keychain. It is not
-cosmetic: macOS ties the Accessibility grant to an app's signature, and an ad-hoc signature changes
-on every build — so without it, every rebuild silently drops the grant and `Paste` stops working.
+`setup-signing.sh` creates a self-signed code-signing identity in your login keychain. It matters:
+macOS ties the Accessibility grant to an app's signature, and an ad-hoc signature changes on every
+build, so without it every rebuild silently drops the grant and `Paste` stops working.
 
 `install.sh` is meant to be run again and again. Shelf-owned files in `~/.starkit` are re-vendored
-each time so the vocabulary upgrades without a hand merge, and `src/scripts/` — the half you write —
-is only ever written when a file is absent. **An install never touches a Script you have edited.**
+each time so the vocabulary upgrades without a hand merge, and `src/scripts/`, the half you write,
+is only ever written when a file is absent. An install never touches a Script you have edited.
 
-There is no notarized download. Building locally is what keeps the signature stable and the app out
-of quarantine; the trade is recorded as T8 in [DESIGN.md](./DESIGN.md).
+Releases are signed with a Developer ID and notarized, so a download opens without the
+right-click-open dance. Building your own copy is signed by `setup-signing.sh` instead, which is
+what keeps *that* signature stable across rebuilds; the trades are T8 and T15 in
+[DESIGN.md](./DESIGN.md).
 
 ## First launch
 
-Starkit has no Dock icon — it lives in the menu bar, and the icon turns red when something is wrong.
+Starkit has no Dock icon. It lives in the menu bar, and the icon turns red when something is wrong.
 
 - **Accessibility** is requested the first time a Script uses `Paste`, because synthesising ⌘V needs
   it. Nothing else does. System Settings → Privacy & Security → Accessibility → Starkit.
@@ -87,8 +89,7 @@ Starkit has no Dock icon — it lives in the menu bar, and the icon turns red wh
 | ⌃D, then ⌃D again | Moves a Script and its test to the Trash, naming the files first |
 | Escape or ⌃⌘K | Dismisses the bar. A Script already running still finishes and performs its Effects |
 
-From a terminal, where only exact keywords resolve — a prefix that reaches the wrong Script shows
-you nothing before it runs, so `Starkit run c` meaning `clean` is not a risk worth taking:
+From a terminal, where only exact keywords resolve and `Starkit run c` will not reach `clean`:
 
 ```sh
 Starkit run youtube "https://youtu.be/…"
@@ -110,11 +111,13 @@ not compile turns the menu bar icon red and leaves every other Script working.
 
 Things people ask for that Starkit will not do:
 
-- **The chord is ⌃⌘K and cannot be changed.** It races Script Kit, Raycast and Alfred, and the loser
+- The chord is ⌃⌘K and cannot be changed. It races Script Kit, Raycast and Alfred, and the loser
   registers nothing without saying so. Quit the other one.
-- **No preferences window, no themes, no per-Script configuration** outside its own manifest.
-- **No dynamic pick-lists.** Effects go out and nothing comes back, so `clean` is all or nothing.
-- **A Script cannot run another Script**, use `@external`, or outlive a 5 s deadline.
+- There is no preferences window, no theming, and no per-Script configuration outside its own
+  manifest.
+- Nothing comes back from an Effect, so there are no dynamic pick-lists and `clean` is all or
+  nothing.
+- A Script cannot run another Script, use `@external`, or outlive a 5 s deadline.
 
 <!-- docs:start -->
 
