@@ -117,9 +117,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func prepare() {
         let home = Toolchain.home
         // Before the Catalogue is read, because on a first launch there is no home to read one from.
-        // Cheap enough to stay on this thread: seventeen small files, and the first build behind it is
-        // what actually costs (Slice 8).
-        let firstTime = setUpHomeIfNeeded(home)
+        // Cheap enough to stay on this thread: seventeen files compared, and on all but the first
+        // launch nothing written (Slice 8).
+        let patient = setUpHome(home)
         // Handed to the bar before anything here can fail, and again if a `describe` improves on it,
         // so the panel's height is settled before the first **Summon** rather than in front of
         // someone.
@@ -132,13 +132,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.builder = Builder(toolchain: toolchain, home: home)
             report("Toolchain: bun \(toolchain.bun.path), gleam \(toolchain.gleam.path)")
 
-            if firstTime {
-                // Off this thread, and only here. Every other launch rebuilds Artefacts that already
-                // exist, which is the measured path F9's budget is about; a first build resolves the
-                // dependency tree and has no budget anyone would recognise. Blocking the main actor
-                // through it would leave the menu bar item present and the bar dead, which is worse
-                // than saying what is happening.
-                firstBuild(toolchain: toolchain, home: home, listing: cached)
+            if patient {
+                // Off this thread, and only when the seeding above changed something. Every other
+                // launch rebuilds Artefacts that already exist, which is the measured path F9's budget
+                // is about; a build behind a seeded or upgraded home may resolve the dependency tree
+                // and has no budget anyone would recognise. Blocking the main actor through it would
+                // leave the menu bar item present and the bar dead, which is worse than saying what is
+                // happening.
+                patientBuild(toolchain: toolchain, home: home, listing: cached)
                 return
             }
 
@@ -167,26 +168,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Bundle.main.bundleURL.standardizedFileURL.path.hasPrefix("/Applications/")
     }
 
-    /// Set up `$STARKIT_HOME` when nothing has, and say whether this was that launch.
+    /// Bring `$STARKIT_HOME` up to what this bundle carries, and say whether the build after it can be
+    /// slow.
     ///
-    /// The case it exists for is a **Cask** or a notarized download: both drop the `.app` and run
-    /// nothing, where `install.sh` would have seeded, written the registry and built. Detected by the
-    /// **Shelf**'s own half being absent rather than by a marker file — a home someone deleted
-    /// `src/starkit.gleam` out of needs the same treatment as one that never existed, and a marker
-    /// would claim otherwise.
+    /// **Every launch, exactly as `install.sh` does on every run.** The reason is the promise the
+    /// vendoring half exists for: **Shelf**-owned files are replaced whenever they differ, so the
+    /// **Vocabulary** upgrades without a hand merge. A **Cask** has no install script to run, so a
+    /// launch that only seeded *absent* homes would leave every upgraded `starkit.gleam` unapplied —
+    /// and T13's one-field migration would arrive at people with nothing to apply it.
     ///
-    /// Silent on an ordinary launch: `seed` finds nothing to do, so nothing is said about it.
-    private func setUpHomeIfNeeded(_ home: URL) -> Bool {
+    /// Silent when there is nothing to do, which is what almost every launch looks like: the vendoring
+    /// path compares content before writing, so an unchanged home costs seventeen reads and says
+    /// nothing.
+    ///
+    /// The **Shelf**'s own half being absent is what "empty" means, rather than a marker file — a home
+    /// someone deleted `src/starkit.gleam` out of needs the same first-launch treatment as one that
+    /// never existed, and a marker would claim otherwise.
+    private func setUpHome(_ home: URL) -> Bool {
         let vocabulary = home.appending(path: "src/starkit.gleam")
-        guard !FileManager.default.fileExists(atPath: vocabulary.path) else { return false }
+        let wasEmpty = !FileManager.default.fileExists(atPath: vocabulary.path)
 
         do throws(Refusal) {
             let summary = try Seeder(home: home).seed(from: try Seeder.vendored())
-            report("Set up \(home.path): \(summary.line)")
-            // Asked for once, here, and never again. `install.sh` asks at the end of an install
-            // because that is the moment the whole promise was asked for; a Cask has no such moment,
-            // so this is it. Registering on every launch would overrule someone who had just turned
-            // Start at Login off from the menu (F9).
+            // Only worth a line when something moved. An ordinary launch has nothing to report here,
+            // and saying "0 vendored" on every login is noise in the one log a person reads for
+            // Refusals.
+            if summary.vendored > 0 || summary.seeded > 0 {
+                report("\(wasEmpty ? "Set up" : "Upgraded") \(home.path): \(summary.line)")
+            }
+
+            // True for an upgrade as well as an empty home, because the answer it decides is "can the
+            // build after this be slow?" — and a vendored `gleam.toml` resolves the dependency tree
+            // just as a first one does.
+            let patient = wasEmpty || summary.vendored > 0
+
+            guard wasEmpty else { return patient }
+
+            // Asked for once, on the launch that found nothing, and never again. `install.sh` asks at
+            // the end of an install because that is the moment the whole promise was asked for; a Cask
+            // has no such moment, so this is it. Asking on every launch would overrule someone who had
+            // just turned Start at Login off from the menu (F9).
             //
             // Only from an installed bundle, for the reason install.sh gives for going through
             // /Applications itself: SMAppService registers whichever bundle the calling executable
@@ -197,10 +218,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 report("Start at Login: not asked for, because this is not an installed copy.")
             }
-            return true
+            return patient
         } catch {
-            // Not fatal, and not silent: a bar listing nothing is still a bar, and the reason is in
-            // the menu where the red icon points.
+            // Not fatal, and not silent: a bar listing what the last build left is still a bar, and the
+            // reason is in the menu where the red icon points.
             status.set(error.reason, for: .scripts)
             report(error.reason)
             if let detail = error.detail { report(detail) }
@@ -208,14 +229,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// The first build a home has ever had, off the main actor.
+    /// The build behind a home that was just seeded or upgraded, off the main actor.
     ///
-    /// It pays for resolving the dependency tree, which no other build does, and it is the one moment
-    /// where saying so is worth more than a number: the menu bar item is up, the chord is taken, and
-    /// the bar would list nothing until this returns.
-    private func firstBuild(toolchain: Toolchain, home: URL, listing cached: [Manifest]) {
-        status.set("Building the Scripts for the first time…", for: .scripts)
-        report("Building the Scripts for the first time — this resolves dependencies, so it is slow.")
+    /// It is the one build that may pay for resolving the dependency tree, and the one moment where
+    /// saying so is worth more than a number: the menu bar item is up, the chord is taken, and the bar
+    /// would list nothing until this returns.
+    private func patientBuild(toolchain: Toolchain, home: URL, listing cached: [Manifest]) {
+        status.set("Building the Scripts…", for: .scripts)
+        report("Building the Scripts — a seeded or upgraded home resolves dependencies, so this is slow.")
 
         Task.detached {
             let outcome = Self.rebuild(toolchain: toolchain, home: home)

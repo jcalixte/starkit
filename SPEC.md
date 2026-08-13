@@ -331,8 +331,12 @@ never seen, from content carried inside itself.
   **Scripts** built, and the item in the menu the whole time rather than after.
 - A first launch on a machine with no **Toolchain** shows red and names what is missing, and the
   menu bar item is still there.
-- A second launch seeds nothing and asks `SMAppService` for nothing. Registering at every launch
-  would overrule someone who had just turned Start at Login off (F9).
+- **Every** launch applies the rule, as every run of `install.sh` does, so an upgraded
+  `starkit.gleam` reaches a home nobody ran a script against. A launch with nothing to do writes
+  nothing and says nothing about it.
+- A launch that upgrades a home names the files it replaced, leaves your **Scripts** alone, and asks
+  `SMAppService` for nothing. Only the launch that found the home empty asks, because registering at
+  every launch would overrule someone who had just turned Start at Login off (F9).
 - The bundle carries `seed/` in `Contents/Resources`, and `codesign --verify --strict` still passes
   with it there.
 
