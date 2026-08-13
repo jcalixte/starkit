@@ -448,15 +448,15 @@ Each function sits under the goal it serves most; secondary goals are noted inli
 | C1  | SummonPanel       | the bar: show/hide, filtering, key handling                 |          |
 | C2  | Catalogue         | read `manifests.json`, resolve **Keyword** → **Script**      |          |
 | C3  | HotKey            | register ⌃⌘K, report failure to hold it                     |          |
-| C4  | Runner            | spawn/kill `bun`, feed a run, 5 s deadline, collect **Effects** and stderr | ADR-0001 |
-| C5  | Builder           | `gleam build`, per-**Script** **Stale** check by mtime        | ADR-0002 |
+| C4  | Runner            | spawn/kill `bun`, feed a run, 5 s deadline, collect **Effects** and stderr | ADR-0001, ADR-0003 |
+| C5  | Builder           | `gleam build`, per-**Script** **Stale** check by content hash | ADR-0002 |
 | C6  | Watcher           | `FSEvents` → regenerate registry, build, rewrite **Manifests**   | ADR-0002 |
 | C7  | Effector          | perform **Open** / **Kill** / **Paste** / **Notify**, focus and clipboard |          |
 | C8  | ContextGatherer   | gather declared **Context** slices in-process                |          |
 | C9  | LoginItem         | `SMAppService` registration                                 |          |
 | C10 | MenuBarStatus     | normal / red, the only ambient signal Starkit emits          |          |
 | C11 | Scaffolder        | write a new **Script** from a **Keyword**, or move one to the Trash |          |
-| C12 | Toolchain         | resolve `bun` and `gleam` paths from `starkit.toml`          |          |
+| C12 | Toolchain         | resolve `bun` and `gleam` paths from `starkit.toml`          | ADR-0003 |
 
 Where the effort goes: C4 and C7 carry the most risk, C4 owning process lifecycle and the deadline
 and C7 the only permission-gated operation in the system. C6 is the quiet load-bearing one. It is
@@ -701,6 +701,15 @@ largest single cost in the system and still the reason F9's budget is in seconds
   target set before the spike would have shipped 8× slower than necessary and looked green.
 - F13 was missing entirely from the first pass at functions, and F12 and F14 nearly were.
   Keyboard navigation is not a detail of the bar; it is most of what using the bar *is*.
+- **C5's responsibility still said "**Stale** check by mtime."** The mtime rule was replaced by
+  content hashing at T1.4, and §10 has recorded that since — but §7's own table kept the old word,
+  so the one line describing what C5 does contradicted the ADR anchored beside it in the same row.
+  Fixed. It is the same failure mode as F5's stale target caught at T8.1: the summary line went
+  stale while the paragraph explaining it stayed correct.
+- **ADR 0003 anchored nothing.** §7's table named ADR-0001 and ADR-0002 and omitted 0003 entirely,
+  though "run **Artefacts** on bun" is exactly what C4 spawns and C12 resolves. Found by needing an
+  ADR row for House II's basement, which is a use the table had not been put to before. Both rows
+  now name it. `README.md`'s documentation list was missing it too, and now is not.
 
 ---
 

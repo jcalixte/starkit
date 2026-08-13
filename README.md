@@ -148,6 +148,8 @@ Limits, all of them deliberate:
   — why **Scripts** target JavaScript rather than Erlang
 - [docs/adr/0002-one-project-with-per-script-staleness.md](./docs/adr/0002-one-project-with-per-script-staleness.md)
   — why one project, and how a broken **Script** avoids taking the others down
+- [docs/adr/0003-run-artefacts-on-bun.md](./docs/adr/0003-run-artefacts-on-bun.md) — why **Artefacts**
+  run on bun, and why the node fallback was rejected
 
 <!-- docs:end -->
 
