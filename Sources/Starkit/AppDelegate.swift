@@ -116,6 +116,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The cache is read before any of it and replaced only if all of it works (F2).
     private func prepare() {
         let home = Toolchain.home
+        // Before the Catalogue is read, because on a first launch there is no home to read one from.
+        // Cheap enough to stay on this thread: seventeen small files, and the first build behind it is
+        // what actually costs (Slice 8).
+        let firstTime = setUpHomeIfNeeded(home)
         // Handed to the bar before anything here can fail, and again if a `describe` improves on it,
         // so the panel's height is settled before the first **Summon** rather than in front of
         // someone.
@@ -127,6 +131,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.toolchain = toolchain
             self.builder = Builder(toolchain: toolchain, home: home)
             report("Toolchain: bun \(toolchain.bun.path), gleam \(toolchain.gleam.path)")
+
+            if firstTime {
+                // Off this thread, and only here. Every other launch rebuilds Artefacts that already
+                // exist, which is the measured path F9's budget is about; a first build resolves the
+                // dependency tree and has no budget anyone would recognise. Blocking the main actor
+                // through it would leave the menu bar item present and the bar dead, which is worse
+                // than saying what is happening.
+                firstBuild(toolchain: toolchain, home: home, listing: cached)
+                return
+            }
 
             settle(Self.rebuild(toolchain: toolchain, home: home), listing: cached)
             // Only once the **Toolchain** resolved: every step a save leads to needs `gleam` and
@@ -140,6 +154,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if let detail = error.detail { report(detail) }
             if !cached.isEmpty {
                 report("Listing \(cached.count) Scripts from the last build that worked.")
+            }
+        }
+    }
+
+    /// Whether this bundle is one somebody installed, rather than one somebody just built.
+    ///
+    /// `/Applications` is where both paths put it: `install.sh` dittos it there, and a **Cask** links
+    /// it there. Asked of the running bundle rather than of a build flag, because a debug build copied
+    /// to `/Applications` by hand is installed, and a release build sitting in `build/` is not.
+    private static var isInstalled: Bool {
+        Bundle.main.bundleURL.standardizedFileURL.path.hasPrefix("/Applications/")
+    }
+
+    /// Set up `$STARKIT_HOME` when nothing has, and say whether this was that launch.
+    ///
+    /// The case it exists for is a **Cask** or a notarized download: both drop the `.app` and run
+    /// nothing, where `install.sh` would have seeded, written the registry and built. Detected by the
+    /// **Shelf**'s own half being absent rather than by a marker file — a home someone deleted
+    /// `src/starkit.gleam` out of needs the same treatment as one that never existed, and a marker
+    /// would claim otherwise.
+    ///
+    /// Silent on an ordinary launch: `seed` finds nothing to do, so nothing is said about it.
+    private func setUpHomeIfNeeded(_ home: URL) -> Bool {
+        let vocabulary = home.appending(path: "src/starkit.gleam")
+        guard !FileManager.default.fileExists(atPath: vocabulary.path) else { return false }
+
+        do throws(Refusal) {
+            let summary = try Seeder(home: home).seed(from: try Seeder.vendored())
+            report("Set up \(home.path): \(summary.line)")
+            // Asked for once, here, and never again. `install.sh` asks at the end of an install
+            // because that is the moment the whole promise was asked for; a Cask has no such moment,
+            // so this is it. Registering on every launch would overrule someone who had just turned
+            // Start at Login off from the menu (F9).
+            //
+            // Only from an installed bundle, for the reason install.sh gives for going through
+            // /Applications itself: SMAppService registers whichever bundle the calling executable
+            // sits in, keyed by bundle identifier — so a copy in build/ would take the registration
+            // away from the installed one and point login at a build artefact.
+            if Self.isInstalled {
+                LoginItem.set(true)
+            } else {
+                report("Start at Login: not asked for, because this is not an installed copy.")
+            }
+            return true
+        } catch {
+            // Not fatal, and not silent: a bar listing nothing is still a bar, and the reason is in
+            // the menu where the red icon points.
+            status.set(error.reason, for: .scripts)
+            report(error.reason)
+            if let detail = error.detail { report(detail) }
+            return false
+        }
+    }
+
+    /// The first build a home has ever had, off the main actor.
+    ///
+    /// It pays for resolving the dependency tree, which no other build does, and it is the one moment
+    /// where saying so is worth more than a number: the menu bar item is up, the chord is taken, and
+    /// the bar would list nothing until this returns.
+    private func firstBuild(toolchain: Toolchain, home: URL, listing cached: [Manifest]) {
+        status.set("Building the Scripts for the first time…", for: .scripts)
+        report("Building the Scripts for the first time — this resolves dependencies, so it is slow.")
+
+        Task.detached {
+            let outcome = Self.rebuild(toolchain: toolchain, home: home)
+            await MainActor.run {
+                self.settle(outcome, listing: cached)
+                // Only once the Scripts are real: watching before this would report the same Refusal
+                // for every file the first build writes.
+                self.watch(home: home, using: toolchain)
             }
         }
     }
