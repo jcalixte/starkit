@@ -1,5 +1,9 @@
 name = "starkit"
-version = "0.1.0"
+# Fixed, and deliberately not the app's version. Nothing reads this field — Staleness compares
+# content (ADR 0002), the Catalogue comes from `describe`, and this project is never published to Hex
+# — so tracking Starkit's version here would add a second number to bump with nothing enforcing the
+# pair, and the drift would be invisible.
+version = "1.0.0"
 
 # JavaScript, not Erlang. Measured at roughly 5x faster to start for this workload — see
 # docs/adr/0001-compile-gleam-to-javascript.md in the Starkit repo. The consequence is that this is
