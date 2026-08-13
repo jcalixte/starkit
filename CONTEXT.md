@@ -22,9 +22,9 @@ A **Script** that reaches the network before it can decide, and therefore answer
 **Effects** rather than with **Effects**. Named in the **Vocabulary** as a second way of writing a
 **Script**, because there is no synchronous HTTP on this target and a **Script** that stays local
 should not have to say so. It is the only asymmetry in the **Vocabulary** and it is deliberate: the
-**Shelf** awaits it and is otherwise indifferent, and the 5 s deadline applies unchanged — a fetch
-that never returns is what that deadline was always for. Added at T5.2 with `youtube`, the first one.
-_Avoid_: async, promise-returning, remote — those describe the mechanism; this names the kind of
+**Shelf** awaits it and is otherwise indifferent, and the 5 s deadline applies unchanged. Added at
+T5.2 with `youtube`, the first one.
+_Avoid_: async, promise-returning, remote. Those describe the mechanism; this names the kind of
 **Script** it is.
 
 ### What crosses the boundary
@@ -35,16 +35,16 @@ clicking, and never appears unasked.
 _Avoid_: open, show, invoke, trigger
 
 **Dismiss**:
-To put the **Shelf** away without running anything — ⌃⌘K again, Escape, or a click outside it. The
+To put the **Shelf** away without running anything: ⌃⌘K again, Escape, or a click outside it. The
 person **Dismisses**; a **Script** never does, and neither does an **Effect** that happens to
 activate another application while the bar is up.
-_Avoid_: close, cancel, hide — `hide` is AppKit's word for hiding the *application*, which is how
+_Avoid_: close, cancel, hide. `hide` is AppKit's word for hiding the *application*, which is how
 the keyboard is handed back, and that is one of the things a **Dismissal** does rather than the
 thing itself.
 
 **Input**:
 The text a person types into the **Shelf** before a **Script** runs. A **Script** either **Asks**
-for one — declared, so the **Shelf** knows before it runs — or **Decides** without.
+for one, declared so the **Shelf** knows before it runs, or **Decides** without.
 _Avoid_: argument, query, prompt, parameter
 
 **Context**:
@@ -54,11 +54,11 @@ _Avoid_: environment, state, world, ambient data
 
 **Keyword**:
 A space-free word that selects a **Script** in the **Shelf**. Everything typed after the first
-space is the **Input**. A **Script** answers to one *canonical* **Keyword** — its module name,
-so it is also its file name — and to any number of further **Keywords**, which are shorthand:
+space is the **Input**. A **Script** answers to one *canonical* **Keyword**, its module name and
+therefore also its file name, and to any number of further **Keywords**, which are shorthand:
 `yt` reaches `youtube`. They are matched the same way and differ only in that the canonical one
 wins a tie.
-_Avoid_: alias, trigger, shortcut, hotkey — a second **Keyword** is still a **Keyword**, typed
+_Avoid_: alias, trigger, shortcut, hotkey. A second **Keyword** is still a **Keyword**, typed
 in the same field, and there are no per-**Script** key bindings; the only key binding in Starkit
 summons the **Shelf**.
 
@@ -68,11 +68,11 @@ takes one keystroke and replacing it takes none. Only a **Script** that **Asks**
 _Avoid_: default, prefill, autofill
 
 **Asks** / **Decides**:
-What a **Script** declares about the **Input**. One that **Asks** carries the question it asks —
-"YouTube URL" — and gets a stage in the bar to ask it in, **Seeded** and selected. One that
+What a **Script** declares about the **Input**. One that **Asks** carries the question it asks
+("YouTube URL") and gets a stage in the bar to ask it in, **Seeded** and selected. One that
 **Decides** works from its **Context** alone and runs on the first ↩. Declared rather than
 discovered, because the bar has to know before the **Script** runs.
-_Avoid_: prompt, ask for input, interactive — and _do not_ call it a **Need**, which is a slice of
+_Avoid_: prompt, ask for input, interactive. And _do not_ call it a **Need**, which is a slice of
 the machine the **Shelf** gathers; an **Input** comes from the person.
 
 **Effect**:
@@ -83,39 +83,38 @@ _Avoid_: command, action, side effect, intent
 **Manifest**:
 What a **Script** declares about itself, as against what it decides: its **Keywords**, the name
 shown in the **Shelf**, and the **Context** slices it needs. Everything the **Shelf** must know
-to list a **Script** and gather for it — and nothing that requires building or running one,
+to list a **Script** and gather for it, and nothing that requires building or running one,
 which is why a **Script** that no longer compiles still has a name in the bar. Declared in Gleam
 and compile-checked, so it cannot drift from the **Script** it describes.
 _Avoid_: metadata, header, descriptor, frontmatter, config
 
 **Refusal**:
-Starkit declining to run a **Script**, in its own voice, naming which and why — a **Stale**
+Starkit declining to run a **Script**, in its own voice, naming which and why: a **Stale**
 **Artefact**, a **Keyword** that resolves to nothing, an absent **Toolchain**, a **Script** that
 crashed, a **Script** killed at the deadline. Distinct from **Notify**, which is a **Script** that
-ran and reported what it decided: a **Refusal** means no **Script** ever got to decide anything.
-Crashing and being killed belong here for that reason rather than because nothing ran — dying is not
-deciding, and the words that follow a **Refusal** are Starkit's or the runtime's, never a
-**Script**'s.
+ran and reported what it decided, where a **Refusal** means no **Script** ever got to decide
+anything. Crashing and being killed belong here because a process that died decided nothing, and
+the words that follow a **Refusal** are Starkit's or the runtime's, never a **Script**'s.
 _Avoid_: error, failure, rejection
 
 **Vocabulary**:
 Every name a **Script** author must learn from Starkit and could not have guessed from Gleam
-itself — the **Effects**, the **Context** slices, and the `script` contract. Standard Gleam does
-not count against it. The **Vocabulary** is closed but not frozen — it may grow, and each
-addition is a decision rather than a convenience. What matters is the baseline it grows from.
+itself: the **Effects**, the **Context** slices, and the `script` contract. Standard Gleam does
+not count against it. The **Vocabulary** is closed but not frozen. It may grow, each addition is a
+design decision, and what matters is the baseline it grows from.
 _Avoid_: API, surface, framework, helpers, globals
 
 ### The Effect vocabulary
 
-Deliberately closed and small. Adding a word here is a design decision, not a convenience.
+Deliberately closed and small. Adding a word here is a design decision.
 
 **Open**:
 Bring an application to the foreground, launching it if needed.
 
 **Kill**:
 Terminate an application immediately, discarding unsaved work.
-_Avoid_: quit, close, terminate — those imply the application is asked and may refuse or
-prompt. **Kill** never asks. This is chosen, not accidental: speed is worth the risk.
+_Avoid_: quit, close, terminate. Those imply the application is asked and may refuse or
+prompt. **Kill** never asks, and that is a choice: speed is worth the risk.
 
 **Paste**:
 Replace the selection in whatever application was frontmost before the **Shelf** appeared, and
@@ -126,7 +125,7 @@ _Avoid_: type, insert, set selected text
 
 **Notify**:
 Tell the person why a **Script** did nothing, in the **Shelf** itself, while it is still on
-screen. Not a system notification: nothing Starkit says is worth keeping.
+screen. Not a system notification, because nothing Starkit says is worth keeping.
 _Avoid_: warn, alert, toast, notification
 
 ### Around the edges
@@ -150,7 +149,7 @@ _Avoid_: dirty, outdated, out of sync
 ### The Context vocabulary
 
 **Running Apps**:
-The applications a person can see and switch to — those with windows and a Dock presence,
+The applications a person can see and switch to: those with windows and a Dock presence,
 excluding background and helper processes.
 _Avoid_: processes, open apps
 
@@ -170,64 +169,65 @@ _Avoid_: processes, open apps
 ## Example dialogue
 
 > **Dev:** "Clean needs the list of apps to close. Does it shell out and ask the system?"
-> **Julien:** "No — it declares **Running Apps** as its **Context**, and the **Shelf** hands
+> **Julien:** "No. It declares **Running Apps** as its **Context**, and the **Shelf** hands
 > them over. Asking the system myself costs 463 ms; the **Shelf** already knows for free."
 >
 > **Dev:** "And then Clean closes them?"
 > **Julien:** "Clean decides *which*. It emits a **Kill** per app and the **Shelf** does it.
-> **Kill**, not quit — I don't want a save dialog standing between me and an empty screen."
+> **Kill**, not quit. I don't want a save dialog standing between me and an empty screen."
 
 ## Flagged ambiguities
 
-- "script" meant both the Gleam source file and the thing that runs — resolved: a **Script**
+- "script" meant both the Gleam source file and the thing that runs. Resolved: a **Script**
   is the module. Its compiled form is an **Artefact**; there is no third word for a single
   execution, because nothing in Starkit outlives one.
-- "context" is overloaded against `CONTEXT.md` itself, which is a glossary, not a **Context**.
+- "context" is overloaded against `CONTEXT.md` itself, which is a glossary and not a **Context**.
   Kept anyway: **Context** is the right domain word, and the collision is only in file naming.
-- "shortcut" was used for both a typed alias and a per-**Script** global key chord — resolved:
+- "shortcut" was used for both a typed alias and a per-**Script** global key chord. Resolved:
   only the typed one exists, and it is called a **Keyword**. There is exactly one key chord in
   Starkit and it **Summons** the **Shelf**.
-- **A second name for a **Script** was asked for as a "shortcut" — `yt` for `youtube`.** Resolved
+- **A second name for a **Script** was asked for as a "shortcut", `yt` for `youtube`.** Resolved
   *without* a new word: by the definition above it is a **Keyword**, so what was wrong was the
   cardinality rather than the vocabulary, and the invariant moved from "exactly one **Keyword**"
-  to "exactly one canonical **Keyword**, and any number more". The ban on "alias" therefore holds
-  — it was written to stop a **Keyword** being called something else, not to forbid a second one —
-  and the field is `other_keywords`, which says what it holds in the **Vocabulary**'s own word.
+  to "exactly one canonical **Keyword**, and any number more". The ban on "alias" therefore holds,
+  since it was written to stop a **Keyword** being called something else and not to forbid a second
+  one, and the field is `other_keywords`, which says what it holds in the **Vocabulary**'s own word.
 - **Paste** and **Seed** both touch the clipboard, so "restore the clipboard" was ambiguous
-  between putting back the **Seed** and keeping the pasted text — resolved: keep the pasted
+  between putting back the **Seed** and keeping the pasted text. Resolved: keep the pasted
   text. The cost is that **Summoning** the same **Script** again **Seeds** from its own output,
   which is cosmetic, since the **Seed** arrives selected.
 - "error" covered two different speakers: a **Script** that ran and reports it did nothing useful,
-  and Starkit declining to run one at all. Resolved — the second is a **Refusal**, the first is a
-  **Notify**. The wire says `refusal` rather than `error` for that reason, and because `error`
+  and Starkit declining to run one at all. Resolved: the second is a **Refusal**, the first is a
+  **Notify**. The wire says `refusal` and not `error` for that reason, and because `error`
   would collide with Swift's own in C4.
 
   A third case turned up at T1.4 and looked like neither: a **Script** that ran and then crashed, or
   one killed at the 5 s deadline. It ran, so **Notify** seemed to fit; nothing was decided, so
   **Refusal** did too. Resolved as a **Refusal**, which sharpened the test from "did it run" to "did
   a **Script** get to decide, and whose words are these". A **Notify** is a decision a **Script**
-  made. A stack trace is not; it is the runtime's. No new word was needed, and finding that out is
-  what the case was worth.
+  made; a stack trace is the runtime's. No new word was needed, and finding that out is what the
+  case was worth.
 - "hide" named two acts at once: putting the bar away, and `NSApp.hide`, which is what returns
   activation to the application the person came from. C1 did both in one method called `hide`, so the
-  code could not say which it meant, and **Summon** had no opposite in the glossary at all — while
+  code could not say which it meant, and **Summon** had no opposite in the glossary at all, while
   its own _Avoid_ list already ruled out "show", which C1 was using. Resolved: the act is a
   **Dismissal**, and `NSApp.hide` is one of the things it does. Found while specifying T2.6, when
   clicking outside became a third way to do the first one and nothing named it. It costs the
   **Vocabulary** nothing (G6): no **Script** author ever writes it, for the same reason none of them
   writes **Shelf** or **Artefact**.
 - The reply to a run was briefly called an "envelope", a word from messaging that named the JSON
-  shape rather than anything in the domain. Resolved — it carries **Effects** or a **Refusal**, and
+  shape rather than anything in the domain. Resolved: it carries **Effects** or a **Refusal**, and
   those two words are enough; the shape needs no name of its own.
-- A **Script** was briefly called pure — wrong. Youtube and Link from URL fetch over HTTP, and
-  the response decides the **Effects**, so the network cannot be a **Context** slice. The line
+- A **Script** was briefly called pure, which is wrong. Youtube and Link from URL fetch over HTTP,
+  and the response decides the **Effects**, so the network cannot be a **Context** slice. The line
   is not purity: a **Script** owns the network, the **Shelf** owns the machine.
 - "the name of an application" turned out to be two names, and only a machine that is not in English
   can tell you. **Open** says "the name you see in the Finder", and on this one that is
-  *Calculatrice* while the bundle on disk is *Calculator.app* — so `Kill("Calculator")` found nothing
+  *Calculatrice* while the bundle on disk is *Calculator.app*, so `Kill("Calculator")` found nothing
   to kill and said so, while `Open("Calculator")` would have launched it, because LaunchServices
-  answers to either. Found at T4.3 by killing the wrong thing's absence. Resolved: the **Vocabulary**
-  keeps one word, and both **Effects** accept both spellings — C7 asks LaunchServices the same
-  question for a **Kill** that it already asked for an **Open**. What a **Script** compares on its
-  own side has no such help: a keep list in `clean.gleam` is matched against a **Running Apps**
-  **Context**, which is made of displayed names, so *Calculatrice* is the spelling that spares it.
+  answers to either. Found at T4.3, when a **Kill** silently killed nothing. Resolved: the
+  **Vocabulary** keeps one word, and both **Effects** accept both spellings, since C7 asks
+  LaunchServices the same question for a **Kill** that it already asked for an **Open**. What a
+  **Script** compares on its own side has no such help: a keep list in `clean.gleam` is matched
+  against a **Running Apps** **Context**, which is made of displayed names, so *Calculatrice* is the
+  spelling that spares it.
