@@ -75,9 +75,9 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     /// the bar that came after it.
     var run: ((Manifest, String, Int) -> Void)?
 
-    /// What ↩ does with the offer to write a **Script** that does not exist yet (F11). The bar goes
-    /// away afterwards: all typing happens in the editor, and C6 makes the file real without being
-    /// asked.
+    /// What ↩ on the selected offer — and ⌥↩ whether or not it is selected — does with a **Script**
+    /// that does not exist yet (F11). The bar goes away afterwards: all typing happens in the
+    /// editor, and C6 makes the file real without being asked.
     var create: ((String) -> Void)?
 
     /// What the *second* ⌃D does to the selected **Script** (F16). The bar stays open, because the
@@ -608,16 +608,39 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         list.select(next)
     }
 
-    /// Open the selected **Script** in the editor.
+    /// Into the editor, whether or not the file is there to open yet: F17's **Open** on a selected
+    /// **Script**, and F11's **Create** on the offer to write one.
     ///
-    /// Nothing on the offer to *create* one: ↩ there already writes the file and opens it, and a second
-    /// key doing three quarters of the same thing is a **Keyword** away from being a mistake.
-    private func editSelected() {
-        guard !working, let selected, choices.indices.contains(selected),
-            case .script(let manifest) = choices[selected]
-        else { return }
-        dismiss()
-        edit?(manifest)
+    /// The offer is reachable here without a selection, which is the one thing ↩ cannot do. It costs
+    /// nothing SPEC asked for: the rule is that `Create "<keyword>"` is never the *default*
+    /// selection, so a typo followed by ↩ still does nothing — ⌥ is not what a typo ends with. What
+    /// it buys is the row being takeable without the deliberate ↓ first, for the person who already
+    /// knows the **Keyword** they are about to write.
+    ///
+    /// A list nobody has narrowed stays out of reach: with an empty field nothing is selected, and
+    /// falling back to the first row there would open whatever sorts first.
+    private func openOrCreate() {
+        guard !working else { return }
+        switch selected.flatMap({ choices.indices.contains($0) ? choices[$0] : nil }) ?? offer {
+        case .script(let manifest):
+            dismiss()
+            edit?(manifest)
+
+        case .create(let keyword):
+            // Away first, for the reason ↩ has: what happens next is a file opening in Zed.
+            dismiss()
+            create?(keyword)
+
+        case nil:
+            break
+        }
+    }
+
+    /// The offer to write a **Script**, when that is what the bar is showing. It is never *in* a
+    /// list — `narrow` puts it up instead of one — so the first row is the whole question.
+    private var offer: Choice? {
+        guard case .create = choices.first else { return nil }
+        return choices.first
     }
 
     /// ⌃D once arms the selected **Script**, ⌃D again moves it to the Trash (F16).
@@ -834,8 +857,9 @@ extension SummonPanel {
         // ⌥↩ *and* ⌃O, both of which macOS binds to this one selector — the same free pair T2.5 got
         // when ⌃N and ⌃P turned out to be `moveDown:` and `moveUp:`. The cheapest key in the bar to
         // take: "insert a newline ignoring the field editor" has nothing to do in a field that holds
-        // one line.
-        case #selector(NSResponder.insertNewlineIgnoringFieldEditor(_:)): editSelected()
+        // one line. One meaning across both rows — get me to the editor — which is why the offer to
+        // write a **Script** answers to it too.
+        case #selector(NSResponder.insertNewlineIgnoringFieldEditor(_:)): openOrCreate()
         // Everything else is the field editor's, including the arrows that move along the line.
         default: return false
         }
@@ -1100,9 +1124,11 @@ private final class RowView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Starkit builds its views in code.") }
 
-    /// Both kinds of row are the same two columns: what it is called, and the **Keywords** that
-    /// reach it. The offer says what pressing ↩ would *do* on the left, because unlike every other
-    /// row it is not naming something that already exists.
+    /// Both kinds of row are the same two columns: what it is called, and what reaches it. The
+    /// offer says what pressing the chord would *do* on the left, because unlike every other row it
+    /// is not naming something that already exists — and on the right it says the chord itself,
+    /// where a **Script** says its **Keywords**. Both columns answer the same two questions either
+    /// way, which is why the offer needs no line of its own under the field.
     ///
     /// The further **Keywords** come *before* the canonical one in a column that is right-aligned,
     /// so the canonical **Keyword** ends at the same x on every row whether a **Script** has others
@@ -1120,7 +1146,12 @@ private final class RowView: NSView {
             // Dimmed to the same colour the **Keyword** column uses: this row is a way out of the bar
             // rather than one of the things in it.
             name.textColor = Palette.aside
-            keyword.stringValue = "new Script"
+            // The chord leads, because this is the one row nothing has selected: ↩ acts on a
+            // selection and there is none until a deliberate ↓, so the key that works from where the
+            // person actually is has to be the part they read. No separator — the two halves are the
+            // key and what it writes, not two **Keywords** either of which would reach the same
+            // **Script**.
+            keyword.stringValue = "⌥↩ new Script"
         }
         select(selected)
     }
