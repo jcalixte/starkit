@@ -903,10 +903,14 @@ largest single cost in the system and still the reason F9's budget is in seconds
   therefore no control in House IV. `SPEC.md` names SummonPanel and Watcher as deliberately untested
   and argues it well, so the *decision* is on the record; what was not was the size, or the
   distinction that matters: C1 fails loudly, because a bar that does not appear is the first thing
-  anyone notices, and C6 fails **silently**, everything still working while the **Artefacts** go
-  **Stale**. Recorded, not fixed. **Trigger to revisit:** the first time a **Script** turns out to
-  have been **Stale** for a while without anyone noticing, at which point the answer is a control
-  rather than a test — something that notices C6 has stopped firing.
+  anyone notices, and C6 fails quietly. §11 works out what "quietly" actually means, and it is
+  narrower than §7's "silently goes **Stale**" claims — F4 re-checks at **Summon** and rebuilds what
+  the watcher never did, so no **Script** ever runs source it was not built from. What C6's death
+  costs is a new **Script** never appearing, F10's early warning, and a **Catalogue** frozen at the
+  last build. Recorded, not fixed, and the fix is not a test: repair already takes one command, while
+  **nothing in the system reports that C6 has stopped**, so every symptom reads as a typo rather than
+  as one dead component. **Trigger to revisit:** the first time a **Script** written into
+  `src/scripts/` does not turn up in the bar, at which point the answer is a liveness signal in C10.
 - **ADR 0003 anchored nothing.** §7's table named ADR-0001 and ADR-0002 and omitted 0003 entirely,
   though "run **Artefacts** on bun" is exactly what C4 spawns and C12 resolves. Found by needing an
   ADR row for House II's basement, which is a use the table had not been put to before. Both rows
@@ -960,8 +964,27 @@ medium cell. That is 32.2 % of the component weight produced by a compiler and v
 is a thin call into a framework, and a mock would pass while the app was broken — so this is a
 position held on purpose. What the house adds is the size of it, and one distinction `SPEC.md` does
 not draw: C1 and C3 fail *loudly*, because a bar that does not appear is the first thing anyone
-notices, while C6 fails **silently**, everything still working as the **Artefacts** go **Stale**.
-Same empty row, different consequence.
+notices, while **C6 fails quietly**. Same empty row, different consequence.
+
+"Quietly" and not "silently", and the difference matters. C6 stopping does not put wrong code on the
+machine: F4 re-checks staleness at **Summon** as a safety net and rebuilds what the watcher never
+did, so an edited **Script** still runs its own source. What C6's death actually costs is narrower —
+and the narrow version is the one to design a control against:
+
+- **A new **Script** never appears.** Registry generation is a consequence of `src/` changing, and
+  §4 F11 calls it "the *only* path by which a new **Script** becomes visible."
+- **F10 is lost**, so a **Script** that does not compile stops going red at save and waits for a
+  **Summon** to say so.
+- **F2 lists what was true when C6 last ran**, since `manifests.json` is only rewritten after a
+  build the watcher started.
+
+Repairing it is already possible and takes one command: `Starkit registry` regenerates the registry
+(`SPEC.md` lists "getting the file back" as a reason that verb is public), `gleam build` in
+`$STARKIT_HOME` rebuilds by hand, `./scripts/install.sh` does the lot and is idempotent, and quitting
+and relaunching recreates the stream. **Diagnosis is what does not exist.** Nothing reports that C6
+has stopped: C10 shows **Script** errors, not watcher health, so every symptom above reads as "I
+must have mistyped something" rather than as one dead component. The missing control is a liveness
+signal, not a test, which is what §10's trigger means.
 
 ### Operation → Control
 
