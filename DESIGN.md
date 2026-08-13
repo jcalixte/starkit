@@ -888,10 +888,121 @@ largest single cost in the system and still the reason F9's budget is in seconds
   so the one line describing what C5 does contradicted the ADR anchored beside it in the same row.
   Fixed. It is the same failure mode as F5's stale target caught at T8.1: the summary line went
   stale while the paragraph explaining it stayed correct.
+- **§7 models the Shelf's internals and calls them "Components."** Six of `SPEC.md`'s operations
+  turned out to have nothing in §7 to relate to: `Starkit icon`, vendoring `seed/` into the bundle,
+  `ditto` to `/Applications`, notarize-and-staple, `gleam test` and `gleam format --check`. They act
+  on the bundle, on the vendored **Vocabulary**, and on the **Scripts** — and `README.md` says in its
+  third paragraph that "**Scripts** live in `~/.starkit`; this repo is only the **Shelf**", so half of
+  what is delivered was never in the component list. Found by needing WHATs for House III. Not fixed
+  by adding rows, because C1–C12 are coherent as they stand and the seeded half is not a set of Swift
+  components; §11 names the six and says what they act on instead. **Trigger to revisit:** a decision
+  that turns on the seeded half's structure, at which point §7 grows a second block rather than
+  stretching the first.
+- **The cascade terminates at `swift build` for C1 and C6.** 29.3 % of the component weight — the
+  first- and second-ranked components — reaches no operation in House III beyond the compiler, and
+  therefore no control in House IV. `SPEC.md` names SummonPanel and Watcher as deliberately untested
+  and argues it well, so the *decision* is on the record; what was not was the size, or the
+  distinction that matters: C1 fails loudly, because a bar that does not appear is the first thing
+  anyone notices, and C6 fails **silently**, everything still working while the **Artefacts** go
+  **Stale**. Recorded, not fixed. **Trigger to revisit:** the first time a **Script** turns out to
+  have been **Stale** for a while without anyone noticing, at which point the answer is a control
+  rather than a test — something that notices C6 has stopped firing.
 - **ADR 0003 anchored nothing.** §7's table named ADR-0001 and ADR-0002 and omitted 0003 entirely,
   though "run **Artefacts** on bun" is exactly what C4 spawns and C12 resolves. Found by needing an
   ADR row for House II's basement, which is a use the table had not been put to before. Both rows
   now name it. `README.md`'s documentation list was missing it too, and now is not.
+
+## 11. The deployment cascade — Houses III and IV
+
+§5 and §7 stop at components, which is where the classical cascade's first two phases stop. These are
+the other two: what produces or verifies each **Component**, and what would catch a regression in
+each of those. Drawn as [House III](./docs/houses/house-3-components-operations.md) and
+[House IV](./docs/houses/house-4-operations-controls.md).
+
+Neither list is invented for the house. The **Operations** are `SPEC.md`'s commands; the **Controls**
+are `.github/workflows/ci.yml`'s steps plus the two things that check at runtime rather than at push.
+Six things `SPEC.md` lists are deliberately absent from the operations: `Starkit icon`, vendoring
+`seed/` into the bundle, `ditto` to `/Applications`, notarize-and-staple, `gleam test` and
+`gleam format --check`. They act on the bundle, the vendored **Vocabulary** and the **Scripts** — the
+seeded half — and §7 models only the **Shelf**'s internals, so they have no component to relate to.
+That is a gap in §7's coverage of what actually gets built, not in the house; see §10.
+
+### Component → Operation
+
+Weights are House II's Rel %, so Σ = `Σ(component Rel % × strength)`.
+
+| Component (Rel %)     | O1 build | O2 sign | O3 registry | O4 gleam build | O5 login | O6 swift test | O7 dry-run | O8 CLI | O9 bench |
+| --------------------- | :------: | :-----: | :---------: | :------------: | :------: | :-----------: | :--------: | :----: | :------: |
+| C1 SummonPanel (15.6) |    9     |         |             |                |          |               |            |        |          |
+| C2 Catalogue (10.8)   |    9     |         |             |                |          |       9       |            |        |          |
+| C3 HotKey (2.9)       |    9     |         |             |                |          |               |            |        |          |
+| C4 Runner (10.8)      |    9     |         |             |       3        |          |       9       |     9      |        |    9     |
+| C5 Builder (6.4)      |    9     |         |             |       9        |          |       9       |            |        |    9     |
+| C6 Watcher (13.7)     |    9     |         |      3      |                |          |               |            |        |          |
+| C7 Effector (4.4)     |    9     |    9    |             |                |          |       3       |     3      |        |          |
+| C8 ContextGatherer (3.8) |  9    |         |             |                |          |               |            |        |    9     |
+| C9 LoginItem (4.4)    |    9     |         |             |                |    9     |               |            |        |          |
+| C10 MenuBarStatus (10.3) |  9    |         |             |                |          |       3       |            |        |          |
+| C11 Scaffolder (7.3)  |    9     |         |             |                |          |               |            |   9    |          |
+| C12 Toolchain (9.6)   |    9     |         |             |                |          |               |            |        |    9     |
+| **Σ**                 |  900.0   |  39.6   |    41.1     |      90.0      |   39.6   |     296.1     |   110.4    |  65.7  |  275.4   |
+| **Rank**              |    1     |    8    |      7      |       5        |    8     |       2       |     4      |   6    |    3     |
+| **Rel %**             |   48.4   |   2.1   |     2.2     |      4.8       |   2.1    |     15.9      |    5.9     |  3.5   |   14.8   |
+
+**O1 at 48.4 % is a degenerate first place.** It produces all twelve components, so it was always
+going to carry half the house, and it says nothing about where to spend effort. Read the ranking
+below it instead: **`swift test` (15.9 %) and `run --bench` (14.8 %)** are the two verification
+operations that carry real weight, and they reach C2, C4, C5, C7, C8, C10 and C12.
+
+**C1's and C3's and C6's rows are the finding.** They hold `swift build` and, between them, one
+medium cell. That is 32.2 % of the component weight produced by a compiler and verified by nothing.
+`SPEC.md` names HotKey, SummonPanel and Watcher in its *Not tested* list and argues the case — each
+is a thin call into a framework, and a mock would pass while the app was broken — so this is a
+position held on purpose. What the house adds is the size of it, and one distinction `SPEC.md` does
+not draw: C1 and C3 fail *loudly*, because a bar that does not appear is the first thing anyone
+notices, while C6 fails **silently**, everything still working as the **Artefacts** go **Stale**.
+Same empty row, different consequence.
+
+### Operation → Control
+
+Weights are House III's Rel %, so Σ = `Σ(operation Rel % × strength)`.
+
+| Operation (Rel %)          | K1 CI | K2 verify | K3 format | K4 gleam test | K5 unpinned | K6 swift test | K7 red | K8 bench | K9 staple | K10 exit |
+| -------------------------- | :---: | :-------: | :-------: | :-----------: | :---------: | :-----------: | :----: | :------: | :-------: | :------: |
+| O1 swift build (48.4)      |   9   |           |           |               |             |       3       |        |          |           |          |
+| O2 codesign (2.1)          |   3   |     9     |           |               |             |               |        |          |     3     |          |
+| O3 Starkit registry (2.2)  |   9   |           |     9     |       3       |             |               |        |          |           |          |
+| O4 gleam build (4.8)       |   9   |           |           |       9       |      9      |               |        |          |           |          |
+| O5 register at login (2.1) |       |           |           |               |             |               |   3    |          |           |    9     |
+| O6 swift test (15.9)       |   9   |           |           |               |             |       9       |        |          |           |          |
+| O7 run --dry-run (5.9)     |       |           |           |               |             |       3       |        |          |           |          |
+| O8 create, edit, delete (3.5) |    |           |     3     |               |             |               |   9    |          |           |          |
+| O9 run --bench (14.8)      |       |           |           |               |             |               |        |    9     |           |          |
+| **Σ**                      | 648.0 |   18.9    |   30.3    |     49.8      |    43.2     |     306.0     |  37.8  |  133.2   |    6.3    |   18.9   |
+| **Rank**                   |   1   |     8     |     7     |       4       |      5      |       2       |   6    |    3     |    10     |    8     |
+| **Rel %**                  | 50.1  |    1.5    |    2.3    |      3.9      |     3.3     |     23.7      |  2.9   |   10.3   |    0.5    |   1.5    |
+
+**CI and `swift test` carry 73.8 % of the control weight**, which is a healthy shape. The third
+control is the `--bench` protocol at 10.3 %, and it is a person: five runs of twenty samples, release
+build, against the real `~/.starkit`, medians quoted because one run's median moved by 2 ms. §8
+records the protocol and `SPEC.md` argues for keeping it out of CI, so this is deliberate. The number
+is what is new — a tenth of the control weight in this system is a manual procedure, and it is the
+tenth that guards the four performance rows of §8.
+
+**K7 is the most automatic control here and is not in CI.** The menu bar goes red within 200 ms of a
+save, on the machine, forever, and it is the only thing controlling O8: a template with a hole in it
+would turn the bar red as its own welcome (§4, F11). CI cannot be that. K9 ranks last at 0.5 %, which
+is correct — it guards one operation that runs at most once per release.
+
+**Three operations reach no CI control at all**: O5, O7 and O9. Each has a reason on the record —
+`start-at-login` asks macOS and exits non-zero when the answer disagrees, `--dry-run` is the
+debugging path, `--bench` would be flaky. None is a surprise. What has no reason on the record is
+that **O1's row is the only one C1 and C6 appear in anywhere in Houses III and IV**, so the chain
+G → F → C → O → K terminates at a compiler for the two heaviest components in the design. Recorded in
+§10 rather than fixed here, because fixing it means either testing framework-facing code that
+`SPEC.md` argues should not be tested, or adding a control that is not a test — and the second is the
+more interesting option: something that notices C6 has stopped firing, which is the one failure in
+this system that is silent by construction.
 
 ---
 
