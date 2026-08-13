@@ -384,6 +384,14 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         matching, which would make misspelling one the fastest way to write a file. ↑ from nothing
         selected does nothing either: the offer sits below the field, and arriving on it by pressing
         *up* is the same accident reached by a different key
+      - ⌥↩ takes the offer without a selection, and the row says so in the column where a **Script**
+        lists its **Keywords** — the offer's answer to *what reaches this* is a chord rather than a
+        word, because nothing else does. The rule above survives whole: what is forbidden is the
+        offer being the **default**, and a typo does not end in ⌥. What it removes is the ↓ standing
+        between someone who already knows the **Keyword** they are about to write and the editor
+        where they will write it. It is the same key F17 gives an existing **Script**, which is why
+        it needs no line of its own: the offer is already a row, and a row that has to be explained
+        by a sentence under it is a row that says the wrong thing
       - A row is one of two things, `.script(Manifest)` or `.create(String)`, rather than a
         **Manifest** with a flag on it: a **Manifest** describes a **Script** that exists, and a
         made-up one reaching `run` is the bug the case cannot express
@@ -433,13 +441,17 @@ Each function sits under the goal it serves most; secondary goals are noted inli
     - **How**: ⌥↩ on the selected **Script** opens it in Zed and **Dismisses** the bar. It is
       F11's "the editor is where all typing happens" applied to a **Script** that already exists, so
       it is the same `open` and not a second way to reach one
+      - One meaning across both kinds of row: on the offer to write a **Script** the same chord
+        scaffolds first and opens what it wrote (F11). ⌥↩ is *get me to the editor* everywhere in
+        the bar, rather than two keys that look alike doing unrelated things a row apart
       - ⌥↩ and ⌃O both arrive, because macOS binds both to `insertNewlineIgnoringFieldEditor:`,
         the same free pair T2.5 found when ⌃N and ⌃P turned out to be `moveDown:` and `moveUp:`. It is
         also the cheapest key in the bar to take: inserting a newline *ignoring the field editor* has
         nothing to do in a field that holds one line, where ⌃D cost F16 the field's forward-delete
       - It refuses instead of creating when the file is not there. A **Keyword** listed with
         nothing behind it is a **Script** that has gone, and writing a template over that answers a
-        question nobody asked
+        question nobody asked — which is the opposite case from the offer, where nothing is listed
+        because nothing was ever written
       - **Component**: C11 Scaffolder
   - **F13** Drive the whole bar from the home row _(also G1)_
     - ⌘ chords travel a different road from ⌃ chords, and that is why ⌘V did not work. Everything

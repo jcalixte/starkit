@@ -298,7 +298,8 @@ That is the boundary working, not a gap in it.
 - A **Script** declaring `other_keywords: ["yt"]` is found by `yt` as well as by `youtube`, and a
   **Keyword** typed in full is never pushed below a shorthand.
 - Typing a **Keyword** that matches nothing offers `Create "<keyword>"`, never as the default
-  selection: pressing ↩ on a typo does nothing at all.
+  selection: pressing ↩ on a typo does nothing at all. The row says the key that takes it — ↓ then
+  ↩, or ⌥↩ from the field without selecting anything.
 - Choosing it writes `src/scripts/<keyword>.gleam` with a compiling `pub fn script()` and opens it
   in Zed. All typing happens in the editor; the bar only scaffolds.
 - Saving a **Script** in Zed regenerates the registry, rebuilds, and rewrites `manifests.json`
@@ -307,7 +308,9 @@ That is the boundary working, not a gap in it.
 - A save that does not compile turns the menu bar icon red within 500 ms, and the previously built
   **Scripts** keep working.
 - ⌘V pastes into the bar's field, and ⌘C, ⌘X, ⌘A and ⌘Z work there too.
-- ⌥↩ or ⌃O on a selected **Script** opens it in Zed and the bar goes away.
+- ⌥↩ or ⌃O on a selected **Script** opens it in Zed and the bar goes away. On the offer to write one
+  it scaffolds and opens instead, selected or not, which is the only key that acts on a row nothing
+  has chosen.
 - ⌃D on a selected **Script** asks before doing anything, naming the files it would move; ⌃D again
   moves them to the Trash and the **Keyword** leaves the list without anything else being run.
   Escape, typing, and moving the selection all take the question back down.

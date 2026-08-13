@@ -97,7 +97,7 @@ Starkit has no Dock icon. It lives in the menu bar, and the icon turns red when 
 | Key | Does |
 | --- | ---- |
 | ↩ | Runs the selected Script, or creates one when nothing matches |
-| ⌥↩ or ⌃O | Opens the selected Script in your editor |
+| ⌥↩ or ⌃O | Opens the selected Script in your editor, or writes the one nothing matched |
 | ⌃D, then ⌃D again | Moves a Script and its test to the Trash, naming the files first |
 | Escape or ⌃⌘K | Dismisses the bar. A Script already running still finishes and performs its Effects |
 
