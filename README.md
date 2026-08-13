@@ -1,3 +1,9 @@
+<!-- Drawn by `Starkit icon`, from the same path the bar's mark uses. Regenerate it rather than edit
+it: `Starkit icon <dir>.iconset` writes every size, and this is the 256 px one. -->
+<p align="center">
+  <img src="./docs/starkit.png" alt="Starkit" width="128" height="128">
+</p>
+
 # Starkit
 
 [![CI](https://github.com/jcalixte/starkit/actions/workflows/ci.yml/badge.svg)](https://github.com/jcalixte/starkit/actions/workflows/ci.yml)
