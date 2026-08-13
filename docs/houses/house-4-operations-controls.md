@@ -1,5 +1,7 @@
 # House IV — Operations × Controls
 
+**Cascade:** [I Goals × Functions](./house-1-goals-functions.md) → [II Functions × Components](./house-2-functions-components.md) → [III Components × Operations](./house-3-components-operations.md) → **IV Operations × Controls** · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
+
 Process control: the operations against the gates that would catch a regression in one.
 
 [`DESIGN.md` §11](../../DESIGN.md#11-the-deployment-cascade--houses-iii-and-iv) holds the relation cells this renders. The importance column is [House III](./house-3-components-operations.md)'s relative weight.
@@ -364,4 +366,10 @@ Process control: the operations against the gates that would catch a regression 
 
 **K7, the menu bar going red, is the most automatic control in the system and is not in CI at all** — it fires within 200 ms of a save, on the machine, forever. K9 ranks last at 0.5 %, which is right: it guards one operation that runs at most once per release.
 
-**And the cascade stops here.** No control in this house reaches C1 or C6, because House III gave them no operation to be controlled through. G → F → C → O → K terminates at `swift build` for the two heaviest components in the design. That sentence is the whole reason to draw four houses instead of one.
+**And the cascade stops here.** No control in this house reaches C1 or C6, because [House III](./house-3-components-operations.md) gave them no operation to be controlled through, and [House II](./house-2-functions-components.md) ranked them 1st and 2nd of twelve. G → F → C → O → K terminates at `swift build` for the two heaviest components in the design. That sentence is the whole reason to draw four houses instead of one.
+
+---
+
+**Carried from [House III](./house-3-components-operations.md). Nothing carries on from here** — **Controls** are the last phase of the cascade, so this basement feeds no further house. Read the chain backwards from any weight in it and you reach a **Goal** in [House I](./house-1-goals-functions.md) with a number beside it.
+
+Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of order silently mixes generations — the rule is in [`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".

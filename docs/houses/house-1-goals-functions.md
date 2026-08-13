@@ -1,5 +1,7 @@
 # House I — Goals × Functions
 
+**Cascade:** **I Goals × Functions** → [II Functions × Components](./house-2-functions-components.md) → [III Components × Operations](./house-3-components-operations.md) → [IV Operations × Controls](./house-4-operations-controls.md) · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
+
 The first house of the QFD cascade: what Starkit is for, against what it must do to deliver that.
 
 `DESIGN.md` §1 holds the **Goals** and their weights, §2 the **Functions** and their targets, [§5](../../DESIGN.md#5-house-i--goals--functions) the relation cells this renders, and [§6](../../DESIGN.md#6-roof--function--function) the roof.
@@ -395,6 +397,12 @@ The first house of the QFD cascade: what Starkit is for, against what it must do
 \end{document}
 ```
 
-Reading the basement left to right: **F10** (8.6 %) and **F2** (8.3 %) carry the most weight, which is C6 and C2 — the watcher and the catalogue. `DESIGN.md` §7 already said C6 was "the quiet load-bearing one" and the arithmetic agrees without having been told to.
+Reading the basement left to right: **F10** (8.6 %) and **F2** (8.3 %) carry the most weight, which is C6 and C2 — the watcher and the catalogue, and they rank 2nd and joint-3rd once that weight reaches [House II](./house-2-functions-components.md). `DESIGN.md` §7 already said C6 was "the quiet load-bearing one" and the arithmetic agrees without having been told to.
 
-Two rows are worth reading against each other. **F17** is the cheapest function in the system (difficulty 1: one `open`, on a key pair macOS gave away) and still carries 3.9 %. **F7** is the most expensive (difficulty 5: the only permission-gated operation, the activation hand-back, TCC's responsible-process rule, two spellings of an application's name) and carries 6.6 %. Effort and weight are not the same axis, and this is where they diverge hardest.
+Two rows are worth reading against each other. **F17** is the cheapest function in the system (difficulty 1: one `open`, on a key pair macOS gave away) and still carries 3.9 %. **F7** is the most expensive (difficulty 5: the only permission-gated operation, the activation hand-back, TCC's responsible-process rule, two spellings of an application's name) and carries 6.6 %. Its component, C7, ranks 9th of 12 in [House II](./house-2-functions-components.md) on the same evidence. Effort and weight are not the same axis, and this is where they diverge hardest.
+
+---
+
+**Carries into [House II](./house-2-functions-components.md).** The Rel % row of this basement *is* House II's importance column, so the weight a **Function** earns here is what the **Components** realising it inherit. Nothing downstream is asserted; it is all this row, multiplied.
+
+Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of order silently mixes generations — the rule is in [`DESIGN.md`](../../DESIGN.md#how-to-keep-this-honest) under "How to keep this honest".
