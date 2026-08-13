@@ -22,7 +22,7 @@ Five are seeded on install:
 | ------- | ---- |
 | `link` | Reads a URL's `h1` and pastes `[Title](url)` |
 | `youtube`, `yt` | Turns a YouTube link into the note a video gets written down as |
-| `clean` | Kills every running application except the ones worth keeping |
+| `clean` | Kills every running application except the ones on your keep list |
 | `work` | Opens your working day — **ships empty, fill it in yourself** |
 | `personal` | The same, for everything else |
 
@@ -32,8 +32,8 @@ employer's tooling ends up in it. See [seed/src/scripts/work.gleam](./seed/src/s
 ## Requirements
 
 - macOS 14 or later
-- Xcode Command Line Tools (`xcode-select --install`), since Starkit builds from source
 - `gleam` and `bun` on your `PATH`
+- Xcode Command Line Tools (`xcode-select --install`), only to build it yourself
 
 Starkit borrows the toolchain from your machine instead of shipping one, and resolves it at every
 launch. `brew upgrade gleam` is a non-event; there is no pinned version to bump. If your login shell
@@ -41,12 +41,16 @@ hides either tool, `~/.starkit/starkit.toml` takes an explicit path.
 
 ## Install
 
-From the tap:
+From the tap, which installs a notarized build and needs nothing else run:
 
 ```sh
-brew install jcalixte/tap/starkit
-starkit-install
+brew install --cask jcalixte/tap/starkit
 ```
+
+Or [download the zip](https://github.com/jcalixte/starkit/releases/latest) and drag it to
+`/Applications`. Either way the app sets `~/.starkit` up the first time it launches: it seeds the
+**Scripts**, builds them, and turns on Start at Login. The first build resolves dependencies, so it
+is slow, and the menu bar says so while it runs.
 
 Or from source:
 
@@ -63,7 +67,8 @@ build, so without it every rebuild silently drops the grant and `Paste` stops wo
 
 `install.sh` is meant to be run again and again. Shelf-owned files in `~/.starkit` are re-vendored
 each time so the vocabulary upgrades without a hand merge, and `src/scripts/`, the half you write,
-is only ever written when a file is absent. An install never touches a Script you have edited.
+is only ever written when a file is absent. An install never touches a Script you have edited — and
+it is the same rule the app applies to itself on a first launch, in Swift rather than in bash.
 
 Releases are signed with a Developer ID and notarized, so a download opens without the
 right-click-open dance. Building your own copy is signed by `setup-signing.sh` instead, which is
@@ -76,7 +81,8 @@ Starkit has no Dock icon. It lives in the menu bar, and the icon turns red when 
 
 - **Accessibility** is requested the first time a Script uses `Paste`, because synthesising ⌘V needs
   it. Nothing else does. System Settings → Privacy & Security → Accessibility → Starkit.
-- **Start at Login** is turned on by `install.sh` and can be toggled from the menu.
+- **Start at Login** is turned on once — by `install.sh`, or by the app itself on a first launch —
+  and can be toggled from the menu afterwards. Nothing turns it back on behind you.
 
 ## Using it
 
@@ -96,9 +102,9 @@ Starkit run youtube "https://youtu.be/…"
 Starkit run clean --dry-run    # prints the Effects, performs none
 ```
 
-The tap puts `Starkit` on your `PATH`. A source install does not: the binary lives inside the
-bundle, at `/Applications/Starkit.app/Contents/MacOS/Starkit`, so alias it or symlink it yourself.
-`Paste` from a terminal needs the *terminal* to hold the Accessibility grant, not Starkit.
+No install puts `Starkit` on your `PATH`: the binary lives inside the bundle, at
+`/Applications/Starkit.app/Contents/MacOS/Starkit`, so alias it or symlink it yourself. `Paste` from
+a terminal needs the *terminal* to hold the Accessibility grant, not Starkit.
 
 ## Writing a Script
 
@@ -109,14 +115,14 @@ not compile turns the menu bar icon red and leaves every other Script working.
 
 ## By design
 
-Things people ask for that Starkit will not do:
+Limits, all of them deliberate:
 
 - The chord is ⌃⌘K and cannot be changed. It races Script Kit, Raycast and Alfred, and the loser
   registers nothing without saying so. Quit the other one.
 - There is no preferences window, no theming, and no per-Script configuration outside its own
   manifest.
-- Nothing comes back from an Effect, so there are no dynamic pick-lists and `clean` is all or
-  nothing.
+- Effects go out and nothing comes back, so no Script can stop and offer you a list to choose
+  from. `clean` kills its whole list or none of it.
 - A Script cannot run another Script, use `@external`, or outlive a 5 s deadline.
 
 <!-- docs:start -->
