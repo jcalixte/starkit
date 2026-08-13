@@ -2,13 +2,17 @@
 # Turns a notarized build into a release people can install: the tag, the GitHub Release, and the
 # cask that `brew install --cask jcalixte/tap/starkit` reads.
 #
-#   ./scripts/publish.sh 0.4.0 notes.md              build, notarize, tag, release, cask
-#   ./scripts/publish.sh --ship-only 0.4.0 notes.md  everything after the zip
+#   ./scripts/publish.sh 0.4.0            build, notarize, tag, release, cask
+#   ./scripts/publish.sh 0.4.0 notes.md   the same, with prose you wrote instead of the generated notes
+#   ./scripts/publish.sh --ship-only 0.4.0 [notes.md]   everything after the zip
 #
-# What it does not do is decide anything a person should have written. The version bump is a commit
-# like any other and has to be on main already — Resources/Info.plist is checked, not edited, so the
-# subject line that says what the version is *for* stays yours. The release notes are a file for the
-# same reason: `--generate-notes` would put a list of commit subjects where three sentences belong.
+# The notes are written from the commit subjects of everything since the last tag, which works here
+# only because the subjects are sentences. `gh --generate-notes` is not what does it: GitHub builds
+# that from merged pull requests, and a repo pushed straight to main has none, so it returns a
+# compare link and nothing else. Hand it a file when a release deserves paragraphs.
+#
+# The version bump it will not do for you. Resources/Info.plist is checked, not edited, so the
+# subject line that says what the version is *for* stays a commit somebody wrote.
 #
 # --ship-only exists for the same reason release.sh has --staple-only. Apple's queue has no SLA and
 # the first submission from this team waited seven hours, so the half of a release that talks to
@@ -30,7 +34,7 @@ fi
 
 VERSION="${1:?usage: ./scripts/publish.sh [--ship-only] <version> <notes-file>}"
 VERSION="${VERSION#v}"
-NOTES="${2:?usage: ./scripts/publish.sh [--ship-only] <version> <notes-file>}"
+NOTES="${2:-}"
 
 TAG="v$VERSION"
 REPO="jcalixte/starkit"
@@ -45,11 +49,42 @@ die() {
 	exit 1
 }
 
+WORK="$(mktemp -d -t starkit-publish)"
+trap 'rm -rf "$WORK"' EXIT
+
+# The release notes, when none were handed over: the subjects of the commits this tag contains.
+#
+# Only the types that describe what changed for someone deciding whether to upgrade. `chore: 0.4.0`
+# and `docs:` are answers to a question they did not ask, and both are one click away under Full
+# Changelog — which is the same reason this reads the log rather than every file that moved.
+#
+# Run after the tag exists, because the range is measured from it.
+generate_notes() {
+	local previous range changed
+	previous="$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)"
+	range="${previous:+$previous..}$TAG"
+
+	changed="$(git log --reverse --format='%s' "$range" |
+		sed -n -E 's/^(feat|fix|perf|refactor)(\([^)]+\))?: /- /p')"
+	# A release with nothing under those types is a documentation or packaging one, and saying so is
+	# better than a heading with nothing under it.
+	[ -n "$changed" ] || changed="- Documentation and packaging."
+
+	printf '## What changed\n\n%s\n\n' "$changed"
+	printf 'Signed with a Developer ID, notarized and stapled.\n'
+	if [ -n "$previous" ]; then
+		printf '\n**Full Changelog**: https://github.com/%s/compare/%s...%s\n' \
+			"$REPO" "$previous" "$TAG"
+	fi
+}
+
 # Everything that can be refused before anything is built, tagged or uploaded. A release that fails
 # halfway leaves a tag pointing at a commit with no download behind it, which is the one state here
 # that has to be cleaned up by hand.
 command -v "$GH" >/dev/null || die "gh is not on PATH — set GH=/path/to/gh, or brew install gh."
-[ -s "$NOTES" ] || die "$NOTES is empty or not there. The release notes are written, not generated."
+# Only when one was named. Asked here rather than at the point of use, so a typo'd path is not
+# found out after the tag has been pushed.
+[ -z "$NOTES" ] || [ -s "$NOTES" ] || die "$NOTES is empty or not there."
 [ -f "$CASK" ] || die "No cask at $CASK. Set STARKIT_TAP to your homebrew-tap checkout."
 
 [ "$(git symbolic-ref --short HEAD)" = "main" ] || die "Not on main."
@@ -83,14 +118,22 @@ xcrun stapler validate "$APP" >/dev/null 2>&1 ||
 git tag "$TAG"
 git push origin "$TAG"
 
+if [ -z "$NOTES" ]; then
+	NOTES="$WORK/notes.md"
+	generate_notes >"$NOTES"
+	# Printed rather than trusted: what a release says is the only part of it nobody can check by
+	# running the app, and this is the last moment before it is public.
+	echo "→ notes, from the commits since the last tag:"
+	sed 's/^/  /' "$NOTES"
+fi
+
 "$GH" release create "$TAG" "$ZIP" --repo "$REPO" \
 	--title "Starkit $VERSION" --notes-file "$NOTES"
 
 # Hashed from what GitHub serves rather than from the file on this disk. They are the same bytes
 # right up until they are not, and the cask is the only part of a release nobody checks by using it:
 # a wrong sha256 fails at `brew install` on someone else's machine, days later.
-SERVED="$(mktemp -t starkit-served)"
-trap 'rm -f "$SERVED"' EXIT
+SERVED="$WORK/served.zip"
 curl -fsSL -o "$SERVED" "https://github.com/$REPO/releases/download/$TAG/Starkit-$VERSION.zip"
 SHA="$(shasum -a 256 "$SERVED" | cut -d' ' -f1)"
 [ "$SHA" = "$(shasum -a 256 "$ZIP" | cut -d' ' -f1)" ] ||

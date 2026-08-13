@@ -29,13 +29,13 @@ release:
 staple:
     ./scripts/release.sh --staple-only
 
-# The version has to be committed in Info.plist and pushed first, and the notes are a file you
-# wrote — see scripts/publish.sh.
+# The version has to be committed in Info.plist and pushed first. The notes are written from the
+# commit subjects since the last tag; pass a file to say it yourself — see scripts/publish.sh.
 
-# Build, notarize, tag, release, cask: `just publish 0.4.0 notes.md`.
-publish version notes:
+# Build, notarize, tag, release, cask: `just publish 0.4.0`.
+publish version notes="":
     STARKIT_TAP="{{tap}}" ./scripts/publish.sh {{version}} {{notes}}
 
 # The half after the zip, for a release whose notarization outlived the wait.
-ship version notes:
+ship version notes="":
     STARKIT_TAP="{{tap}}" ./scripts/publish.sh --ship-only {{version}} {{notes}}
