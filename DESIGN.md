@@ -473,7 +473,91 @@ Each function sits under the goal it serves most; secondary goals are noted inli
     **Effect** instead of an escape hatch. No function of their own: they are constraints the
     other functions are judged against. Current standing: 0 FFI declarations, 10 bespoke names.
 
-## 7. Components
+## 5. House I — Goals × Functions
+
+Transposed against the canonical orientation: functions are rows here, because eighteen markdown
+columns do not fit and [House I](./docs/houses/house-1-goals-functions.md) already draws it the
+other way round. Σ = `Σ(goal weight ×
+strength)`. Rel % is Σ over the house total of 2061, and it is the number House II carries down.
+
+| Function                    | G2 (10) | G1 (9) | G4 (8) | G3 (7) | G7 (7) | G5 (6) | G6 (6) |   Σ | Rank | Rel % |
+| --------------------------- | :-----: | :----: | :----: | :----: | :----: | :----: | :----: | --: | :--: | ----: |
+| F1 bar on screen            |    3    |   9    |        |        |        |        |        | 111 |  9   |   5.4 |
+| F2 catalogue without build  |    9    |   9    |        |        |        |        |        | 171 |  2   |   8.3 |
+| F3 narrow as you type       |         |   9    |        |        |        |        |        |  81 |  14  |   3.9 |
+| F18 shorthand **Keyword**   |         |   9    |        |        |        |        |        |  81 |  14  |   3.9 |
+| F13 home row only           |         |   9    |        |   3    |        |        |   9    | 156 |  3   |   7.6 |
+| F4 **Current**, or **Refuse** |  9    |   3    |        |   3    |        |        |        | 138 |  5   |   6.7 |
+| F5 execute the **Artefact** |         |   9    |   9    |        |        |        |        | 153 |  4   |   7.4 |
+| F6 gather **Context**       |         |   9    |        |        |        |   3    |   3    | 117 |  8   |   5.7 |
+| F7 **Effects** in order     |         |   9    |        |        |        |   9    |        | 135 |  6   |   6.6 |
+| F8 hold the chord           |    9    |        |        |        |        |        |        |  90 |  11  |   4.4 |
+| F9 ready after login        |    9    |        |   3    |        |   3    |        |        | 135 |  6   |   6.6 |
+| F10 breakage at save time   |    9    |        |   3    |   9    |        |        |        | 177 |  1   |   8.6 |
+| F12 report a crash          |    9    |        |        |        |        |        |        |  90 |  11  |   4.4 |
+| F14 bound the run           |    9    |        |        |        |        |        |        |  90 |  11  |   4.4 |
+| F15 follow the **Toolchain** |   3    |        |        |        |   9    |        |   3    | 111 |  9   |   5.4 |
+| F11 **Keyword** to **Script** |       |        |        |   9    |        |        |   3    |  81 |  14  |   3.9 |
+| F16 take one away           |         |        |        |   9    |        |        |        |  63 |  18  |   3.1 |
+| F17 open in editor          |         |        |        |   9    |        |   3    |        |  81 |  14  |   3.9 |
+| **Σ per goal**              |   690   |  675   |  120   |  294   |   84   |   90   |  108   | 2061 |     |       |
+
+**Top engineering priorities.** F10 first (8.6 %) and F2 second (8.3 %), which is C6 and C2, the
+watcher and the catalogue. §7's prose reached the same place by argument — "C6 is the quiet
+load-bearing one" — and the arithmetic did not need telling. F13 third (7.6 %) is the one that
+would not have been guessed: driving the bar from the home row is worth more than executing an
+**Artefact**, because it is the only function that lands on three goals at once, two of them
+strongly. F16 is last (3.1 %), the newest function in the doc and the least load-bearing, which is
+the right order to have built things in.
+
+**What the goal row exposes.** G1 and G2 hold 36 % of the total goal weight and take **66 % of the
+house**. The other four goals hold 51 % of the weight and take 19 %. For G5 and G6 that is already
+on the record — §4 says outright they have "no function of their own" — but G4 and G7 are in exactly
+the same position and §4 does not say so. G4 is weight 8, the third-heaviest goal in the document,
+and 120 of 2061. Nothing in §2 names a footprint. §3 measures one, and the 3.9 MB against 1.86 GB is
+won by T1, T2 and T12 — by trades, not by a function anybody has to hold. See §10.
+
+## 6. Roof — Function × Function
+
+Only the pairs §4 or §9 already argues for. Blank is the overwhelming majority and the honest
+answer: most function pairs in this system do not touch. Symbols follow the houses above.
+
+| Pair       |  Sym  | What backs it                                                                       |
+| ---------- | :---: | ----------------------------------------------------------------------------------- |
+| F2 · F9    |  ++   | the cached **Catalogue** reaches the panel before resolve, build and `describe` run, which is the only reason a ~3 s boot is tolerable |
+| F2 · F10   |  ++   | "F2 and F10 being the same mechanism seen from two sides"                            |
+| F4 · F10   |  ++   | the watcher builds on save, so a **Summon** usually finds the work already done      |
+| F10 · F11  |  ++   | registry generation is a consequence of `src/` changing, so the watcher is the only path by which a new **Script** becomes visible |
+| F10 · F16  |  ++   | C6 notices the file has gone; deleting from the bar and deleting in Finder are one event |
+| F12 · F14  |  ++   | the deadline's `SIGKILL` produces a **Refusal** that lands in a bar still on screen  |
+| F1 · F6    |   +    | both warm at launch, where nothing is waiting, and for the same stated reason        |
+| F4 · F5    |   +    | a **Stale** **Artefact** **Refuses** instead of running the wrong one                |
+| F4 · F15   |   +    | nothing builds without a resolved `gleam`                                           |
+| F5 · F6    |   +    | `ContextGatherer.warm()` moves the 2.8–7.8 ms first read off the run's clock         |
+| F5 · F12   |   +    | bun's stack trace reaches the **Refusal**'s `detail` with the **Script**'s own message on top |
+| F5 · F14   |   +    | the 5 s deadline is what bounds a run at all                                        |
+| F5 · F15   |   +    | nothing runs without a resolved `bun`                                               |
+| F13 · F17  |   +    | ⌥↩ and ⌃O were free: `insertNewlineIgnoringFieldEditor:` has nothing to do in a one-line field |
+| F1 · F7    |   −    | the bar must activate to be typed into, so **Paste** must hand activation back. 19.4 ms of the 23.1 is that hand-back |
+| F3 · F18   |   −    | a shorthand typed into the same field would sit behind any **Keyword** merely starting with those letters |
+| F13 · F16  |   −    | ⌃D cost the field its `deleteForward:`, and every home-row candidate is a text-editing binding |
+| F9 · F15   |   −    | asking the login shell spends 325–510 ms of a 3 s budget, once per launch            |
+
+**Conflicts that actually shape the design.** Three, and each is handled differently.
+
+- **F1 against F7** is not resolved and cannot be: it is one decision split across C1 and C7, and
+  §9 keeps it as a watched tension rather than a fixed bug. The 19.4 ms is the price of the split.
+- **F9 against F15** is paid, knowingly, and is the largest single cost in the system. The
+  alternative — pinning paths in `starkit.toml` — buys 330 ms by trading away the thing G7 exists
+  to get, so it stays a debugging convenience.
+- **F3 against F18** and **F13 against F16** were both resolved inside the function that caused
+  them: four match bands, and accepting the loss of `deleteForward:`. Neither needs an ADR.
+
+**F1 against F5 is deliberately blank.** It was the design's sharpest conflict until T1.4 and is
+now dissolved rather than mitigated: with T3 dropped there is no speculative spawn to sequence after
+the panel, so nothing competes with F1's 50 ms. A mark would claim a tension that no longer exists.
+
+## 7. Components & Function → Component map
 
 | ID  | Component         | Responsibility                                              | ADR      |
 | --- | ----------------- | ----------------------------------------------------------- | -------- |
@@ -490,10 +574,59 @@ Each function sits under the goal it serves most; secondary goals are noted inli
 | C11 | Scaffolder        | write a new **Script** from a **Keyword**, or move one to the Trash |          |
 | C12 | Toolchain         | resolve `bun` and `gleam` paths from `starkit.toml`          | ADR-0003 |
 
-Where the effort goes: C4 and C7 carry the most risk, C4 owning process lifecycle and the deadline
-and C7 the only permission-gated operation in the system. C6 is the quiet load-bearing one. It is
-what makes F2, F4, F10 and F11 all cheap, and if it stops firing, everything still works but
-silently goes **Stale**.
+### Function → Component
+
+Transposed for the same reason §5 is, and drawn as
+[House II](./docs/houses/house-2-functions-components.md). Component Σ = `Σ(function Σ from §5 × strength)`, so a
+component's weight is inherited from the goals and not asserted here. House total 27 765.
+
+| Function                      | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 | C11 | C12 |
+| ----------------------------- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| F1 bar on screen (111)        | 9  |    |    |    |    |    |    |    |    |     |     |     |
+| F2 catalogue without build (171) |  | 9 |    |    |    | 3  |    |    |    |     |     |     |
+| F3 narrow as you type (81)    | 9  | 9  |    |    |    |    |    |    |    |     |     |     |
+| F18 shorthand **Keyword** (81) | 3 | 9  |    |    |    |    |    |    |    |     |     |     |
+| F13 home row only (156)       | 9  |    |    |    |    |    |    |    |    |     |     |     |
+| F4 **Current**, or **Refuse** (138) | |  |    |    | 9  | 3  |    |    |    |     |     |     |
+| F5 execute the **Artefact** (153) | |  |    | 9  |    |    |    |    |    |     |     | 3   |
+| F6 gather **Context** (117)   |    |    |    |    |    |    |    | 9  |    |     |     |     |
+| F7 **Effects** in order (135) | 3  |    |    |    |    |    | 9  |    |    |     |     |     |
+| F8 hold the chord (90)        |    |    | 9  |    |    |    |    |    |    | 3   |     |     |
+| F9 ready after login (135)    |    |    |    |    |    |    |    |    | 9  | 3   |     | 9   |
+| F10 breakage at save (177)    |    |    |    |    | 3  | 9  |    |    |    | 9   |     |     |
+| F12 report a crash (90)       | 3  |    |    | 9  |    |    |    |    |    | 3   |     |     |
+| F14 bound the run (90)        | 3  |    |    | 9  |    |    |    |    |    |     |     |     |
+| F15 follow the **Toolchain** (111) | | |    |    |    |    |    |    |    | 3   |     | 9   |
+| F11 **Keyword** to **Script** (81) | | |   |    |    | 9  |    |    |    |     | 9   |     |
+| F16 take one away (63)        |    |    |    |    |    | 9  |    |    |    |     | 9   |     |
+| F17 open in editor (81)       |    |    |    |    |    |    |    |    |    |     | 9   |     |
+| **Σ**                         | 4320 | 2997 | 810 | 2997 | 1773 | 3816 | 1215 | 1053 | 1215 | 2871 | 2025 | 2673 |
+| **Rank**                      | 1  | 3  | 12 | 3  | 8  | 2  | 9  | 11 | 9  | 5   | 7   | 6   |
+| **Rel %**                     | 15.6 | 10.8 | 2.9 | 10.8 | 6.4 | 13.7 | 4.4 | 3.8 | 4.4 | 10.3 | 7.3 | 9.6 |
+
+**Where the engineering effort goes — and where the ranking disagrees.** The paragraph this replaces
+said C4 and C7 carry the most risk and C6 is the quiet load-bearing one. Computing it confirms half
+of that and contradicts the other half, so both now get said with the axis named.
+
+- **C6 Watcher ranks 2nd (13.7 %)**, which is the confirmation. It was argued for as "the quiet
+  load-bearing one" and it is: five functions touch it, and it owns F10 — the highest-weighted
+  function in the system — outright. If it stops firing, everything still works and silently goes
+  **Stale**, which is the worst failure shape in the document because nothing goes red.
+- **C1 SummonPanel ranks 1st (15.6 %)** and was not previously singled out at all. Seven functions
+  touch it, and it holds F13 (156) and F1 (111) alone. §10's last line already knew why —
+  "keyboard navigation is not a detail of the bar; it is most of what using the bar *is*" — and
+  15.6 % is that sentence with a number on it.
+- **C7 Effector ranks 9th of 12 (4.4 %)**, and it is one of the two components §7 called riskiest.
+  Both are true. C7 carries one function, F7, so its *weight* is small; it also carries the only
+  permission-gated operation, the activation hand-back, TCC's responsible-process rule and two
+  spellings of an application's name, so its *risk* is the highest in the system. **Risk and weight
+  are different axes**, and the earlier paragraph was ranking by risk without saying which it meant.
+  Effort follows risk here on purpose: a low-weight component that can lose the Accessibility grant
+  takes attention a high-weight one that merely draws rows does not.
+- **C3 HotKey ranks last (2.9 %)**, which reads wrong until you notice why: half of F8 does not
+  exist and cannot (§4), so C3 is `RegisterEventHotKey` and a failure report. The component that
+  owns the only way into the entire application is the smallest thing in it, and that is the design
+  working.
 
 ## 8. Critical performance budget
 
@@ -564,7 +697,7 @@ largest single cost in the system and still the reason F9's budget is in seconds
 | T7 | **Kill** over quit | an empty screen, immediately | unsaved work is lost, deliberately | |
 | T8 | ~~Local `install.sh` over Homebrew~~ — **revisited once a Developer ID existed** | bought no notarization, no quarantine, and a stable signature that keeps the Accessibility grant; confirmed at T5.5 across a changed binary and a deleted-and-recopied bundle | cost was that nobody else could install it in one line, and that the grant lasted exactly as long as one machine's certificate. Both were paid until the Apple Developer Program made a Developer ID available: its designated requirement is the same on every machine and across every release, so the grant outlives the certificate that happened to be in one keychain. `setup-signing.sh` stays for anyone building their own copy, which is still the path the README leads with | |
 | T15 | A notarized download, and the app seeding its own home | Gatekeeper opens the app on a machine that has never seen it, with no right-click-open and no `xattr -d`; a cask can name `gleam` and `bun` as dependencies, which a caveat could only ask for | the seeding rule moves out of `install.sh` and into the binary, because a cask drops the `.app` and runs nothing. First launch grew a branch that only ever runs once, and `seed/` is now carried twice — in the repo and in `Contents/Resources` — with `build.sh` the only thing keeping them the same. Apple's queue has no SLA: the first submission took seven hours, which is why the staple is reachable on its own | |
-| T9 | Tree only, no importance matrix | no 72-cell grid to keep current | component priority is argued from goal weights, not computed | |
+| T9 | ~~Tree only, no importance matrix~~ — **reversed once the tree had eighteen functions** | bought no grid to keep current, while component priority was argued from goal weights rather than computed. That held while the argument was small enough to hold in one head. Both houses are now drawn: F10, F2 and F13 rank by arithmetic instead of by assertion; C1 turns out to be the heaviest component and had never been named; C7 turns out to be 9th by weight and joint-first by risk, which is the sentence §7 was making without saying which axis it meant; and G4, weight 8, turns out to have no function at all | 126 relation cells and 216 more, recomputed whenever a goal weight, a function or a component moves, plus two TikZ diagrams that must be redrawn with them — and the diagrams carry the preamble twice, since there is no project-level one. The original T9 was right about the cost and wrong about it being avoidable: the tree hid a missing function behind a goal nobody had checked | |
 | T10 | Borrow the **Toolchain**, resolve it every launch | bun and Gleam upgrades are non-events; nothing to configure | ~40 ms per launch for both, and a broken `.zshrc` breaks resolution, though it would break your terminal first | |
 | T12 | bun over node as the runtime | cold spawn 17.6 ms vs 54.9 ms, which puts a run inside F5's budget with no resident process; one self-contained binary, no version-manager shim | a faster-moving runtime under G7; bun ignores `NO_COLOR`, so C4 must strip ANSI from stderr before F12 shows it | |
 | T13 | A **Script** declares its **Input** in a field, over a `Need` variant | the **Vocabulary** keeps **Context** and **Input** apart, since a **Need** is a slice of the machine the **Shelf** gathers, and C8 never has to know one word in that list is not for it | a constructor gained a field, so every **Script** already written on every machine has to be edited once, and `install.sh` cannot do it: the one upgrade this design has no migration for. Taken at T5.1 because five stubs is the cheapest it will ever be | |
@@ -733,6 +866,23 @@ largest single cost in the system and still the reason F9's budget is in seconds
   target set before the spike would have shipped 8× slower than necessary and looked green.
 - F13 was missing entirely from the first pass at functions, and F12 and F14 nearly were.
   Keyboard navigation is not a detail of the bar; it is most of what using the bar *is*.
+- **G4 has no function.** It is weight 8, the third-heaviest goal in the document, and §5 gives it
+  120 of 2061 — 5.8 % of a house where it holds 15 % of the weight. Its three cells are all
+  side-effects of decisions taken for other reasons: F5 keeps nothing between runs so the run is
+  fast, F9 is a login item, F10's FSEvents happens to be a subscription rather than a poll. §3
+  measures the goal thoroughly — 3.9 MB against 1.86 GB, 21 MB phys footprint, 0 measurable idle CPU
+  — and every one of those numbers is won by a *trade* (T1, T2, T12) rather than by anything §2 holds
+  anyone to. So G4 is currently met by luck that happens to be structural. Not resolved by adding a
+  function on the spot, because inventing a target for a goal already being met would be the
+  reverse of how every other row here was written. Recorded instead, with the trigger: the first
+  change that costs idle memory or disk, at which point G4 needs a function with a number, and the
+  material to write it is already in §3. The same reading applies more weakly to G7, which at least
+  has F15 owning it outright.
+- **§7 was ranking by risk and calling it effort.** "C4 and C7 carry the most risk" is true; it sat
+  under the heading "where the effort goes" next to no computed weights, so it read as a priority
+  ordering. Computing it puts C7 9th of 12. Resolved by naming both axes in §7 rather than by
+  changing either judgement — risk says where a mistake costs most, weight says where the goals land,
+  and C7 is the row where they disagree hardest.
 - **C5's responsibility still said "**Stale** check by mtime."** The mtime rule was replaced by
   content hashing at T1.4, and §10 has recorded that since — but §7's own table kept the old word,
   so the one line describing what C5 does contradicted the ADR anchored beside it in the same row.
@@ -753,5 +903,14 @@ largest single cost in the system and still the reason F9's budget is in seconds
   "measured 6.7 ms warm", which is the warm-process number from the alternative T3 *rejected*, so the
   one line most people would read first described a design that was never built.
 - Goals change rarely; functions change with each release; matrices are recomputed when either side changes.
+- **A house is a rendering, not a source.** §5, §7 and §11 hold the cells; the four files under
+  `docs/houses/` hold the same numbers a second time and cannot be recomputed from anything. So the
+  order is always tables first, houses after, and never one without the other.
+- **The cascade is a chain, so a change propagates down it.** Each house's importance column *is* the
+  house above's Rel %. Adding one function to §2 changes 7 cells in §5, up to 12 in §7, one Σ and
+  every Rel % in both — and because House II's Rel % feeds House III's weights, which feed House
+  IV's, it moves every number in all four basements. Four diagrams to redraw for one function. This
+  is what T9 now costs and the reason it was declined for as long as it was. Recompute in order
+  I → II → III → IV; there is no shortcut, and doing it out of order silently mixes generations.
 - If a section becomes empty after edits, delete it. An empty section reads as a claim that there
   was nothing to record.
