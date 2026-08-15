@@ -61,7 +61,7 @@ starkit/                          # this repo — the Shelf, plus what it seeds
 │   ├── Catalogue.swift           # C2  manifests.json, Keyword resolution
 │   ├── Runner.swift              # C4  spawn bun per run, 5 s deadline, two pipes
 │   ├── Builder.swift             # C5  gleam build, hashing what it built
-│   ├── Effector.swift            # C7  Open / Kill / Paste / Notify
+│   ├── Effector.swift            # C7  perform the Effects
 │   ├── ContextGatherer.swift     # C8  Running Apps
 │   ├── LoginItem.swift           # C9  SMAppService — lift from cmd-tab verbatim
 │   ├── MenuBarStatus.swift       # C10 normal / red
@@ -157,8 +157,9 @@ that this design made the risky decisions pure.
   source *touched* but not changed is **Current**.
 - `Keyword`, for the first token splitting from **Input**; no match; a **Keyword** that is a prefix
   of another.
-- `Effect`, for reading a reply from `entry.gleam`: the four words of the **Vocabulary** under the
-  field names it gave them, in order; awkward text through the **Paste** path; a **Refusal** the
+- `Effect`, for reading a reply from `entry.gleam`: every word of the **Effect** **Vocabulary**
+  under the field names it gave them, in order; awkward text through the **Paste** path; a **Browse** spelled
+  like an **Open**, which must be a **Refusal** rather than a URL called *Slack*; a **Refusal** the
   child wrote itself, including the non-zero exit that accompanies it; a **Script** that crashed,
   with and without stderr; and an **Effect** this Starkit does not know, which must be a loud
   **Refusal** naming the word instead of one the **Effector** silently skips.

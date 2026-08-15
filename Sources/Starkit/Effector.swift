@@ -32,7 +32,9 @@ struct Effector {
         for effect in effects {
             switch effect {
             case .open(let app): try open(app)
+            case .browse(let url): try browse(url)
             case .kill(let app): try kill(app)
+            case .copy(let text): copy(text)
             case .paste(let text): try paste(text)
             case .notify(let message): notify(message)
             }
@@ -60,6 +62,35 @@ struct Effector {
         guard NSWorkspace.shared.open(URL(fileURLWithPath: path)) else {
             throw Refusal("Starkit could not open \(app).", detail: "It is at \(path).")
         }
+    }
+
+    /// Hand a URL to LaunchServices, which gives it to whatever registered the scheme.
+    ///
+    /// The same act as clicking a link, and it carries the same consequence: a **Script** that
+    /// fetched the URL from somewhere is trusting where it came from. Nothing here narrows the
+    /// schemes, because narrowing them would mean choosing which applications a person is allowed
+    /// to reach by name — `obsidian://`, `zed://` and `mailto:` are the point of the word.
+    ///
+    /// `URL(string:)` accepts almost anything, including a bare `Slack`, which would then open in a
+    /// browser as a relative path and look like an **Open** that went wrong. Requiring a scheme is
+    /// what makes the confusion between the two words a **Refusal** instead.
+    private func browse(_ url: String) throws(Refusal) {
+        guard let target = URL(string: url), target.scheme != nil else {
+            throw Refusal(
+                "\"\(url)\" is not a URL Starkit can open.",
+                detail: "Browse takes a whole URL, scheme and all: https://example.com, or a "
+                    + "scheme an application registered, like obsidian://. An application by name "
+                    + "is an Open."
+            )
+        }
+        guard NSWorkspace.shared.open(target) else {
+            throw Refusal(
+                "Starkit could not open \(url).",
+                detail: "No application on this machine answers to "
+                    + "\(target.scheme.map { "\($0)://" } ?? "that scheme")."
+            )
+        }
+        report("   Browse — \(url)")
     }
 
     /// End an application without asking it, and without letting it ask you.
@@ -120,6 +151,21 @@ struct Effector {
         report("   Kill — \(app)\(targets.count > 1 ? " (\(targets.count) of them)" : "")")
     }
 
+    /// Put the text on the clipboard and stop.
+    ///
+    /// Everything a **Paste** does beyond this needs Accessibility and needs to know what was in
+    /// front; this needs neither, which is the whole of the difference between the two words.
+    ///
+    /// It replaces whatever was on the clipboard, including the **Seed** the text may have been
+    /// derived from (`DESIGN.md` §9). Cannot fail: `NSPasteboard` reports a change count, not a
+    /// refusal, and there is nothing to do about a clipboard that declined.
+    private func copy(_ text: String) {
+        let board = NSPasteboard.general
+        board.clearContents()
+        board.setString(text, forType: .string)
+        report("   Copy — \(text.count) characters to the clipboard")
+    }
+
     /// Put the text on the clipboard, give the keyboard back, then press ⌘V for the person.
     ///
     /// The middle step is load-bearing: the **Shelf** had to activate to be typed into (T0.5), so a
@@ -127,9 +173,18 @@ struct Effector {
     /// back on **Dismissal** — the same debt paid by whichever gets there first.
     ///
     /// The text stays on the clipboard afterwards by design (T6), so ⌘V repeats the paste by hand.
-    /// It replaces whatever was there, including the **Seed** it was derived from (`DESIGN.md` §9).
+    ///
+    /// The clipboard is written **before** the Accessibility check and not after, so that the
+    /// sentence the **Refusal** ends on — press ⌘V yourself — is true when it is read. It also
+    /// makes a denied grant cost the run its keystroke and nothing else: the text is where a
+    /// **Copy** would have left it.
     private func paste(_ text: String) throws(Refusal) {
         let start = CFAbsoluteTimeGetCurrent()
+
+        let board = NSPasteboard.general
+        board.clearContents()
+        board.setString(text, forType: .string)
+
         guard AXIsProcessTrusted() else {
             // Asked for at the moment it is needed rather than at launch: a permission dialog on
             // login for something nobody has asked for yet gets an application denied on principle.
@@ -143,10 +198,6 @@ struct Effector {
                     + "The text is on the clipboard; ⌘V pastes it by hand in the meantime."
             )
         }
-
-        let board = NSPasteboard.general
-        board.clearContents()
-        board.setString(text, forType: .string)
 
         handFocusBack()
 

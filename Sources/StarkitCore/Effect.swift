@@ -8,8 +8,12 @@ import Foundation
 public enum Effect: Equatable, Sendable {
     /// Bring an application to the front, launching it if it is not running.
     case open(app: String)
+    /// Hand a URL to whatever registered its scheme.
+    case browse(url: String)
     /// Terminate an application without asking it first.
     case kill(app: String)
+    /// Put text on the clipboard and stop there.
+    case copy(text: String)
     /// Put text on the clipboard, restore focus, and synthesise the paste keystroke.
     case paste(text: String)
     case notify(message: String)
@@ -60,17 +64,19 @@ extension Effect {
 
 extension Effect: Decodable {
     private enum Key: String, CodingKey {
-        case kind, app, text, message
+        case kind, app, url, text, message
     }
 
-    /// Each value arrives under the **Vocabulary**'s own name for it — `app`, `text`, `message`.
-    /// `entry.gleam`'s `tagged` is the other end of exactly this.
+    /// Each value arrives under the **Vocabulary**'s own name for it — `app`, `url`, `text`,
+    /// `message`. `entry.gleam`'s `tagged` is the other end of exactly this.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: Key.self)
         let kind = try container.decode(String.self, forKey: .kind)
         switch kind {
         case "open": self = .open(app: try container.decode(String.self, forKey: .app))
+        case "browse": self = .browse(url: try container.decode(String.self, forKey: .url))
         case "kill": self = .kill(app: try container.decode(String.self, forKey: .app))
+        case "copy": self = .copy(text: try container.decode(String.self, forKey: .text))
         case "paste": self = .paste(text: try container.decode(String.self, forKey: .text))
         case "notify": self = .notify(message: try container.decode(String.self, forKey: .message))
         default:
@@ -90,7 +96,9 @@ extension Effect: CustomStringConvertible {
     public var description: String {
         switch self {
         case .open(let app): "Open(\(String(reflecting: app)))"
+        case .browse(let url): "Browse(\(String(reflecting: url)))"
         case .kill(let app): "Kill(\(String(reflecting: app)))"
+        case .copy(let text): "Copy(\(String(reflecting: text)))"
         case .paste(let text): "Paste(\(String(reflecting: text)))"
         case .notify(let message): "Notify(\(String(reflecting: message)))"
         }

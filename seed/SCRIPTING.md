@@ -39,22 +39,24 @@ Two constructors, and you want `Script` unless you reach the network:
 | `Script` | `List(Effect)` | Everything local |
 | `Fetching` | `Promise(List(Effect))` | A **Script** that must fetch before it can decide |
 
-## The four Effects
+## The Effects
 
 Every one of them is performed by the **Shelf**, in the order you listed them.
 
 | Effect | Does | Worth knowing |
 | ------ | ---- | ------------- |
 | `Open(app:)` | Brings an application to the front, launching it if needed | Takes the displayed name or the bundle name: `Calculatrice` or `Calculator` both work |
+| `Browse(url:)` | Hands a URL to whatever registered its scheme | A whole URL, scheme and all: `https://…`, or `obsidian://`, `mailto:`. An application by name is an `Open`, and a string without a scheme is a **Refusal** rather than a guess |
 | `Kill(app:)` | Terminates it immediately | Never asks, never lets it save. Same two spellings accepted |
-| `Paste(text:)` | Puts the text on the clipboard, restores focus to the application you came from, and synthesises ⌘V | The text stays on the clipboard afterwards, so it can be pasted again by hand |
+| `Copy(text:)` | Puts the text on the clipboard | Types nothing anywhere, so it does not care what was in front. Reach for it when the result is worth keeping and there is nowhere to put it |
+| `Paste(text:)` | Puts the text on the clipboard, restores focus to the application you came from, and synthesises ⌘V | The text stays on the clipboard afterwards, so it can be pasted again by hand. Needs Accessibility; a `Copy` does not |
 | `Notify(message:)` | Shows a message in the bar while it is still on screen | Not a system notification, and the only way a **Script** reports anything, failure included |
 
 Returning `[]` is legitimate: the seeded `work.gleam` is exactly that until you fill it in.
 
-There is no fifth **Effect**, and no escape hatch to stand in for one. A **Script** that needs a new
-capability gets a new word in the **Vocabulary**, which is a design decision. See *When four words
-are not enough* below.
+The table above is the whole list, and there is no escape hatch to stand in for a word that is not
+on it. A **Script** that needs a new capability gets a new word in the **Vocabulary**, which is a
+design decision. See *When the Vocabulary is not enough* below.
 
 ## What a Script can know
 
@@ -232,7 +234,7 @@ moves both.
 | `src/registry.gleam` | Generated from `src/scripts/` on every save. Do not edit |
 | `starkit.toml` | Yours, and optional: **Toolchain** paths, for a shell that hides `gleam` or `bun` |
 
-## When four words are not enough
+## When the Vocabulary is not enough
 
 Adding an **Effect** or a **Context** slice is a design decision, and the smallness of the
 **Vocabulary** is the property being defended, so the bar for a new word is several **Scripts**

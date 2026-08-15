@@ -116,7 +116,7 @@ machine; blanks are where nothing was measured.
 | ---------------------------- | ------------------ | --------------------- |
 | F5 execute                   | 27–29 ms           | —                     |
 | F6 gather **Running Apps**   | 0.013–0.020 ms in-process, 4.2–5.7 ms on the first read | 463 ms, `osascript` |
-| **Vocabulary** size (G6)     | 10 bespoke names   | 356 injected globals  |
+| **Vocabulary** size (G6)     | 12 bespoke names   | 356 injected globals  |
 | On-disk total (G4)           | 3.9 MB             | 1.86 GB               |
 | — the app                    | 492 KB             | 717 MB (Electron)     |
 | — support directory          | 3.4 MB `~/.starkit`, of which 3.3 MB is Gleam's `build/` | 1.1 GB `~/.kit` + 42 MB `~/.kenv` |
@@ -124,7 +124,7 @@ machine; blanks are where nothing was measured.
 | Idle CPU (G4)                | 0 ms over 300 s, and 0 again over 60 s with C6 watching | — |
 
 What this tells us: the `osascript` figure is the single largest latency in the current system and
-disappears entirely by moving **Context** gathering in-process. The 356-to-10 vocabulary ratio is
+disappears entirely by moving **Context** gathering in-process. The 356-to-12 vocabulary ratio is
 what "real simplicity" meant, and it is already banked by the closed vocabularies in `CONTEXT.md`,
 so the design's job on G6 is not to erode it.
 
@@ -579,7 +579,7 @@ the panel, so nothing competes with F1's 50 ms. A mark would claim a tension tha
 | C4  | Runner            | spawn/kill `bun`, feed a run, 5 s deadline, collect **Effects** and stderr | ADR-0001, ADR-0003 |
 | C5  | Builder           | `gleam build`, per-**Script** **Stale** check by content hash | ADR-0002 |
 | C6  | Watcher           | `FSEvents` → regenerate registry, build, rewrite **Manifests**   | ADR-0002 |
-| C7  | Effector          | perform **Open** / **Kill** / **Paste** / **Notify**, focus and clipboard |          |
+| C7  | Effector          | perform every **Effect**, focus and clipboard                |          |
 | C8  | ContextGatherer   | gather declared **Context** slices in-process                |          |
 | C9  | LoginItem         | `SMAppService` registration                                 |          |
 | C10 | MenuBarStatus     | normal / red, the only ambient signal Starkit emits          |          |
@@ -738,6 +738,18 @@ largest single cost in the system and still the reason F9's budget is in seconds
   T1.6 measured is spent one import at a time.
 - The **Vocabulary** will want to grow. G6 is weight 6 and not a cap. **Trigger:** a third
   **Script** wanting the same missing **Effect**.
+
+  **Fired, for two words at once: `Browse(url:)` and `Copy(text:)`.** Both were reached by the same
+  route, which is that every word the **Vocabulary** then had could only end a **Script** in an
+  application — an **Open** names one, a **Paste** types into one — while a launcher's other two
+  endings are an address and the clipboard. **Browse** is what `link` and `youtube` had no way to do
+  with the URL they already hold, and what `obsidian://` and `mailto:` need; **Copy** is a **Paste**
+  for the case where nothing in front is a text field, which was previously either destructive or
+  unavailable. Neither word costs a permission: **Browse** is LaunchServices, which C7 already asks
+  about every **Open**, and **Copy** is the clipboard write **Paste** already performs, which is
+  exactly why it needs no Accessibility grant where **Paste** does. **Trigger to revisit:** a
+  **Script** wanting to open a URL in a *named* browser rather than the default one, which is
+  neither word and would be a third.
 - C1 and C7 are coupled through activation (T0.5). The bar has to be typed into, and macOS
   routes keys only to the *active* application's key window, so a `.nonactivatingPanel` in an
   inactive app never becomes key and can hold no **Keyword** at all. The **Shelf** must therefore

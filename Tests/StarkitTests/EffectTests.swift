@@ -22,22 +22,36 @@ struct EffectTests {
         )
     }
 
-    // MARK: - The four words of the Vocabulary
+    // MARK: - The words of the Vocabulary
 
     @Test("each Effect arrives under the field name the Vocabulary gave it")
     func everyKind() throws {
         let reply = """
-            {"effects":[{"kind":"open","app":"Slack"},{"kind":"kill","app":"Notion"},\
+            {"effects":[{"kind":"open","app":"Slack"},{"kind":"browse","url":"https://gleam.run"},\
+            {"kind":"kill","app":"Notion"},{"kind":"copy","text":"kept"},\
             {"kind":"paste","text":"hello"},{"kind":"notify","message":"nothing to do"}]}
             """
         #expect(
             try read(reply) == [
                 .open(app: "Slack"),
+                .browse(url: "https://gleam.run"),
                 .kill(app: "Notion"),
+                .copy(text: "kept"),
                 .paste(text: "hello"),
                 .notify(message: "nothing to do"),
             ]
         )
+    }
+
+    // Open and Browse both name something to bring up and both carry one string, so a Browse that
+    // arrived spelled like an Open would otherwise decode to a URL of "Slack" and be found out only
+    // when a browser opened on it. The field name is the second lock behind the kind.
+    @Test("a Browse spelled like an Open is a Refusal, not a URL called Slack")
+    func browseWantsAURL() {
+        let refusal = #expect(throws: Refusal.self) {
+            try read(#"{"effects":[{"kind":"browse","app":"Slack"}]}"#)
+        }
+        #expect(refusal?.reason == "Starkit could not read what \"work\" answered.")
     }
 
     // A Script emits Effects *in order* and the Shelf performs them in order (CONTEXT.md). Work's
@@ -143,7 +157,9 @@ struct EffectTests {
     @Test("an Effect prints the way it was written in Gleam")
     func rendering() {
         #expect("\(Effect.open(app: "Slack"))" == #"Open("Slack")"#)
+        #expect("\(Effect.browse(url: "https://gleam.run"))" == #"Browse("https://gleam.run")"#)
         #expect("\(Effect.kill(app: "Notion"))" == #"Kill("Notion")"#)
+        #expect("\(Effect.copy(text: "kept"))" == #"Copy("kept")"#)
         #expect("\(Effect.notify(message: "offline"))" == #"Notify("offline")"#)
         #expect("\(Effect.paste(text: "two\nlines"))" == #"Paste("two\nlines")"#)
     }

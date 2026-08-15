@@ -15,7 +15,7 @@ Scripts live in `~/.starkit`.
 ## What a Script is
 
 One Gleam module in `~/.starkit/src/scripts/`. It turns an **Input** and a **Context** into a list
-of **Effects** (`Open`, `Kill`, `Paste`, `Notify`).
+of **Effects**.
 
 Five are seeded on install:
 
@@ -87,7 +87,7 @@ Limits, all of them deliberate:
 
 ## Documentation
 
-- [seed/SCRIPTING.md](./seed/SCRIPTING.md) — what a **Script** may do and may not, the four
+- [seed/SCRIPTING.md](./seed/SCRIPTING.md) — what a **Script** may do and may not, the
   **Effects**, and the save-to-**Keyword** loop. Vendored to `~/.starkit/SCRIPTING.md`, beside the
   **Scripts** it describes
 - [tasks/todo.md](./tasks/todo.md) — the ordered task list, with checkpoints

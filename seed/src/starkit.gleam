@@ -16,13 +16,22 @@ pub type Effect {
   /// Bring an application to the front, launching it if it is not running.
   Open(app: String)
 
+  /// Hand a URL to the machine, which opens it with whatever registered the scheme: a browser for
+  /// `https://`, an application for its own, like `obsidian://`. The url must be a full one,
+  /// scheme and all — this is a click on a link, not a search.
+  Browse(url: String)
+
   /// Terminate an application without asking it first. Never prompts, never lets the app refuse
   /// or put up a save dialog. This is chosen, not accidental: speed is worth the risk.
   Kill(app: String)
 
+  /// Put text on the clipboard and stop there. Nothing is typed anywhere, so nothing depends on
+  /// what was in front — which is what Paste cannot promise. Needs no Accessibility grant.
+  Copy(text: String)
+
   /// Put text on the clipboard, give focus back to whatever was frontmost before the Shelf
   /// appeared, and synthesise the paste keystroke. The text is deliberately left on the clipboard
-  /// afterwards, so it can be pasted again by hand.
+  /// afterwards, so it can be pasted again by hand. Copy is this without the keystroke.
   Paste(text: String)
 
   /// Show a message in the bar. The only way a Script reports anything, including failure.

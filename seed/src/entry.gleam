@@ -18,8 +18,9 @@ import gleam/json.{type Json}
 import gleam/list
 import registry
 import starkit.{
-  type Asking, type Context, type Effect, type Need, type Script, Asks, Context,
-  Decides, Fetching, Kill, Notify, Open, Paste, RunningApps, Script,
+  type Asking, type Context, type Effect, type Need, type Script, Asks, Browse,
+  Context, Copy, Decides, Fetching, Kill, Notify, Open, Paste, RunningApps,
+  Script,
 }
 
 /// Every Script's Manifest, as JSON.
@@ -120,7 +121,9 @@ fn need(need: Need) -> Json {
 fn effect(effect: Effect) -> Json {
   case effect {
     Open(app) -> tagged("open", "app", app)
+    Browse(url) -> tagged("browse", "url", url)
     Kill(app) -> tagged("kill", "app", app)
+    Copy(text) -> tagged("copy", "text", text)
     Paste(text) -> tagged("paste", "text", text)
     Notify(message) -> tagged("notify", "message", message)
   }

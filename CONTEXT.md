@@ -111,10 +111,25 @@ Deliberately closed and small. Adding a word here is a design decision.
 **Open**:
 Bring an application to the foreground, launching it if needed.
 
+**Browse**:
+Hand a URL to the machine, which opens it with whatever registered the scheme: a browser for
+`https://`, an application for its own, like `obsidian://`. **Open** names an application and
+**Browse** names an address, which is why they are two words and not one with two spellings — the
+machine answers them by different mechanisms and fails them for different reasons. A **Script** that
+fetched the URL is trusting where it came from, exactly as a person clicking a link is.
+_Avoid_: open, visit, launch, url. And not **Link**, which is the name of a **Script**.
+
 **Kill**:
 Terminate an application immediately, discarding unsaved work.
 _Avoid_: quit, close, terminate. Those imply the application is asked and may refuse or
 prompt. **Kill** never asks, and that is a choice: speed is worth the risk.
+
+**Copy**:
+Put text on the clipboard and stop there. Nothing is typed anywhere, so nothing depends on what was
+in front, and no Accessibility grant is involved. What a **Script** reaches for when the result is
+worth keeping and there is nowhere to put it yet.
+_Avoid_: clipboard, pasteboard, yank, stash. And do not call it a silent **Paste**: a **Paste** with
+its keystroke removed is a different act, not a quieter one.
 
 **Paste**:
 Replace the selection in whatever application was frontmost before the **Shelf** appeared, and
@@ -231,3 +246,15 @@ _Avoid_: processes, open apps
   **Script** compares on its own side has no such help: a keep list in `clean.gleam` is matched
   against a **Running Apps** **Context**, which is made of displayed names, so *Calculatrice* is the
   spelling that spares it.
+- **Copy** was nearly not a word at all, because **Paste** already leaves its text on the clipboard
+  (T6) and the two therefore differ by one keystroke. Resolved as a word, on what each one needs
+  rather than on what each one leaves behind: a **Paste** needs Accessibility and needs to know
+  which application the bar took the keyboard from, and it types into that application whether or
+  not it was a text field. A **Script** whose result is worth keeping and has nowhere to go had only
+  the destructive one of the two. The **Effector** shows the split — `copy` cannot fail, and every
+  way a **Paste** can is downstream of the clipboard write.
+
+  Writing the clipboard *before* the Accessibility check came out of the same reading: the
+  **Refusal** for a missing grant ends "the text is on the clipboard; ⌘V pastes it by hand", and
+  until this change it was written before the clipboard had been touched. A denied grant now costs
+  the run its keystroke and nothing more.
