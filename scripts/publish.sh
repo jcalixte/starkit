@@ -14,11 +14,10 @@
 # The version bump it will not do for you. Resources/Info.plist is checked, not edited, so the
 # subject line that says what the version is *for* stays a commit somebody wrote.
 #
-# --ship-only exists for the same reason release.sh has --staple-only. Apple's queue has no SLA and
-# the first submission from this team waited seven hours, so the half of a release that talks to
-# Apple and the half that talks to GitHub have to be separately runnable. It takes the zip that is
-# already in build/ and never rebuilds: a rebuild re-signs with a new timestamp, which is a different
-# app from the one the notary ticket was issued against.
+# --ship-only exists for the same reason release.sh has --staple-only: Apple's notary queue has no
+# SLA, so the half of a release that talks to Apple and the half that talks to GitHub have to be
+# separately runnable. It takes the zip already in build/ and never rebuilds — a rebuild re-signs
+# with a new timestamp, which is a different app from the one the notary ticket was issued against.
 #
 # The tap is a checkout, not an API call — the cask is a file in another repo and this pushes it.
 # Expected at $STARKIT_TAP, defaulting to the sibling ../homebrew-tap.

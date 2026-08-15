@@ -3,9 +3,6 @@ import Testing
 
 @testable import StarkitCore
 
-/// Reading `manifests.json` — F2's whole surface, and the one file that outlives the version of
-/// Starkit that wrote it. A decode that throws is a bar with no **Scripts** in it, which looks
-/// exactly like the machine state the cache exists to survive.
 struct ManifestTests {
     private func read(_ json: String) throws -> [Manifest] {
         try Manifest.all(reply: Data(json.utf8), diagnostics: nil, exitStatus: 0)
@@ -45,8 +42,6 @@ struct ManifestTests {
         #expect(scripts[0].asks == "")
     }
 
-    // Same promise as `asks`, one field later: an upgrade must not empty the bar on the launch that
-    // follows it. `other_keywords` arrives absent from every cache written before it existed.
     @Test("a cache written before other Keywords existed decodes with none")
     func olderCacheHasNoOtherKeywords() throws {
         let scripts = try read(#"[{"keyword":"youtube","name":"Youtube","needs":[]}]"#)

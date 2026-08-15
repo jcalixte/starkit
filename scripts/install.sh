@@ -70,9 +70,8 @@ if ! "$DEST/Contents/MacOS/Starkit" start-at-login on; then
 fi
 
 # One rule, applied by path: src/scripts/ is yours, everything else under seed/ is the Shelf's. It
-# used to live here as a `case` in a loop, and now lives in Swift where the app can reach it too — a
-# Cask drops the .app and runs nothing, so first launch has to be able to do this with no script
-# involved (Slice 8, StarkitCore/Seeding.swift).
+# lives in Swift rather than here so the app can reach it too — a Cask drops the .app and runs
+# nothing, so first launch has to be able to do this with no script involved.
 #
 # Through the *installed* bundle, and from the seed content inside it rather than from seed/ here:
 # that is the copy a Cask would have, so this exercises the same path anyone else's install takes.

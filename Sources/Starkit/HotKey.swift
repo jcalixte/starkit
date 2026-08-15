@@ -7,10 +7,9 @@ import StarkitCore
 /// `RegisterEventHotKey` rather than a `CGEventTap`: a tap costs an Accessibility grant that macOS
 /// can revoke on its own, and a permission silently switched off is F8's whole failure mode.
 ///
-/// Measured at T2.1: Carbon does not arbitrate between applications. Two processes asking for ⌃⌘K
-/// both get `noErr` and neither is told about the other, while a `CGEventTap` sees the key before
-/// hotkey dispatch and can consume it outright. So Starkit can neither take the chord from anyone
-/// nor detect having lost it (`DESIGN.md` §4, F8).
+/// Carbon does not arbitrate between applications: two processes asking for ⌃⌘K both get `noErr` and
+/// neither is told about the other, so Starkit can neither take the chord from anyone nor detect
+/// having lost it.
 @MainActor
 final class HotKey {
     /// Carbon counts keys by position, so the chord follows the physical key across layouts rather
@@ -29,7 +28,6 @@ final class HotKey {
         self.onPress = onPress
     }
 
-    /// Take the chord, or **Refuse**.
     func register() throws(Refusal) {
         var wanted = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
@@ -64,8 +62,8 @@ final class HotKey {
             0,
             &reference
         )
-        // Measured at T2.1: a second process asking for the same chord is given it, so this fires
-        // only when Starkit registers twice — a bug in the caller, not a conflict with another app.
+        // A second process asking for the same chord is given it, so this fires only when Starkit
+        // registers twice — a bug in the caller, not a conflict with another app.
         guard registered != eventHotKeyExistsErr else {
             throw Refusal("Starkit is already holding ⌃⌘K.")
         }

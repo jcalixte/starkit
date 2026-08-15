@@ -1,11 +1,8 @@
 //// Which applications Clean closes, given what is running.
 ////
-//// Written before the filter it tests, because Kill never asks: an application that should have
-//// been kept is closed with whatever was unsaved in it, with no dialog and no undo.
-////
-//// These pass their own keep list rather than reading the shipped one, which is yours to edit. Of
-//// the shipped Script only what must hold on every machine is asserted: Starkit survives, and the
-//// Need is declared.
+//// Kill never asks: an application that should have been kept is closed with whatever was unsaved
+//// in it, with no dialog and no undo. These pass their own keep list rather than reading the
+//// shipped one, which is yours to edit.
 
 import scripts/clean
 import starkit.{Context, Kill, RunningApps, Script}
@@ -13,8 +10,6 @@ import starkit.{Context, Kill, RunningApps, Script}
 /// An empty keep list, which is what the seed ships and what the tests below use whenever the
 /// question is about the filter rather than about anyone's preferences.
 const nothing_kept: List(String) = []
-
-// Clean is all or nothing (DESIGN.md §9, T4). With nothing kept, everything running dies.
 
 pub fn everything_running_is_killed_test() {
   assert clean.kills(["Safari", "Slack", "Zed"], nothing_kept)
@@ -29,8 +24,6 @@ pub fn the_order_the_shelf_gathered_them_in_is_kept_test() {
   assert clean.kills(["Zed", "Safari"], nothing_kept)
     == [Kill("Zed"), Kill("Safari")]
 }
-
-// The keep list.
 
 pub fn a_kept_application_is_not_killed_test() {
   assert clean.kills(["Safari", "Slack"], ["Slack"]) == [Kill("Safari")]
@@ -62,8 +55,6 @@ pub fn a_longer_name_is_a_different_application_test() {
     == [Kill("Safari Technology Preview")]
 }
 
-// Starkit itself, which is not a preference.
-
 pub fn starkit_is_never_killed_test() {
   assert clean.kills(["Starkit"], nothing_kept) == []
 }
@@ -77,8 +68,6 @@ pub fn starkit_is_never_killed_however_it_is_spelled_test() {
   assert clean.kills(["starkit"], nothing_kept) == []
 }
 
-// The shipped Script, through the same door the Shelf uses.
-
 pub fn the_script_declares_the_running_apps_it_filters_test() {
   let assert Script(needs:, ..) = clean.script()
   assert needs == [RunningApps]
@@ -90,7 +79,6 @@ pub fn the_script_kills_what_the_shelf_handed_it_test() {
     == [Kill("Safari")]
 }
 
-/// Clean Decides, so there is nothing to type after the Keyword and nothing typed there is read.
 pub fn anything_typed_after_the_keyword_is_ignored_test() {
   let assert Script(run:, ..) = clean.script()
   assert run("everything", Context(running_apps: ["Safari"]))

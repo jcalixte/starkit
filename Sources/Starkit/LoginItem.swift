@@ -7,9 +7,7 @@ import ServiceManagement
 /// its back — in System Settings, or by the bundle moving — so every read asks macOS again. That is
 /// the whole of T7.2: a cached `Bool` would keep saying "on" long after the answer had changed.
 enum LoginItem {
-    /// What macOS reports, in the four shapes it can take.
     enum State {
-        /// Registered and on: Starkit comes back at the next login.
         case on
         /// Never registered, or registered and then turned off from this menu.
         case off
@@ -22,7 +20,6 @@ enum LoginItem {
         var isOn: Bool { self == .on }
 
         /// What the state needs said about it beyond on and off, or `nil` when it needs nothing.
-        /// One string, so the menu and the terminal cannot drift apart.
         var note: String? {
             switch self {
             case .on, .off: nil

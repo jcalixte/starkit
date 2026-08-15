@@ -16,10 +16,8 @@ public enum Keyword {
     /// everything.
     ///
     /// Four bands, in this order: the canonical **Keyword** exactly, one of the others exactly, the
-    /// canonical **Keyword** by prefix, one of the others by prefix. The first band is why ↩ on a fully
-    /// typed `link` cannot run `linkedin`; the second is why a two-letter shorthand cannot be shadowed
-    /// by a **Script** that merely starts with those letters. A **Keyword** typed in full always wins,
-    /// and the canonical one wins over the rest.
+    /// canonical **Keyword** by prefix, one of the others by prefix. A **Keyword** typed in full always
+    /// wins, and the canonical one wins over the rest.
     public static func matches(_ keyword: String, in catalogue: [Manifest]) -> [Manifest] {
         guard !keyword.isEmpty else { return catalogue }
         let typed = keyword.lowercased()
@@ -35,10 +33,6 @@ public enum Keyword {
     /// Which band a **Manifest** falls in for an already-lowercased `typed`. Lower is better; `nil`
     /// does not match at all. A **Script** is ranked once however many of its **Keywords** match, so a
     /// second name can never put the same row on screen twice.
-    ///
-    /// One function and two callers, for the reason T9.1 moved the registry rule into Swift: the bar
-    /// and a terminal disagreeing about which **Script** a word means is a bug nobody would see until
-    /// the wrong one ran.
     static func band(of manifest: Manifest, matching typed: String) -> Int? {
         let keyword = manifest.keyword.lowercased()
         let others = manifest.otherKeywords.map { $0.lowercased() }
@@ -64,18 +58,16 @@ public enum Keyword {
         case several([String])
     }
 
-    /// The canonical **Keyword** behind a word typed at a terminal, so `Starkit run yt` reaches
-    /// the **Script** whose module is `youtube.gleam` — everything downstream is addressed by the
-    /// canonical one, since C5 finds a source at `src/scripts/<keyword>.gleam` and `entry.gleam`
-    /// matches on the name a **Script** declares.
+    /// The canonical **Keyword** behind a word typed at a terminal, so `Starkit run yt` reaches the
+    /// **Script** whose module is `youtube.gleam` — everything downstream is addressed by the canonical
+    /// one.
     ///
-    /// **Exact only, where the bar also takes prefixes.** The bar can afford band 2 and band 3 because
-    /// it shows you the row it selected before ↩ reaches it; between a typed word and the **Effects**
-    /// a terminal shows nothing, and `Starkit run c` meaning Clean is every application on the machine
-    /// force-quit by an abbreviation. So the two exact bands resolve and the two prefix bands do not.
+    /// Exact only, where the bar also takes prefixes: the bar shows you the row it selected before ↩
+    /// reaches it, where a terminal shows nothing between a typed word and the **Effects**, and
+    /// `Starkit run c` meaning Clean is every application on the machine force-quit by an abbreviation.
     ///
-    /// Ambiguity is reported *within* a band, never across: a `yt.gleam` and a `youtube` declaring
-    /// `yt` is not a tie, because band 0 beating band 1 is the rule the bar already follows.
+    /// Ambiguity is reported *within* a band, never across: a `yt.gleam` and a `youtube` declaring `yt`
+    /// is not a tie, because band 0 beats band 1.
     public static func resolve(_ typed: String, in catalogue: [Manifest]) -> Resolution {
         guard !typed.isEmpty else { return .unknown }
         let typed = typed.lowercased()

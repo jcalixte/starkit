@@ -2,13 +2,8 @@
 ///
 /// One rule, applied by path, so a file added to `seed/` later is carried without a list to update:
 /// `src/scripts/` is what you write, everything else under `seed/` is the **Shelf**'s to replace.
-/// That is what lets the **Vocabulary** upgrade on every install without a hand merge while **an
-/// install never touches a Script you have edited**.
-///
-/// Here rather than in `install.sh` because there are two callers now. A **Cask** and a notarized
-/// download drop the `.app` and run nothing, so the app has to be able to set up a home it has never
-/// seen — and two copies of this rule, one in bash and one in Swift, is the kind of pair that agrees
-/// until the day it matters.
+/// That is what lets the **Vocabulary** upgrade on every install without a hand merge while an
+/// install never touches a **Script** you have edited.
 public enum Seeding {
     /// What is owed to one file of seed content.
     public enum Verdict: Equatable, Sendable {

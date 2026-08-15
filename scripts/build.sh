@@ -14,8 +14,6 @@ IDENTITY="${STARKIT_IDENTITY:-}"
 if [ -z "$IDENTITY" ]; then
 	# A Developer ID when the machine has one, because its designated requirement is the same on
 	# every machine and across every release, where "Starkit Self-Signed" is one keychain's only.
-	# Never required: finding none is the ordinary case for anyone who is not the author, and the
-	# self-signed path below is what they get.
 	#
 	# `find-identity -v` rather than `find-certificate`, because a Developer ID is trusted and shows
 	# up there — which is exactly what the self-signed certificate does not do (see

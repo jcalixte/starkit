@@ -6,7 +6,6 @@ import AppKit
 /// light and dark correctly, and overriding them would be a legibility bug on whichever appearance
 /// was not being looked at while choosing.
 enum Palette {
-    /// The fruit itself, on the periwinkle chip at the head of the bar.
     static let fruit = NSColor(hex: 0xFFF2C6)
 
     /// Not a colour but an opacity: what the panel is made of, under everything else.
@@ -44,7 +43,6 @@ enum Palette {
         NSColor(hex: 0xAAC4F5, alpha: appearance.isDark ? 0.45 : 0.9)
     }
 
-    /// The chip and the caret, where the accent is the ink.
     static let accent = NSColor(hex: 0x8CA9FF)
 
     /// The accent behind the selected row, where it is the paper instead. The row's name stays
@@ -54,8 +52,6 @@ enum Palette {
         NSColor(hex: 0x8CA9FF, alpha: appearance.isDark ? 0.30 : 0.45)
     }
 
-    /// The accent, taken far enough towards its background to read as placeholder text rather than
-    /// as something typed.
     static let placeholder = NSColor(name: "starkit.placeholder") { appearance in
         appearance.isDark
             ? NSColor(hex: 0x8CA9FF, alpha: 0.75)

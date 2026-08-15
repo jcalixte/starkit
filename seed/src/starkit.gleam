@@ -22,7 +22,7 @@ pub type Effect {
   Browse(url: String)
 
   /// Terminate an application without asking it first. Never prompts, never lets the app refuse
-  /// or put up a save dialog. This is chosen, not accidental: speed is worth the risk.
+  /// or put up a save dialog.
   Kill(app: String)
 
   /// Put text on the clipboard and stop there. Nothing is typed anywhere, so nothing depends on
@@ -48,8 +48,7 @@ pub type Need {
 /// What the Shelf gathered, for the Needs a Script declared.
 ///
 /// Fields for undeclared Needs hold their empty value rather than being absent, so a Script that
-/// forgot to declare a Need sees nothing rather than failing to compile — which is why the Kill
-/// list is tested (SPEC.md § Testing strategy).
+/// forgot to declare a Need sees nothing rather than failing to compile.
 pub type Context {
   Context(running_apps: List(String))
 }

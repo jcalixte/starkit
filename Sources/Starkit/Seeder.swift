@@ -1,22 +1,14 @@
 import Foundation
 import StarkitCore
 
-/// Sets up a `$STARKIT_HOME` from the seed content the bundle carries, by the rule in `Seeding`.
-///
-/// It exists because a **Cask** and a notarized download drop the `.app` and run nothing, where
-/// `install.sh` used to do this in bash. `install.sh` calls it now rather than repeating it — the same
-/// move the registry made at T9.1, and for the same reason: one rule, in Swift, where both callers can
-/// reach it.
 struct Seeder {
     let home: URL
 
-    /// What one pass did, in the words `install.sh` has always used.
     struct Summary {
         var vendored = 0
         var seeded = 0
         var kept = 0
 
-        /// True when this home had nothing of ours in it — a first launch rather than an upgrade.
         var isFirstTime: Bool { seeded > 0 && kept == 0 }
 
         var line: String {
@@ -26,11 +18,9 @@ struct Seeder {
 
     /// The seed content inside the running bundle.
     ///
-    /// `Bundle.main` rather than a path relative to the executable, because the only caller that
-    /// matters is an installed bundle: `install.sh` invokes the copy in `/Applications` for exactly
-    /// this reason, and a **Cask** has nothing else to invoke. Running the bare binary out of
-    /// `.build/` has no resources, and **Refuses** here rather than seeding a home from whatever
-    /// happens to sit beside it.
+    /// `Bundle.main` rather than a path relative to the executable: `install.sh` invokes the copy in
+    /// `/Applications` for exactly this reason, and a **Cask** has nothing else to invoke. Running the
+    /// bare binary out of `.build/` has no resources and **Refuses** here.
     static func vendored() throws(Refusal) -> URL {
         guard let resources = Bundle.main.resourceURL else {
             throw Refusal("Starkit is not running from a bundle, so it carries no seed content.")
@@ -48,14 +38,12 @@ struct Seeder {
 
     /// Apply the rule to every file under `source`, and say what happened to each.
     ///
-    /// `report` rather than `print`, so the lines land on stderr beside every other thing Starkit
-    /// says about itself — stdout carries **Effects** and nothing else.
+    /// `report` rather than `print`: stdout carries **Effects** and nothing else.
     func seed(from source: URL, verbose: Bool = true) throws(Refusal) -> Summary {
         var summary = Summary()
         let manager = FileManager.default
 
-        // Sorted so two runs on the same content print the same lines in the same order, which is
-        // what makes the output of a second install readable as "nothing happened".
+        // Sorted so two runs on the same content print the same lines in the same order.
         for relative in try Self.contents(of: source).sorted() {
             let from = source.appending(path: relative)
             let to = home.appending(path: relative)
@@ -91,10 +79,8 @@ struct Seeder {
         return summary
     }
 
-    /// Every file under `source`, as paths relative to it, with no leading `./`.
-    ///
-    /// Directories are not listed: a directory is created when the file inside it is written, so an
-    /// empty one in the seed carries nothing and is not worth reproducing.
+    /// Every file under `source`, as paths relative to it, with no leading `./`. Directories are not
+    /// listed: one is created when the file inside it is written.
     private static func contents(of source: URL) throws(Refusal) -> [String] {
         guard
             let walker = FileManager.default.enumerator(

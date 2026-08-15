@@ -3,11 +3,6 @@ import Testing
 
 @testable import StarkitCore
 
-/// The payload a **Script** is handed, which is C8's half of the wire.
-///
-/// A **Need** under the wrong key, or a slice that arrives empty where it should be absent, produces
-/// a **Script** that runs and decides from nothing — and `entry.gleam` cannot tell that apart from a
-/// machine with nothing on it.
 struct PayloadTests {
     /// Untyped on the way out because `#expect(throws:)` takes a closure.
     private func needs(_ declared: [String], for keyword: String) throws -> Set<Need> {
@@ -32,8 +27,6 @@ struct PayloadTests {
         #expect(try json(payload) == #"{"input":"","running_apps":["Safari","Zed"]}"#)
     }
 
-    /// A **Script** that declares a **Need** and asks a question carries both, and neither field
-    /// knows about the other — an **Input** is not a **Need** (T13).
     @Test("the Input and the Context travel together and separately")
     func inputAndContextAreBothCarried() throws {
         let payload = Payload(input: "everything", runningApps: ["Finder"])
@@ -55,8 +48,6 @@ struct PayloadTests {
         #expect(try needs(["running_apps", "running_apps"], for: "clean") == [.runningApps])
     }
 
-    /// Loud, not skipped: a **Script** handed nothing where it declared something still runs, and
-    /// decides from an empty **Context** with no way to know that is not the truth about the machine.
     @Test("a Need this Starkit cannot gather is a Refusal naming the word and the Script")
     func unknownNeedIsRefused() throws {
         let refusal = #expect(throws: Refusal.self) { try needs(["windows"], for: "tidy") }
@@ -65,8 +56,6 @@ struct PayloadTests {
         #expect(refusal?.detail?.contains("reinstall") == true)
     }
 
-    /// One unknown word refuses the whole run: half a **Context** is not a smaller **Context**, it
-    /// is a **Script** deciding on a machine that does not exist.
     @Test("a known Need beside an unknown one does not rescue the run")
     func oneUnknownNeedRefusesTheWholeRun() throws {
         #expect(throws: Refusal.self) {

@@ -3,19 +3,9 @@ import ApplicationServices
 import Carbon.HIToolbox
 import StarkitCore
 
-/// C7 — do to the machine what a **Script** decided, in the order it decided it.
-///
-/// The only component that acts, so every permission the **Shelf** was granted is exercised from
-/// here and nowhere else. An **Effect** this cannot perform is a **Refusal**, never a silent skip:
-/// claiming to have done something is the one failure a person cannot see.
 struct Effector {
-    /// Where a **Paste** hands the keyboard back (`Focus`). Nothing on the terminal path, which
-    /// never activates anything, so the application in front is already the paste's target.
     private let previous: NSRunningApplication?
 
-    /// A closure rather than a panel: the bar and the **Effector** run on different threads at
-    /// opposite ends of the same run, and the only thing they need to agree on is a sentence. It
-    /// also keeps the terminal path, which has no bar, from needing a branch here.
     private let notify: (String) -> Void
 
     init(
@@ -43,15 +33,10 @@ struct Effector {
 
     /// Bring an application to the front, launching it if it is not running.
     ///
-    /// Which application ends up frontmost after several **Opens** is not decided here: `NSWorkspace`
-    /// activates an application when its launch *finishes*, so a cold Slack can arrive after a warm
-    /// terminal asked for later (measured at T1.5, left alone).
-    ///
-    /// `fullPath(forApplication:)` is deprecated and kept deliberately. The replacement Apple names
-    /// in the warning, `urlForApplication(withBundleIdentifier:)`, answers a different question —
+    /// `fullPath(forApplication:)` is deprecated and kept deliberately: the replacement Apple names in
+    /// the warning, `urlForApplication(withBundleIdentifier:)`, answers a different question —
     /// **Open** carries the name a person reads in the Finder, and this is LaunchServices' own
-    /// case-insensitive answer to it, wherever the application is installed. Enumerating likely
-    /// directories instead is the mistake DESIGN.md §4 F15 records rejecting for `PATH`.
+    /// case-insensitive answer to it, wherever the application is installed.
     private func open(_ app: String) throws(Refusal) {
         guard let path = NSWorkspace.shared.fullPath(forApplication: app) else {
             throw Refusal(
@@ -66,14 +51,9 @@ struct Effector {
 
     /// Hand a URL to LaunchServices, which gives it to whatever registered the scheme.
     ///
-    /// The same act as clicking a link, and it carries the same consequence: a **Script** that
-    /// fetched the URL from somewhere is trusting where it came from. Nothing here narrows the
-    /// schemes, because narrowing them would mean choosing which applications a person is allowed
-    /// to reach by name — `obsidian://`, `zed://` and `mailto:` are the point of the word.
-    ///
     /// `URL(string:)` accepts almost anything, including a bare `Slack`, which would then open in a
-    /// browser as a relative path and look like an **Open** that went wrong. Requiring a scheme is
-    /// what makes the confusion between the two words a **Refusal** instead.
+    /// browser as a relative path and look like an **Open** that went wrong. Requiring a scheme makes
+    /// that a **Refusal** instead.
     private func browse(_ url: String) throws(Refusal) {
         guard let target = URL(string: url), target.scheme != nil else {
             throw Refusal(
@@ -96,21 +76,14 @@ struct Effector {
     /// End an application without asking it, and without letting it ask you.
     ///
     /// `forceTerminate`, never `terminate()`: no save dialog and no chance for the application to
-    /// refuse. Needs no Accessibility grant (`DESIGN.md` §4, F7), which is why the guard below has
-    /// to be Starkit's own.
+    /// refuse, and it needs no Accessibility grant.
     ///
-    /// **Nothing running by that name is done, not refused** — one that quit between the gather and
-    /// here has satisfied the **Kill**, and from here "already gone" and "never existed" are the
-    /// same absence. The cost is that a misspelt name is quiet where **Open** would be loud.
+    /// Nothing running by that name is done, not refused — one that quit between the gather and here
+    /// has satisfied the **Kill**.
     ///
-    /// Matched case-insensitively, as LaunchServices resolves an **Open** and as `clean.gleam`
-    /// compares its keep list. Every instance answering to the name is killed.
-    ///
-    /// Matched **twice**, the second way found rather than designed: `localizedName` is the name in
-    /// the machine's language, so on a French system Calculator runs as Calculatrice and
-    /// `Kill("Calculator")` quietly matched nothing — while **Open** resolved it fine. Comparing
-    /// bundle URLs as well closes that seam. The name match stays because it needs nothing from
-    /// disk, and a **Kill** from a **Context** is already spelled as C8 spelled it.
+    /// Matched twice: `localizedName` is the name in the machine's language, so on a French system
+    /// Calculator runs as Calculatrice and `Kill("Calculator")` matched nothing. Comparing bundle URLs
+    /// as well closes that seam; the name match stays because it needs nothing from disk.
     private func kill(_ app: String) throws(Refusal) {
         let bundle = NSWorkspace.shared.fullPath(forApplication: app)
             .map { URL(fileURLWithPath: $0).standardizedFileURL }
@@ -121,11 +94,10 @@ struct Effector {
 
         // The third lock, and the only one that holds for every **Script**: `clean.gleam` and C8 both
         // guard names arriving from a **Context**, but any **Script** can write the word itself.
-        // Starkit ending here would stop the run partway down a list it is still performing.
         //
-        // Both names Starkit goes by: the application's when it is the bundle in the menu bar, and
-        // the process's on the terminal path, where the binary has no bundle. Neither is hard-coded
-        // — a guard spelling "Starkit" stops being true the day the product is renamed.
+        // Both names Starkit goes by: the application's when it is the bundle in the menu bar, and the
+        // process's on the terminal path, where the binary has no bundle. Neither is hard-coded — a
+        // guard spelling "Starkit" stops being true the day the product is renamed.
         let names = [NSRunningApplication.current.localizedName, ProcessInfo.processInfo.processName]
         guard !names.contains(where: { $0?.caseInsensitiveCompare(app) == .orderedSame }) else {
             throw Refusal(
@@ -151,14 +123,8 @@ struct Effector {
         report("   Kill — \(app)\(targets.count > 1 ? " (\(targets.count) of them)" : "")")
     }
 
-    /// Put the text on the clipboard and stop.
-    ///
-    /// Everything a **Paste** does beyond this needs Accessibility and needs to know what was in
-    /// front; this needs neither, which is the whole of the difference between the two words.
-    ///
-    /// It replaces whatever was on the clipboard, including the **Seed** the text may have been
-    /// derived from (`DESIGN.md` §9). Cannot fail: `NSPasteboard` reports a change count, not a
-    /// refusal, and there is nothing to do about a clipboard that declined.
+    /// Put the text on the clipboard and stop. It replaces whatever was there, including the **Seed**
+    /// the text may have been derived from.
     private func copy(_ text: String) {
         let board = NSPasteboard.general
         board.clearContents()
@@ -168,16 +134,11 @@ struct Effector {
 
     /// Put the text on the clipboard, give the keyboard back, then press ⌘V for the person.
     ///
-    /// The middle step is load-bearing: the **Shelf** had to activate to be typed into (T0.5), so a
-    /// keystroke synthesised while it still holds activation lands in the bar. C1 also hands focus
-    /// back on **Dismissal** — the same debt paid by whichever gets there first.
+    /// The middle step is load-bearing: the **Shelf** had to activate to be typed into, so a keystroke
+    /// synthesised while it still holds activation lands in the bar.
     ///
-    /// The text stays on the clipboard afterwards by design (T6), so ⌘V repeats the paste by hand.
-    ///
-    /// The clipboard is written **before** the Accessibility check and not after, so that the
-    /// sentence the **Refusal** ends on — press ⌘V yourself — is true when it is read. It also
-    /// makes a denied grant cost the run its keystroke and nothing else: the text is where a
-    /// **Copy** would have left it.
+    /// The clipboard is written *before* the Accessibility check, so that the sentence the **Refusal**
+    /// ends on — press ⌘V yourself — is true when it is read.
     private func paste(_ text: String) throws(Refusal) {
         let start = CFAbsoluteTimeGetCurrent()
 
@@ -186,10 +147,8 @@ struct Effector {
         board.setString(text, forType: .string)
 
         guard AXIsProcessTrusted() else {
-            // Asked for at the moment it is needed rather than at launch: a permission dialog on
-            // login for something nobody has asked for yet gets an application denied on principle.
-            // The grant reaches a process already running (measured at T0.5), so the fix from here
-            // is granting it and pressing ↩ again — no relaunch.
+            // Asked for at the moment it is needed rather than at launch. The grant reaches a process
+            // already running, so the fix from here is granting it and pressing ↩ again — no relaunch.
             let ask = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
             AXIsProcessTrustedWithOptions(ask as CFDictionary)
             throw Refusal(
@@ -229,15 +188,13 @@ struct Effector {
         )
     }
 
-    /// Wait for the application the bar took the keyboard from to have it back. Usually nothing to
-    /// do: C1 hides on **Dismissal** and the **Script** then spends a build and a `bun` spawn.
+    /// Wait for the application the bar took the keyboard from to have it back.
     ///
     /// The deadline is for the notification that never comes — pasting into the wrong window is bad,
     /// hanging a run on a notification is worse.
     ///
-    /// **This blocks, and must never be called on the main thread**: the run loop the notification
-    /// arrives on has to keep turning. AppDelegate performs every **Effect** off the main thread
-    /// (T1.5), and the terminal path never took activation, so it never reaches the wait at all.
+    /// This blocks, and must never be called on the main thread: the run loop the notification arrives
+    /// on has to keep turning.
     private func handFocusBack() {
         guard let previous, !previous.isActive else { return }
 
@@ -263,17 +220,15 @@ struct Effector {
     }
 }
 
-/// Who the keyboard belongs to when it is not the bar's (`DESIGN.md` §9).
+/// Who the keyboard belongs to when it is not the bar's.
 ///
 /// Must be sampled as it happens, never read at **Paste** time: by then the frontmost application is
-/// Starkit. Pinning it when the **Shelf** becomes active is also what keeps a **Script** that
-/// **Opens** and then **Pastes** from pasting into the application it just launched.
+/// Starkit. Pinning it when the **Shelf** becomes active also keeps a **Script** that **Opens** and
+/// then **Pastes** from pasting into the application it just launched.
 @MainActor
 final class Focus {
-    /// The application the bar took the keyboard from, and where a **Paste** goes.
     private(set) var previous: NSRunningApplication?
 
-    /// The last application that was not us to come to the front.
     private var latest: NSRunningApplication?
 
     init() {

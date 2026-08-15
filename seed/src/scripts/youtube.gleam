@@ -60,11 +60,8 @@ fn decide(input: String) -> Promise(List(Effect)) {
   }
 }
 
-/// The video ID in whatever a person pasted, or nothing.
-///
-/// Public because this is the half worth testing: every shape it accepts is one YouTube's own share
-/// menu hands out, and a wrong ID is the failure that does not look like one — it pastes a working
-/// link to the wrong video.
+/// The video ID in whatever a person pasted, or nothing. A wrong ID is the failure that does not
+/// look like one — it pastes a working link to the wrong video.
 pub fn video_id(input: String) -> Result(String, Nil) {
   let trimmed = string.trim(input)
   case is_id(trimmed) {

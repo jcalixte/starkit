@@ -4,8 +4,6 @@ import StarkitCore
 /// C8 — read the slices of the machine a **Script** declared, and none of the ones it did not.
 /// Nothing here may spawn a process: the F6 budget is ≤ 5 ms (`DESIGN.md` §4).
 struct ContextGatherer {
-    /// Takes the declared words rather than a **Manifest**, so neither the CLI nor the bar has to
-    /// invent a **Manifest** it does not have.
     func payload(input: String, keyword: String, needs: [String]) throws(Refusal) -> Payload {
         let needed = try Need.all(needs, for: keyword)
         return Payload(
@@ -22,12 +20,10 @@ struct ContextGatherer {
         _ = runningApps()
     }
 
-    /// Every application with a Dock icon, under the name macOS shows — which is the name someone
-    /// writes in a keep list.
+    /// Every application with a Dock icon, under the name macOS shows.
     ///
-    /// `.regular` also drops Starkit itself, which is `.accessory` (`main.swift`), so a **Kill**
-    /// list can never contain the process performing it. `clean.gleam` refuses that name again on
-    /// its own side; both locks are deliberate.
+    /// `.regular` also drops Starkit itself, which is `.accessory`, so a **Kill** list can never
+    /// contain the process performing it.
     private static func runningApps() -> [String] {
         NSWorkspace.shared.runningApplications
             .filter { $0.activationPolicy == .regular }

@@ -6,9 +6,6 @@
 
 import scripts/youtube
 
-// The six shapes. Every one of these is something YouTube's own share menu, address bar or embed
-// dialog will hand you.
-
 pub fn watch_url_test() {
   assert youtube.video_id("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     == Ok("dQw4w9WgXcQ")
@@ -41,8 +38,6 @@ pub fn old_embed_url_test() {
 pub fn bare_id_test() {
   assert youtube.video_id("dQw4w9WgXcQ") == Ok("dQw4w9WgXcQ")
 }
-
-// The decorations real URLs arrive wearing.
 
 pub fn timestamp_is_not_part_of_the_id_test() {
   assert youtube.video_id("https://youtu.be/dQw4w9WgXcQ?t=42")
@@ -89,9 +84,6 @@ pub fn v_after_other_parameters_test() {
     )
     == Ok("dQw4w9WgXcQ")
 }
-
-// What it declines. Every one is a Notify rather than a paste, and the Script cannot tell them
-// apart — which is why the message says what it looked at.
 
 pub fn empty_input_test() {
   assert youtube.video_id("") == Error(Nil)

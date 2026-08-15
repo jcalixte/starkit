@@ -4,10 +4,6 @@
 //// parsing it — a stand-in for a DOM selector that gets some pages wrong. Those pages are in the
 //// test suite, pinned rather than fixed: fixing them means an HTML parser, which is a dependency
 //// and a decision (SPEC, Ask first).
-////
-//// Not a regexp either, despite the word SPEC used: Gleam's stdlib has none, so it would be a sixth
-//// dependency for three calls to `string.split_once`, and the pages that come out wrong are the
-//// same either way — the limit is "not a DOM parser".
 
 import gleam/fetch
 import gleam/http/request

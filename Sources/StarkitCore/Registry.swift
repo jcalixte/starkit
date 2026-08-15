@@ -1,16 +1,12 @@
 import Foundation
 
-/// The one list Gleam cannot derive for itself.
+/// The one list Gleam cannot derive for itself: Gleam has no runtime reflection, so "every **Script**
+/// the **Shelf** knows about" has to exist as source.
 ///
-/// Gleam has no runtime reflection, so "every **Script** the **Shelf** knows about" has to exist as
-/// source. This turns a set of **Keywords** into that source, and it is the whole rule — finding the
-/// **Keywords** and writing the file belong to C6, which is where a filesystem is allowed.
-///
-/// **Byte-identical output for the same input is the point, not tidiness.** `registry.gleam` is one of
+/// Byte-identical output for the same input is the point, not tidiness. `registry.gleam` is one of
 /// C5's shared modules, so a file rewritten with the same contents would move its mtime, change
 /// nothing, and mark every **Script** **Stale** — see `Staleness` and ADR 0002. That is also why the
-/// text below is already `gleam format`-clean: a file Gleam would reformat is a file something else
-/// rewrites later.
+/// text below is already `gleam format`-clean.
 public enum Registry {
     /// Sorted by UTF-8 bytes rather than by `<`, which is what `LC_ALL=C sort` did when this rule
     /// lived in a shell script — the two agree for every valid Gleam module name and stop agreeing

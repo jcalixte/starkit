@@ -15,13 +15,9 @@ final class MenuBarStatus: NSObject, NSMenuDelegate {
         case hotKey
         /// C12 or C5 gave way, so a **Script** will fail when it is reached for.
         case scripts
-        /// C6 is not watching, so a **Script** saved in Zed will not become real on its own. Kept
-        /// apart from `scripts` because nothing is wrong with the **Scripts**: every one already built
-        /// still runs, and collapsing the two would hide a compile error behind a stream that failed
-        /// to start.
+        /// C6 is not watching, so a **Script** saved in Zed will not become real on its own.
         case watcher
-        /// A **Script** the person ran **Refused**. The transient **Concern**: cleared by the next
-        /// run that works, because it is about the last run and not about the machine.
+        /// A **Script** the person ran **Refused**. Cleared by the next run that works.
         case run
     }
 
@@ -41,7 +37,6 @@ final class MenuBarStatus: NSObject, NSMenuDelegate {
         apply()
     }
 
-    /// One sentence, or `nil` for nothing wrong with this **Concern** any more.
     func set(_ reason: String?, for concern: Concern) {
         problems[concern] = reason
         apply()
@@ -61,10 +56,9 @@ final class MenuBarStatus: NSObject, NSMenuDelegate {
         item.button?.toolTip = description
     }
 
-    /// The menu is built when it opens and at no other time, which is the only moment its contents
-    /// are read. That is not a saving: **Start at Login** is a line about something this process
-    /// does not own — System Settings, or another process, can turn it off without telling anyone —
-    /// so building it on a state change would show whatever was true at the last **Refusal** (T7.2).
+    /// The menu is built when it opens and at no other time: **Start at Login** is a line about
+    /// something this process does not own — System Settings, or another process, can turn it off
+    /// without telling anyone — so building it on a state change would show a stale answer.
     func menuNeedsUpdate(_ menu: NSMenu) {
         fill()
     }

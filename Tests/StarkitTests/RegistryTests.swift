@@ -3,12 +3,8 @@ import Testing
 
 @testable import StarkitCore
 
-/// The generated module, pinned as text.
-///
-/// Worth pinning at all because two things read this file and neither of them is a person: `gleam
-/// build`, which fails loudly, and C5's staleness check, which fails *silently* — a byte that moves
-/// for no reason marks every **Script** **Stale**, and nothing says so except **Scripts** refusing
-/// one at a time.
+/// The generated module, pinned as text: `gleam build` fails loudly on it, but C5's staleness check
+/// fails *silently* — a byte that moves for no reason marks every **Script** **Stale**.
 struct RegistryTests {
     @Test("the whole module, for the five Scripts the seed ships")
     func fiveScripts() {
@@ -41,9 +37,6 @@ struct RegistryTests {
         )
     }
 
-    // An empty list cannot be written `[]`: Gleam has no element type to infer, and the annotation
-    // only goes on a binding. Deleting every Script has to leave a file that still compiles, or the
-    // menu bar goes red for a home that is merely empty.
     @Test("no Scripts still produces a module that compiles")
     func noScripts() {
         let source = Registry.source(for: [])
@@ -74,9 +67,7 @@ struct RegistryTests {
     }
 
     // `_` is 0x5F and every letter is above it, so `link_check` sorts before `linkedin` — the answer
-    // `LC_ALL=C sort` gave when this rule was a shell script, and the same answer the machine's own
-    // locale gives for the lowercase-ASCII-and-underscore names Gleam allows. The two only part
-    // company outside them, which is why the rule compares bytes and does not have to care.
+    // `LC_ALL=C sort` gave when this rule was a shell script.
     @Test("an underscore sorts before a letter, as it did under LC_ALL=C")
     func underscoreSortsByByte() {
         let source = Registry.source(for: ["linkedin", "link_check"])

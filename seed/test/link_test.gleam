@@ -9,8 +9,6 @@
 
 import scripts/link
 
-// The h1 as pages actually write it.
-
 pub fn a_plain_h1_test() {
   assert link.title_in("<html><body><h1>Getting Started</h1></body></html>")
     == Ok("Getting Started")
@@ -44,8 +42,6 @@ pub fn a_non_breaking_space_is_a_space_test() {
     == Ok("Getting Started")
 }
 
-// The entities a title actually contains.
-
 pub fn an_escaped_ampersand_is_an_ampersand_test() {
   assert link.title_in("<h1>Design &amp; Build</h1>") == Ok("Design & Build")
 }
@@ -64,8 +60,6 @@ pub fn escaped_angle_brackets_come_back_test() {
   assert link.title_in("<h1>Reading &lt;h1&gt; tags</h1>")
     == Ok("Reading <h1> tags")
 }
-
-// What it declines. Each of these is a Notify rather than a paste.
 
 pub fn a_page_with_no_h1_test() {
   assert link.title_in("<html><head><title>Only a title</title></head></html>")
@@ -205,8 +199,6 @@ pub fn prose_is_refused_test() {
   assert link.fetchable("what was that page called")
     == Error("That does not start with https://: \"what was that page called\"")
 }
-
-// The note. `[Title](url)`, which is what SPEC asks for and what every Markdown reader takes.
 
 pub fn markdown_is_a_title_and_the_url_it_came_from_test() {
   assert link.markdown("Getting Started", "https://example.com/start")

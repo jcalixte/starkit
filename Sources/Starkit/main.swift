@@ -12,9 +12,7 @@ let application = NSApplication.shared
 let delegate = MainActor.assumeIsolated { AppDelegate() }
 application.delegate = delegate
 // Set here as well as via `LSUIElement` in Info.plist, because the executable is also run directly
-// from a terminal during development, where no bundle is involved. `.accessory` governs the Dock
-// icon only — the Shelf still takes activation on **Summon**, since macOS routes keys only to the
-// active application's key window.
+// from a terminal during development, where no bundle is involved.
 application.setActivationPolicy(.accessory)
 application.run()
 
@@ -61,20 +59,13 @@ private func command(_ arguments: [String]) -> Int32 {
     // same string.
     let input = words.dropFirst(2).joined(separator: " ")
 
-    // A second **Keyword** reaches its **Script** from here too, and not only from the bar. Resolved
-    // against the cached **Catalogue** — no build, no `bun`, and the same stale cache the bar reads,
-    // so a terminal run reproduces what ↩ does (`Catalogue`). Above the `--bench` line on purpose:
-    // benching `yt` should bench the same **Script** running it would.
     let keyword: String
     switch Keyword.resolve(typed, in: Catalogue(home: Toolchain.home).cached()) {
     case .one(let canonical):
         keyword = canonical
-        // Only when they differ, and to stderr, where stdout still carries the **Effects** alone: a
-        // run that went somewhere other than the word typed should say where.
+        // Only when they differ, and to stderr, where stdout still carries the **Effects** alone.
         if canonical != typed { report("→ \(typed) is \(canonical)") }
-    // Carried through as typed, which is what this path did before any of this existed: a home whose
-    // Scripts have never been listed has no cache, and the sentence saying a **Script** does not
-    // exist is C5's to write against a real path.
+    // Carried through as typed: the sentence saying a **Script** does not exist is C5's to write.
     case .unknown:
         keyword = typed
     case .several(let candidates):
@@ -102,11 +93,7 @@ private func command(_ arguments: [String]) -> Int32 {
 
         let effects = try runner.run(keyword: keyword, payload: payload)
 
-        // Printing and performing are exclusive on purpose: the flag answers "what did this
-        // **Script** decide" without the machine changing underneath the answer.
         if dryRun {
-            // The gather clock prints here because it is the only place F6's 5 ms budget can be read
-            // without putting an instrument on the ↩ path.
             print(payload, terminator: "")
             print(String(format: " in %.2f ms", gathering))
             for effect in effects { print(effect) }
@@ -121,22 +108,13 @@ private func command(_ arguments: [String]) -> Int32 {
     }
 }
 
-/// `Starkit create <keyword>` — C11 from a terminal.
-///
-/// **This verb exists because its absence shipped a crash.** Every other component is reachable from
-/// this CLI, and C11 was reachable only by pressing ↩ on a row in the bar — so the one line that
-/// mattered, the write itself, was never executed until someone did that, and it trapped on the first
-/// try (`Scaffolder`). A path that cannot be run without a keystroke is a path that does not get run.
-///
-/// It writes and opens exactly as the bar does, and performs no build: C6 does that, or `registry`
-/// does it by hand when nothing is watching.
+/// `Starkit create <keyword>` — C11 from a terminal. Writes and opens exactly as the bar does, and
+/// performs no build: C6 does that, or `registry` does it by hand when nothing is watching.
 private func create(_ words: [String]) -> Int32 {
     guard let keyword = words.first, words.count == 1 else {
         report("usage: Starkit create <keyword>")
         return 2
     }
-    // Checked here as well as in the bar, because the bar's check is about what to *offer* and this
-    // one is about what a person typed. Both ask `Scaffold`, so they cannot disagree.
     guard Scaffold.isValid(keyword) else {
         report(
             "\"\(keyword)\" cannot be a Keyword: a Script is a Gleam module, so it needs lowercase "
@@ -174,11 +152,6 @@ private func edit(_ words: [String]) -> Int32 {
 }
 
 /// `Starkit delete <keyword>` — move a **Script** to the Trash, the same way ⌃D twice in the bar does.
-///
-/// Here for the reason `create` is: this is the one path in Starkit that destroys something a person
-/// wrote, so it is the last one that should first execute because somebody pressed a key twice. It
-/// takes no confirmation of its own — a terminal has already made typing the name the confirmation,
-/// and the file goes to the Trash either way.
 private func delete(_ words: [String]) -> Int32 {
     guard let keyword = words.first, words.count == 1 else {
         report("usage: Starkit delete <keyword>")
@@ -196,11 +169,8 @@ private func delete(_ words: [String]) -> Int32 {
     }
 }
 
-/// `Starkit icon <directory.iconset>` — draw the app icon's PNGs where `iconutil` can pack them.
-///
-/// Exists so `build.sh` can put an icon in the bundle without an asset catalog, and so the icon in
-/// Finder is rendered from the same `Carambola` path as the bar's mark on every build rather than
-/// being a `.icns` somebody exported once (`AppIcon`).
+/// `Starkit icon <directory.iconset>` — draw the app icon's PNGs where `iconutil` can pack them, so
+/// `build.sh` can put an icon in the bundle without an asset catalog.
 private func icon(_ words: [String]) -> Int32 {
     guard let directory = words.first, words.count == 1 else {
         report("usage: Starkit icon <directory.iconset>")
@@ -219,16 +189,14 @@ private func icon(_ words: [String]) -> Int32 {
 
 /// `Starkit registry` — write `src/registry.gleam` from the **Scripts** on disk, once.
 ///
-/// C6 does this on every save, so this verb exists for the two moments no Watcher is running:
-/// `install.sh`, which has to produce a registry *before* its first `gleam build` because a fresh
-/// `~/.starkit` has none, and a person who wants the file back after deleting it. It is the same code
-/// path either way — one rule, one implementation, which is what retired `gen-registry.sh`.
+/// C6 does this on every save; this verb is for the moments no Watcher is running, chiefly
+/// `install.sh`, which needs a registry *before* its first `gleam build`.
 private func registry() -> Int32 {
     let home = Toolchain.home
     do throws(Refusal) {
         let changed = try Watcher.regenerate(home: home)
-        // Says which of the two happened, because "unchanged" is the interesting answer: it means
-        // every **Artefact** is still valid, and a rewrite would have marked them all **Stale**.
+        // "unchanged" is the interesting answer: every **Artefact** is still valid, where a rewrite
+        // would have marked them all **Stale**.
         print("\(changed ? "→" : "=") \(Watcher.registry(in: home).path)\(changed ? "" : " unchanged")")
         return 0
     } catch {
@@ -238,11 +206,8 @@ private func registry() -> Int32 {
     }
 }
 
-/// `Starkit seed` — set up `$STARKIT_HOME` from the seed content this bundle carries.
-///
-/// For `install.sh`, which used to hold this rule in bash, and for a first launch out of a **Cask**,
-/// which has no script to hold it at all. Safe to run again and again: that is the rule, not a
-/// property of the caller.
+/// `Starkit seed` — set up `$STARKIT_HOME` from the seed content this bundle carries. Safe to run
+/// again and again.
 private func seed() -> Int32 {
     let home = Toolchain.home
     do throws(Refusal) {
@@ -256,16 +221,8 @@ private func seed() -> Int32 {
     }
 }
 
-/// `Starkit start-at-login [on|off]` — C9 from a terminal, since the registration belongs to the *bundle*
-/// this executable sits in and not to the running instance.
-///
-/// Named for the words already on the menu item rather than for what it does to `SMAppService`. The
-/// verb was `login` until it was read aloud: `Starkit login on` is a sentence about an account, and
-/// Starkit has no account and never will. One thing, one name — the menu says **Start at Login**.
-///
-/// It exists for two callers. `install.sh`, because an install is the moment the whole promise was
-/// asked for, boot included; and T7.2, which has to read the state after moving that bundle around
-/// and would otherwise be a person opening a menu and squinting at a tick.
+/// `Starkit start-at-login [on|off]` — C9 from a terminal, since the registration belongs to the
+/// *bundle* this executable sits in and not to the running instance.
 ///
 /// Always prints the state macOS reports *after* the request, never what was requested. Exit 1 when
 /// those differ, so a caller can tell without parsing the sentence.

@@ -2,9 +2,8 @@ import Foundation
 
 /// What a new **Script** says before anyone has written it.
 ///
-/// Pure, and separate from C11 for the reason `Registry` is separate from C6: the text has to compile
-/// the moment it lands on disk, because C6 will build it within 200 ms of it appearing and a template
-/// that does not compile turns the menu bar red as its own welcome.
+/// The text has to compile the moment it lands on disk, because C6 will build it within 200 ms of it
+/// appearing and a template that does not compile turns the menu bar red as its own welcome.
 public enum Scaffold {
     /// A **Keyword** is a Gleam module name — the file becomes `import scripts/<keyword>` — so what is
     /// allowed here is what Gleam allows there: lowercase, digits and underscores, starting with a
@@ -15,19 +14,12 @@ public enum Scaffold {
         return keyword.allSatisfy { $0.isLowercaseASCIILetter || $0.isASCIIDigit || $0 == "_" }
     }
 
-    /// The name the bar will show, derived rather than asked for: one field to fill in is the whole
-    /// point of F11, and `daily_notes` wanting to read *Daily notes* is a guess that is right often
-    /// enough to be worth not asking about. It is one line in the file to change.
     public static func name(for keyword: String) -> String {
         let words = keyword.split(separator: "_").joined(separator: " ")
         return words.prefix(1).uppercased() + words.dropFirst()
     }
 
     /// A **Script** that compiles, does nothing, and shows where to start.
-    ///
-    /// `Decides` and no **Needs**, because those are the two declarations someone has to *change* to
-    /// mean something, and a template that guessed at either would be a **Script** asking a question
-    /// nobody wrote.
     public static func source(for keyword: String) -> String {
         """
         //// \(name(for: keyword)) — created by Starkit. Say what it does here.

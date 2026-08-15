@@ -3,7 +3,6 @@ import Testing
 
 @testable import StarkitCore
 
-/// What the bar is allowed to offer, and what it writes when the offer is taken.
 struct ScaffoldTests {
     @Test("a lowercase word is a Keyword")
     func plainWord() {
@@ -12,8 +11,6 @@ struct ScaffoldTests {
         #expect(Scaffold.isValid("todo2"))
     }
 
-    // Each of these would land as `import scripts/<keyword>` in a generated module, so the offer has
-    // to be withheld rather than the name repaired: what Gleam rejects, the bar must not promise.
     @Test("what Gleam would not accept as a module name is not offered")
     func notAModuleName() {
         #expect(!Scaffold.isValid(""))
@@ -33,9 +30,6 @@ struct ScaffoldTests {
         #expect(Scaffold.name(for: "a") == "A")
     }
 
-    // The template's whole job is to compile on arrival: C6 builds it within 200 ms of the file
-    // appearing, so a template with a hole in it would turn the menu bar red as its welcome. This
-    // pins the shape; that it *compiles* was checked by writing one and letting C6 build it (T9.3).
     @Test("the template declares the Keyword it was asked for, and decides nothing")
     func template() {
         let source = Scaffold.source(for: "daily_notes")
@@ -45,11 +39,9 @@ struct ScaffoldTests {
         #expect(source.contains(#"name: "Daily notes","#))
         #expect(source.contains("needs: [],"))
         #expect(source.contains("asks: Decides,"))
-        // Returns no Effects: a template that did something would be a Script nobody asked to run.
         #expect(source.contains("      []\n"))
-        // Exactly one trailing newline, like the registry and for the same reason: a file `gleam
-        // format` would rewrite is a file whose mtime moves later, and this one is about to be opened
-        // in an editor that formats on save.
+        // Exactly one trailing newline: a file `gleam format` would rewrite is a file whose mtime
+        // moves later, and this one is about to be opened in an editor that formats on save.
         #expect(source.hasSuffix("}\n"))
         #expect(!source.hasSuffix("}\n\n"))
     }

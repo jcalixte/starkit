@@ -3,8 +3,7 @@ import StarkitCore
 
 /// C4 — run one **Artefact** and collect what it decided.
 ///
-/// A fresh `bun` per run, nothing kept between runs: 22.7 ms median, 3 ms over F5. The warm-process
-/// alternative and its cost are in DESIGN.md §9. The cold spawn also guarantees a fresh module cache,
+/// A fresh `bun` per run, nothing kept between runs. The cold spawn guarantees a fresh module cache,
 /// so an edited **Script** is always the one that runs.
 struct Runner {
     /// F14. Enforced with `SIGKILL`, never `terminate()`: that is `SIGTERM`, which is a request, and
@@ -14,8 +13,6 @@ struct Runner {
     let toolchain: Toolchain
     let home: URL
 
-    /// Every failure here is a **Refusal**, never a **Notify** — a **Script** that crashed or hung
-    /// did not decide anything.
     func run(keyword: String, payload: Payload) throws(Refusal) -> [Effect] {
         // One `argv` element with no shell in between, so an **Input** containing quotes, spaces or
         // a semicolon needs no escaping and cannot be read as anything but data.

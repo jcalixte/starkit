@@ -3,11 +3,6 @@ import Testing
 
 @testable import StarkitCore
 
-/// Reading what a **Script** answered.
-///
-/// C4's other half — spawning `bun`, holding the 5 s deadline, draining two pipes — is deliberately
-/// not here: it is a thin call into Foundation where a mock would pass while the app was broken, so
-/// it is verified by running it (SPEC.md § Testing strategy).
 struct EffectTests {
     private func read(
         _ reply: String,
@@ -54,8 +49,6 @@ struct EffectTests {
         #expect(refusal?.reason == "Starkit could not read what \"work\" answered.")
     }
 
-    // A Script emits Effects *in order* and the Shelf performs them in order (CONTEXT.md). Work's
-    // last Open is the one that ends up frontmost, so a reordering here would be felt, not seen.
     @Test("Effects keep the order the Script decided on")
     func order() throws {
         let reply = """
@@ -65,8 +58,6 @@ struct EffectTests {
         #expect(try read(reply) == [.open(app: "Slack"), .open(app: "Notion"), .open(app: "Ghostty")])
     }
 
-    // gleam_json owns the escaping on the two paths that carry arbitrary text — a page title into
-    // Paste, an error into Notify. This is the Swift end of that claim.
     @Test("text survives quotes, newlines, backslashes and multi-byte characters")
     func awkwardText() throws {
         let text = "He said \"go\"\n\tC:\\Users — naïve, 日本語, 🌟"
@@ -126,8 +117,6 @@ struct EffectTests {
 
     // MARK: - The two halves of the Vocabulary drifting
 
-    // An Effect this Starkit does not know must be a loud Refusal naming the word, never one the
-    // Effector silently skips.
     @Test("an Effect this Starkit does not know is a Refusal, and the reply is not half-performed")
     func unknownKind() {
         let reply = """
@@ -152,8 +141,6 @@ struct EffectTests {
 
     // MARK: - What --dry-run prints
 
-    // Escaping is what makes a Paste of two lines legible as one line of output rather than
-    // breaking the list.
     @Test("an Effect prints the way it was written in Gleam")
     func rendering() {
         #expect("\(Effect.open(app: "Slack"))" == #"Open("Slack")"#)

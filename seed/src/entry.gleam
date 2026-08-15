@@ -79,7 +79,7 @@ fn find(keyword: String) -> Result(Script, String) {
 /// table mapping one to the other.
 ///
 /// Undeclared Needs are absent from the payload rather than empty and decode to their empty value
-/// here — the behaviour starkit.gleam documents, and the reason the Kill list is tested.
+/// here — the behaviour starkit.gleam documents.
 fn payload_decoder() -> Decoder(#(String, Context)) {
   use input <- decode.optional_field("input", "", decode.string)
   use running_apps <- decode.optional_field(

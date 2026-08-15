@@ -2,9 +2,6 @@
 ////
 //// The only destructive path in the system. Kill never asks and never prompts, so a name missing
 //// from `keep` is an application closed with whatever was unsaved in it.
-////
-//// Clean is all or nothing — Effects go out and nothing comes back (DESIGN.md §9), so it cannot
-//// offer a list to pick from. The keep list is how you say "not that one", in advance.
 
 import gleam/list
 import gleam/string
@@ -27,24 +24,20 @@ pub fn script() -> Script {
 /// Write the name macOS shows, spelled in full: `Google Chrome`, not `Chrome`. Case and surrounding
 /// spaces do not matter; anything else does, **including the language**. The list the Shelf hands
 /// over is what each application calls itself on *this* machine, so on a French one it says
-/// `Calculatrice` and a keep list saying `Calculator` spares nothing (T4.3).
+/// `Calculatrice` and a keep list saying `Calculator` spares nothing.
 ///
-/// Finder is here rather than in `untouchable` because sparing it is a preference, not a rule:
-/// force-terminating it only makes macOS start it again.
+/// Finder is a preference rather than a rule: force-terminating it only makes macOS start it again.
 const keep = ["Finder"]
 
 /// Never Killed, whatever `keep` says.
 ///
 /// Clean has to survive its own run — the Shelf performs Effects in order, so a Kill aimed at
 /// Starkit would end the process partway down its own list. The ContextGatherer already makes this
-/// unreachable (DESIGN.md §4, F6); this is a deliberate second lock, because the two are on
-/// opposite sides of the wire and only one of them is tested.
+/// unreachable; this is a deliberate second lock.
 const untouchable = ["Starkit"]
 
-/// The Kills for a Running Apps list and a keep list.
-///
-/// Takes its keep list as an argument so the destructive decision can be tested away from anyone's
-/// actual preferences — `keep` above is edited per machine.
+/// The Kills for a Running Apps list and a keep list. Takes its keep list as an argument so the
+/// destructive decision can be tested away from anyone's actual preferences.
 pub fn kills(running_apps: List(String), keep: List(String)) -> List(Effect) {
   running_apps
   |> list.filter(fn(app) { !is_spared(app, keep) })

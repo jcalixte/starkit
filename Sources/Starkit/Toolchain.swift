@@ -1,21 +1,14 @@
 import Foundation
 import StarkitCore
 
-/// C12 — the `bun` and `gleam` that Starkit borrows from the machine rather than shipping.
-///
-/// Resolved at every launch, never cached to disk and never pinned (G7), against F9's 3 s budget.
-/// Order is override, then login shell: `starkit.toml` is consulted first only to be allowed to
-/// win, never to be required.
 struct Toolchain {
     let bun: URL
     let gleam: URL
 }
 
 extension Toolchain {
-    /// The names resolved, in the order they are reported when both are missing.
     private static let tools = ["bun", "gleam"]
 
-    /// `~/.starkit`, or wherever `STARKIT_HOME` points — the same variable `install.sh` reads.
     static var home: URL {
         if let set = ProcessInfo.processInfo.environment["STARKIT_HOME"], !set.isEmpty {
             return URL(fileURLWithPath: set)
@@ -27,10 +20,7 @@ extension Toolchain {
     /// `nil` on an ordinary machine.
     ///
     /// A scratch `STARKIT_HOME` is inherited rather than chosen: `install.sh` exports it and ends by
-    /// `open`ing the bundle, and macOS hands an app the environment of whoever launched it. A bench
-    /// install therefore leaves the everyday Starkit serving a temp directory that looks exactly like
-    /// the real one — same rows, same builds, ⌥↩ editing a copy — until something says which home is
-    /// on screen. Nothing **Refuses** on this: serving another home is the point of the variable.
+    /// `open`ing the bundle, and macOS hands an app the environment of whoever launched it.
     static var overriddenHome: URL? {
         let usual = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".starkit")
         // Compared as standardized paths rather than URLs, because `install.sh` exports
@@ -71,10 +61,9 @@ extension Toolchain {
         return Toolchain(bun: try locate("bun"), gleam: try locate("gleam"))
     }
 
-    /// `bun = "/path"` and `gleam = "/path"`, both optional, read without a TOML parser.
-    ///
-    /// A deliberate two-key subset, not an implementation of TOML: anything else it ignores, so a
-    /// line that is valid TOML but not one of these two is silently not an override.
+    /// `bun = "/path"` and `gleam = "/path"`, both optional, read without a TOML parser. A deliberate
+    /// two-key subset: anything else is ignored, so a line that is valid TOML but not one of these two
+    /// is silently not an override.
     private static func overrides(in home: URL) -> [String: String] {
         let file = home.appendingPathComponent("starkit.toml")
         guard let text = try? String(contentsOf: file, encoding: .utf8) else { return [:] }
@@ -95,15 +84,13 @@ extension Toolchain {
 
     /// Ask the login shell where each tool is, in one spawn.
     ///
-    /// `command -v` rather than searching `PATH` ourselves: it follows shims, functions and aliases,
-    /// and a version manager's shim is the version-agnostic entry point worth resolving *to*.
+    /// `command -v` rather than searching `PATH` ourselves: it follows shims, functions and aliases.
     /// `|| true` so an absent tool still prints its name with an empty path — a shell that exited
     /// non-zero on the first failure would hide the second.
     ///
-    /// `-ilc`, **not** `-lc`. A login shell that is not *interactive* never reads `~/.zshrc`, which
-    /// is where `~/.bun/bin` is added, so `-lc` cannot see `bun` at all from a clean environment.
-    /// Under `SMAppService` the app starts with exactly such an environment, so `-lc` would go red
-    /// on every boot while looking correct from a terminal (cost measured in DESIGN.md §4, F9).
+    /// `-ilc`, not `-lc`. A login shell that is not *interactive* never reads `~/.zshrc`, which is
+    /// where `~/.bun/bin` is added, so `-lc` cannot see `bun` at all from a clean environment — and
+    /// under `SMAppService` the app starts with exactly such an environment.
     ///
     /// The shell comes from the password database, not `$SHELL`: a login-launched app inherits a
     /// minimal environment where that variable may be absent.
@@ -125,8 +112,7 @@ extension Toolchain {
         do {
             try process.run()
         } catch {
-            // Every tool then comes back missing and the Refusal names them: from the outside, an
-            // unusable shell and an empty PATH are the same failure to answer.
+            // Every tool then comes back missing and the **Refusal** names them.
             return [:]
         }
         let data = output.fileHandleForReading.readDataToEndOfFile()

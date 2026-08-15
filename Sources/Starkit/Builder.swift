@@ -2,12 +2,6 @@ import CryptoKit
 import Foundation
 import StarkitCore
 
-/// C5 — bring the **Artefacts** up to date, or **Refuse**.
-///
-/// `build()` compiles the whole project, because there is only one; `remember()` writes down what
-/// that build compiled; `staleness(of:)` then decides, per **Script**, whether a *later* failed build
-/// is *this* **Script**'s problem. Without the last two the first would make one broken **Script**
-/// take the other four down with it — see `Staleness` and ADR 0002.
 struct Builder {
     let toolchain: Toolchain
     let home: URL
@@ -74,9 +68,6 @@ struct Builder {
 
     /// Bring the **Artefact** up to date, and **Refuse** only when it is *this* **Script**'s problem
     /// — see [ADR 0002](../../docs/adr/0002-one-project-with-per-script-staleness.md).
-    ///
-    /// Must stay the single F4 path: both the bar's ↩ and the debug CLI reach it, and two copies
-    /// would be two ways to decide whether a **Script** may run.
     func ensureCurrent(_ keyword: String) throws(Refusal) {
         // Held rather than thrown: a project that does not compile is only *this* **Script**'s
         // problem if this **Script** changed since the project last compiled, and that question has
@@ -106,8 +97,6 @@ struct Builder {
         )
     }
 
-    /// Hashing the files is C5's job; comparing them is `StarkitCore`'s, where the rule is tested
-    /// without a filesystem.
     func staleness(of keyword: String) throws(Refusal) -> Staleness {
         let source = source(of: keyword)
         guard let sourceHash = hash(source) else {
@@ -126,8 +115,8 @@ struct Builder {
         )
     }
 
-    /// Gleam's build layout, mirroring `src/`. Not a documented interface — the single reference
-    /// to it on the Swift side, and a watched tension in DESIGN.md §9.
+    /// Gleam's build layout, mirroring `src/`. Not a documented interface, and the single reference to
+    /// it on the Swift side.
     func artefact(of keyword: String) -> URL {
         home.appending(path: "build/dev/javascript/starkit/scripts/\(keyword).mjs")
     }

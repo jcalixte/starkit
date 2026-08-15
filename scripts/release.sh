@@ -12,11 +12,9 @@
 #   ./scripts/release.sh                  build, sign, submit, wait, staple
 #   ./scripts/release.sh --staple-only    staple what is already in build/, and nothing else
 #
-# --staple-only exists because Apple's queue has no SLA: the first submission from this team waited
-# seven hours, long enough for the waiting process to be gone when the answer arrived. An accepted
-# build must not be rebuilt in order to be stapled — a rebuild re-signs with a new timestamp, which
-# changes the hash the ticket was issued against, and stapling then fails on an app that really was
-# notarized.
+# --staple-only exists because Apple's notary queue has no SLA and the wait can outlive the process
+# waiting on it. An accepted build must not be rebuilt in order to be stapled — a rebuild re-signs
+# with a new timestamp, which changes the hash the ticket was issued against.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

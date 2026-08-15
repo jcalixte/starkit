@@ -6,13 +6,11 @@ import Foundation
 /// between the two halves and no shared schema, which is why an unknown `kind` is a decode failure
 /// naming the offending word rather than an **Effect** the **Effector** silently skips.
 public enum Effect: Equatable, Sendable {
-    /// Bring an application to the front, launching it if it is not running.
     case open(app: String)
     /// Hand a URL to whatever registered its scheme.
     case browse(url: String)
     /// Terminate an application without asking it first.
     case kill(app: String)
-    /// Put text on the clipboard and stop there.
     case copy(text: String)
     /// Put text on the clipboard, restore focus, and synthesise the paste keystroke.
     case paste(text: String)
