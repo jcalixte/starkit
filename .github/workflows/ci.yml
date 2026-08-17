@@ -24,8 +24,21 @@ jobs:
       - name: Report the toolchain
         run: swift --version
 
+      # The Swift half of the `gleam format --check` below, so that one of the two languages in this
+      # repo is not held to a standard the other is only asked about in review. The width is in
+      # `.swift-format` and is swift-format's own default, which is what the source was already
+      # written to. If this is red on its first run, one pass fixes it:
+      # `swift format --in-place --recursive Sources Tests Package.swift`.
+      - name: Check the Swift is formatted
+        run: swift format lint --recursive Sources Tests Package.swift
+
       - name: Test the pure rules
         run: swift test
+
+      # Release as well as debug: the app ships built this way, and an optimiser-only diagnostic
+      # should not first appear during `just release`.
+      - name: Build the release configuration
+        run: swift build -c release
 
       # There is no "Starkit Self-Signed" certificate on a runner, so build.sh takes its ad-hoc
       # branch and says so in the log. That is the right outcome to test: what CI can check is that
@@ -58,3 +71,11 @@ jobs:
       - name: Test the Scripts
         working-directory: seed
         run: gleam test
+
+      # The contract between the two halves, which nothing else here checks: every other test decodes
+      # a string a person typed, where this one puts what `entry.gleam` actually writes through the
+      # decoder the bar actually uses. A field renamed on one side and not the other fails here.
+      - name: Check the two halves still agree
+        env:
+          STARKIT_HOME: ${{ github.workspace }}/seed
+        run: "$(swift build -c debug --show-bin-path)/Starkit describe"

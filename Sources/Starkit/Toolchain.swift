@@ -9,6 +9,11 @@ struct Toolchain {
 extension Toolchain {
     private static let tools = ["bun", "gleam"]
 
+    /// Every key `starkit.toml` may carry. `editor` is not a **Toolchain** path — nothing builds or
+    /// runs with it — but it is read from the same file by the same rule, and a second file for one
+    /// line would be a second thing to find.
+    private static let keys = tools + ["editor"]
+
     static var home: URL {
         if let set = ProcessInfo.processInfo.environment["STARKIT_HOME"], !set.isEmpty {
             return URL(fileURLWithPath: set)
@@ -61,26 +66,24 @@ extension Toolchain {
         return Toolchain(bun: try locate("bun"), gleam: try locate("gleam"))
     }
 
-    /// `bun = "/path"` and `gleam = "/path"`, both optional, read without a TOML parser. A deliberate
-    /// two-key subset: anything else is ignored, so a line that is valid TOML but not one of these two
-    /// is silently not an override.
+    /// What `starkit.toml` says, or nothing at all: the file is optional and absent by default. The
+    /// rule for reading it is `Overrides`, in **StarkitCore**, where it is tested.
     private static func overrides(in home: URL) -> [String: String] {
         let file = home.appendingPathComponent("starkit.toml")
         guard let text = try? String(contentsOf: file, encoding: .utf8) else { return [:] }
-
-        var found: [String: String] = [:]
-        for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            guard !trimmed.hasPrefix("#"), let equals = trimmed.firstIndex(of: "=") else { continue }
-            let key = trimmed[..<equals].trimmingCharacters(in: .whitespaces)
-            guard tools.contains(key) else { continue }
-            let value = trimmed[trimmed.index(after: equals)...]
-                .trimmingCharacters(in: .whitespaces)
-                .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-            if !value.isEmpty { found[key] = value }
-        }
-        return found
+        return Overrides.read(text, keys: keys)
     }
+
+    /// The application `starkit.toml` names for opening a **Script**, by the name the Finder shows —
+    /// the same spelling the **Open** **Effect** takes, so there is one rule for naming an
+    /// application and not two.
+    ///
+    /// Read at the moment it is needed rather than resolved at launch: nothing waits on it, and an
+    /// editor installed after login should work without one.
+    ///
+    /// Takes the home rather than reading the usual one, so a scratch `$STARKIT_HOME` answers for its
+    /// own `starkit.toml` exactly as it does for `bun` and `gleam`.
+    static func editor(in home: URL) -> String? { overrides(in: home)["editor"] }
 
     /// Ask the login shell where each tool is, in one spawn.
     ///

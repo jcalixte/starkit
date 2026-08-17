@@ -101,10 +101,29 @@ struct Scaffolder {
         return trashed
     }
 
-    /// Zed by bundle identifier, then whatever the machine opens `.gleam` with. By identifier rather
-    /// than by name, because a name is the machine's language and an identifier is not.
+    /// The `editor` in `starkit.toml`, then Zed by bundle identifier, then whatever the machine opens
+    /// `.gleam` with.
+    ///
+    /// Zed by identifier rather than by name, because a name is the machine's language and an
+    /// identifier is not. The line in `starkit.toml` is a name, because that is what a person knows
+    /// their editor by and what **Open** already takes.
     private func open(_ url: URL) {
         let configuration = NSWorkspace.OpenConfiguration()
+
+        if let named = Toolchain.editor(in: home) {
+            if let editor = NSWorkspace.shared.fullPath(forApplication: named) {
+                NSWorkspace.shared.open(
+                    [url],
+                    withApplicationAt: URL(fileURLWithPath: editor),
+                    configuration: configuration
+                )
+                return
+            }
+            // Not a **Refusal**: the file still has to open, and the fallbacks below are exactly what
+            // would have happened without the line.
+            report("starkit.toml asks for \(named), which is not an application on this machine.")
+        }
+
         if let zed = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "dev.zed.Zed") {
             NSWorkspace.shared.open([url], withApplicationAt: zed, configuration: configuration)
             return

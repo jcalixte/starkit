@@ -31,6 +31,22 @@ struct Effector {
         }
     }
 
+    /// Where AppKit is read, from wherever this was called.
+    ///
+    /// **Effects** are performed off the main thread — an **Open** blocks until a launch is under way
+    /// — but `NSWorkspace` and `NSRunningApplication` are AppKit's, and C8 gathers its **Context** on
+    /// the main actor for exactly that reason. This is the same rule, applied on the way out.
+    ///
+    /// Inline when this already *is* the main thread: the terminal path performs its **Effects**
+    /// there, and a hop would be the thread waiting on itself.
+    ///
+    /// Not `MainActor.assumeIsolated`, whose result must be `Sendable`: an `NSRunningApplication` is
+    /// not, and reading the list is most of what this exists for.
+    private func onMain<T>(_ read: () -> T) -> T {
+        if Thread.isMainThread { return read() }
+        return DispatchQueue.main.sync(execute: read)
+    }
+
     /// Bring an application to the front, launching it if it is not running.
     ///
     /// `fullPath(forApplication:)` is deprecated and kept deliberately: the replacement Apple names in
@@ -38,13 +54,13 @@ struct Effector {
     /// **Open** carries the name a person reads in the Finder, and this is LaunchServices' own
     /// case-insensitive answer to it, wherever the application is installed.
     private func open(_ app: String) throws(Refusal) {
-        guard let path = NSWorkspace.shared.fullPath(forApplication: app) else {
+        guard let path = onMain({ NSWorkspace.shared.fullPath(forApplication: app) }) else {
             throw Refusal(
                 "There is no application called \"\(app)\" on this machine.",
                 detail: "Open takes the name you see in the Finder, not a path or a bundle id."
             )
         }
-        guard NSWorkspace.shared.open(URL(fileURLWithPath: path)) else {
+        guard onMain({ NSWorkspace.shared.open(URL(fileURLWithPath: path)) }) else {
             throw Refusal("Starkit could not open \(app).", detail: "It is at \(path).")
         }
     }
@@ -63,7 +79,7 @@ struct Effector {
                     + "is an Open."
             )
         }
-        guard NSWorkspace.shared.open(target) else {
+        guard onMain({ NSWorkspace.shared.open(target) }) else {
             throw Refusal(
                 "Starkit could not open \(url).",
                 detail: "No application on this machine answers to "
@@ -85,11 +101,13 @@ struct Effector {
     /// Calculator runs as Calculatrice and `Kill("Calculator")` matched nothing. Comparing bundle URLs
     /// as well closes that seam; the name match stays because it needs nothing from disk.
     private func kill(_ app: String) throws(Refusal) {
-        let bundle = NSWorkspace.shared.fullPath(forApplication: app)
-            .map { URL(fileURLWithPath: $0).standardizedFileURL }
-        let targets = NSWorkspace.shared.runningApplications.filter {
-            $0.localizedName?.caseInsensitiveCompare(app) == .orderedSame
-                || (bundle != nil && $0.bundleURL?.standardizedFileURL == bundle)
+        let targets = onMain { () -> [NSRunningApplication] in
+            let bundle = NSWorkspace.shared.fullPath(forApplication: app)
+                .map { URL(fileURLWithPath: $0).standardizedFileURL }
+            return NSWorkspace.shared.runningApplications.filter {
+                $0.localizedName?.caseInsensitiveCompare(app) == .orderedSame
+                    || (bundle != nil && $0.bundleURL?.standardizedFileURL == bundle)
+            }
         }
 
         // The third lock, and the only one that holds for every **Script**: `clean.gleam` and C8 both
@@ -98,7 +116,9 @@ struct Effector {
         // Both names Starkit goes by: the application's when it is the bundle in the menu bar, and the
         // process's on the terminal path, where the binary has no bundle. Neither is hard-coded — a
         // guard spelling "Starkit" stops being true the day the product is renamed.
-        let names = [NSRunningApplication.current.localizedName, ProcessInfo.processInfo.processName]
+        let names = onMain {
+            [NSRunningApplication.current.localizedName, ProcessInfo.processInfo.processName]
+        }
         guard !names.contains(where: { $0?.caseInsensitiveCompare(app) == .orderedSame }) else {
             throw Refusal(
                 "A Script cannot Kill Starkit.",
@@ -113,7 +133,7 @@ struct Effector {
         }
 
         for target in targets {
-            guard target.forceTerminate() else {
+            guard onMain({ target.forceTerminate() }) else {
                 throw Refusal(
                     "Starkit could not kill \(app).",
                     detail: "It is process \(target.processIdentifier) and it is still running."
@@ -181,9 +201,9 @@ struct Effector {
         down.post(tap: .cghidEventTap)
         up.post(tap: .cghidEventTap)
 
+        let into = onMain { NSWorkspace.shared.frontmostApplication?.localizedName }
         report(
-            "   Paste — \(text.count) characters into "
-                + "\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "whatever is in front")"
+            "   Paste — \(text.count) characters into \(into ?? "whatever is in front")"
                 + String(format: " in %.1f ms", (CFAbsoluteTimeGetCurrent() - start) * 1000)
         )
     }
@@ -196,7 +216,7 @@ struct Effector {
     /// This blocks, and must never be called on the main thread: the run loop the notification arrives
     /// on has to keep turning.
     private func handFocusBack() {
-        guard let previous, !previous.isActive else { return }
+        guard let previous, !onMain({ previous.isActive }) else { return }
 
         let arrived = DispatchSemaphore(value: 0)
         let observer = NSWorkspace.shared.notificationCenter.addObserver(
@@ -213,9 +233,10 @@ struct Effector {
         }
         defer { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
 
-        previous.activate()
+        onMain { _ = previous.activate() }
         if arrived.wait(timeout: .now() + 0.3) == .timedOut {
-            report("   \(previous.localizedName ?? "It") did not come back in 300 ms — pasting anyway.")
+            let name = onMain { previous.localizedName }
+            report("   \(name ?? "It") did not come back in 300 ms — pasting anyway.")
         }
     }
 }

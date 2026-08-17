@@ -10,12 +10,14 @@ _default:
 # The registry is generated and never committed, so the seed does not typecheck until it has been
 # written — the same order install.sh and CI use.
 
-# The pure rules, in Swift and in Gleam.
+# The pure rules, in Swift and in Gleam, then the contract between them.
 test:
+    swift format lint --recursive Sources Tests Package.swift
     swift test
     swift build
     STARKIT_HOME="{{justfile_directory()}}/seed" "$(swift build --show-bin-path)/Starkit" registry
     cd seed && gleam format --check src test && gleam test
+    STARKIT_HOME="{{justfile_directory()}}/seed" "$(swift build --show-bin-path)/Starkit" describe
 
 # build/Starkit.app, signed with whatever identity this keychain holds.
 build:

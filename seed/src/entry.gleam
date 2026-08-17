@@ -65,6 +65,15 @@ fn answer(effects: List(Effect)) -> Json {
   json.object([#("effects", json.array(effects, of: effect))])
 }
 
+/// The exact bytes a run answers with, for a test to pin them against the Swift decoder that reads
+/// them. There is no generator between the two halves and no shared schema, so a misspelled `kind`
+/// or field name is otherwise found out by a person pressing ↩ rather than by anything in CI.
+///
+/// Goes through `answer`, which is what `decide` answers with, so this cannot drift from a real run.
+pub fn encode(effects: List(Effect)) -> String {
+  effects |> answer |> json.to_string
+}
+
 /// By the canonical Keyword only, deliberately. The Shelf resolves what was typed to a Keyword before
 /// it gets here (C2), so the Keyword rule lives in exactly one place; a second copy here would be a
 /// second thing to keep in step.

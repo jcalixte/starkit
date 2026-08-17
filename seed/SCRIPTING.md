@@ -232,7 +232,7 @@ moves both.
 | `test/*_test.gleam` | Yours, apart from `starkit_test.gleam` |
 | `src/starkit.gleam`, `src/entry.gleam`, `src/text.gleam`, `run.mjs`, `gleam.toml`, this file | The **Shelf**'s. Overwritten on every install |
 | `src/registry.gleam` | Generated from `src/scripts/` on every save. Do not edit |
-| `starkit.toml` | Yours, and optional: **Toolchain** paths, for a shell that hides `gleam` or `bun` |
+| `starkit.toml` | Yours, and optional: `bun` and `gleam` paths for a shell that hides them, and the `editor` ⌥↩ opens a **Script** in |
 
 ## When the Vocabulary is not enough
 

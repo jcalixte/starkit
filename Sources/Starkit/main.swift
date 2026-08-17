@@ -37,6 +37,7 @@ private func command(_ arguments: [String]) -> Int32 {
 
     if words.first == "start-at-login" { return startAtLogin(Array(words.dropFirst())) }
     if words.first == "registry" { return registry() }
+    if words.first == "describe" { return describe() }
     if words.first == "seed" { return seed() }
     if words.first == "create" { return create(Array(words.dropFirst())) }
     if words.first == "delete" { return delete(Array(words.dropFirst())) }
@@ -47,6 +48,7 @@ private func command(_ arguments: [String]) -> Int32 {
         report("usage: Starkit run <keyword> [input] [--dry-run] [--bench[=N]]")
         report("       Starkit start-at-login [on|off]")
         report("       Starkit registry")
+        report("       Starkit describe")
         report("       Starkit seed")
         report("       Starkit create <keyword>")
         report("       Starkit delete <keyword>")
@@ -102,10 +104,17 @@ private func command(_ arguments: [String]) -> Int32 {
         }
         return 0
     } catch {
-        report(error.reason)
-        if let detail = error.detail { report(detail) }
-        return 1
+        return refused(error)
     }
+}
+
+/// A **Refusal** at a terminal: the sentence, then whatever came with it, then the exit code every
+/// verb here answers a **Refusal** with. Both lines go to stderr, where stdout still carries the
+/// **Effects** alone.
+private func refused(_ refusal: Refusal) -> Int32 {
+    report(refusal.reason)
+    if let detail = refusal.detail { report(detail) }
+    return 1
 }
 
 /// `Starkit create <keyword>` — C11 from a terminal. Writes and opens exactly as the bar does, and
@@ -128,9 +137,7 @@ private func create(_ words: [String]) -> Int32 {
         print("→ \(file.path)")
         return 0
     } catch {
-        report(error.reason)
-        if let detail = error.detail { report(detail) }
-        return 1
+        return refused(error)
     }
 }
 
@@ -145,9 +152,7 @@ private func edit(_ words: [String]) -> Int32 {
         print("→ \(try Scaffolder(home: Toolchain.home).edit(keyword).path)")
         return 0
     } catch {
-        report(error.reason)
-        if let detail = error.detail { report(detail) }
-        return 1
+        return refused(error)
     }
 }
 
@@ -163,9 +168,7 @@ private func delete(_ words: [String]) -> Int32 {
         for file in trashed { print("→ Trash: \(file.path)") }
         return 0
     } catch {
-        report(error.reason)
-        if let detail = error.detail { report(detail) }
-        return 1
+        return refused(error)
     }
 }
 
@@ -181,9 +184,7 @@ private func icon(_ words: [String]) -> Int32 {
         print("→ \(try AppIcon.iconset(at: URL(filePath: directory)).path)")
         return 0
     } catch {
-        report(error.reason)
-        if let detail = error.detail { report(detail) }
-        return 1
+        return refused(error)
     }
 }
 
@@ -200,9 +201,29 @@ private func registry() -> Int32 {
         print("\(changed ? "→" : "=") \(Watcher.registry(in: home).path)\(changed ? "" : " unchanged")")
         return 0
     } catch {
-        report(error.reason)
-        if let detail = error.detail { report(detail) }
-        return 1
+        return refused(error)
+    }
+}
+
+/// `Starkit describe` — ask the **Scripts** what they are, through the same decoder the bar reads
+/// them with, and refresh `manifests.json` with the answer.
+///
+/// The contract between the two halves, checkable without a **Summon**: `entry.gleam` writes the
+/// **Manifests** and nothing generates its spelling from `Manifest`'s, so a field renamed on one side
+/// fails here. That is why CI runs it — everything else in the suite decodes a string a person typed.
+private func describe() -> Int32 {
+    let home = Toolchain.home
+    do throws(Refusal) {
+        let toolchain = try Toolchain.resolve(home: home)
+        let runner = Runner(toolchain: toolchain, home: home)
+        let manifests = try Catalogue(home: home).refresh(using: runner)
+        for manifest in manifests {
+            let keywords = (manifest.otherKeywords + [manifest.keyword]).joined(separator: ", ")
+            print("\(manifest.keyword)\t\(manifest.name)\t\(keywords)")
+        }
+        return 0
+    } catch {
+        return refused(error)
     }
 }
 
@@ -215,9 +236,7 @@ private func seed() -> Int32 {
         print("= \(home.path): \(summary.line)")
         return 0
     } catch {
-        report(error.reason)
-        if let detail = error.detail { report(detail) }
-        return 1
+        return refused(error)
     }
 }
 

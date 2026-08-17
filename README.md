@@ -62,7 +62,7 @@ Starkit lives in the menu bar, and the icon turns red when something is wrong.
 | Key | Does |
 | --- | ---- |
 | ↩ | Runs the selected Script, or creates one when nothing matches |
-| ⌥↩ or ⌃O | Opens the selected Script in your editor, or writes the one nothing matched |
+| ⌥↩ or ⌃O | Opens the selected Script in your editor, or writes the one nothing matched. Zed unless `~/.starkit/starkit.toml` says `editor = "Your Editor"` |
 | ⌃D, then ⌃D again | Moves a Script and its test to the Trash, naming the files first |
 | Escape or ⌃⌘K | Dismisses the bar. A Script already running still finishes and performs its Effects |
 

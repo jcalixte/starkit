@@ -19,6 +19,10 @@ struct EffectTests {
 
     // MARK: - The words of the Vocabulary
 
+    /// The other end of this exact string is
+    /// `seed/test/entry_test.gleam`'s `every_effect_crosses_the_wire_under_its_own_field_name_test`,
+    /// which asserts that `entry.encode` writes it character for character. Nothing generates either
+    /// half from the other, so the two literals *are* the contract: change one and change the other.
     @Test("each Effect arrives under the field name the Vocabulary gave it")
     func everyKind() throws {
         let reply = """

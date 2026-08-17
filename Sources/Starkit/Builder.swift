@@ -10,6 +10,15 @@ struct Builder {
     /// byte-identical file over one, which `install.sh` does on every install, does not.
     static let sharedModules = ["starkit.gleam", "entry.gleam", "registry.gleam"]
 
+    /// F14's sibling, for the compiler rather than for a **Script**. A build is spawned from the
+    /// **Watcher**'s queue and from the ↩ path, and neither has anywhere to put a wait that never
+    /// ends: the bar would spin for as long as the machine stayed on, and every later save would
+    /// queue up behind it.
+    ///
+    /// Two minutes rather than the five seconds a run gets, because the slowest legitimate build is
+    /// the one behind a seeded home, which resolves the dependency tree over the network.
+    static let deadline: DispatchTimeInterval = .seconds(120)
+
     func build() throws(Refusal) {
         let process = Process()
         process.executableURL = toolchain.gleam
@@ -36,15 +45,24 @@ struct Builder {
                     + "\(toolchain.gleam.path)."
             )
         }
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        exited.wait()
+        let said = Drain()
+        let drained = DispatchGroup()
+        said.drain(output, in: drained)
+
+        if exited.wait(timeout: .now() + Self.deadline) == .timedOut {
+            kill(process.processIdentifier, SIGKILL)
+            // The kill closes the write end, so the drain finishes on its own.
+            drained.wait()
+            throw Refusal(
+                "Building your Scripts was killed after 2 minutes.",
+                detail: said.text
+                    ?? "gleam printed nothing before it was stopped. It was run in \(home.path)."
+            )
+        }
+        drained.wait()
 
         guard process.terminationStatus == 0 else {
-            throw Refusal(
-                "Your Scripts do not compile.",
-                detail: String(decoding: data, as: UTF8.self).withoutTerminalColour
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-            )
+            throw Refusal("Your Scripts do not compile.", detail: said.text)
         }
     }
 

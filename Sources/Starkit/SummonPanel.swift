@@ -216,12 +216,12 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
     ///
     /// Transparent *and* off screen: either alone risks a frame of a bar appearing at launch.
     private func warm() {
-        let hidden = panel.alphaValue
+        let alpha = panel.alphaValue
         panel.alphaValue = 0
         panel.setFrameOrigin(NSPoint(x: -Self.width * 4, y: -Self.header * 4))
         panel.orderFront(nil)
         panel.orderOut(nil)
-        panel.alphaValue = hidden
+        panel.alphaValue = alpha
     }
 
     func toggle() {
@@ -397,7 +397,6 @@ final class SummonPanel: NSObject, NSTextFieldDelegate {
         report("   \(manifest.keyword) asks for \(question) — Seeded with \(seed.count) characters")
     }
 
-    /// Back to the **Keyword** stage, with what was typed still in the field. Escape's first
     /// Back to the **Keyword** stage, with what was typed still in the field. The caret goes to the
     /// end rather than selecting, so the **Keyword** does not vanish on the next keystroke.
     private func stopAsking() {
@@ -658,6 +657,12 @@ private final class Mark: NSView {
         spinner.appearance = NSAppearance(named: .darkAqua)
         spinner.isDisplayedWhenStopped = false
         addSubview(spinner)
+
+        // Decoration. The fruit says nothing, and the spinner says what the field being locked
+        // already says — read out, the pair is two interruptions for no information.
+        setAccessibilityElement(false)
+        glyph.setAccessibilityElement(false)
+        spinner.setAccessibilityElement(false)
     }
 
     @available(*, unavailable)
@@ -697,6 +702,11 @@ private final class MessageView: NSView {
         )
         symbol.contentTintColor = Palette.aside
         addSubview(symbol)
+
+        // One element rather than a label beside a symbol: what is read out should be the sentence
+        // and who is saying it, in that order, and not two announcements that arrive apart.
+        setAccessibilityElement(true)
+        setAccessibilityRole(.staticText)
     }
 
     @available(*, unavailable)
@@ -706,6 +716,9 @@ private final class MessageView: NSView {
 
     func show(_ text: String, inStarkitsVoice: Bool) {
         sentence.stringValue = text
+        // Whose voice it is, said rather than drawn: the warning symbol is the only thing that tells
+        // a **Refusal** from a **Notify** on screen, and a symbol reads as nothing.
+        setAccessibilityLabel(inStarkitsVoice ? "Starkit refused. \(text)" : text)
         let room = frame.width - leading - margin
         // The cell is asked how tall it needs to be *at this width* — a label's intrinsic size is a
         // single line unless something tells it what width it has.
@@ -786,6 +799,8 @@ private final class ListView: NSView {
             row.isHidden = true
             addSubview(row)
         }
+        setAccessibilityRole(.list)
+        setAccessibilityLabel("Scripts")
     }
 
     @available(*, unavailable)
@@ -847,6 +862,11 @@ private final class RowView: NSView {
             width: Self.keywordWidth,
             in: frame.height
         )
+
+        // The row and not its two labels: a row read out as "Youtube" and then "yt, youtube" is two
+        // things where there is one, and the selection is a property of the row.
+        setAccessibilityElement(true)
+        setAccessibilityRole(.row)
     }
 
     @available(*, unavailable)
@@ -864,10 +884,12 @@ private final class RowView: NSView {
             name.textColor = Palette.aside
             keyword.stringValue = "⌥↩ new Script"
         }
+        setAccessibilityLabel("\(name.stringValue), \(keyword.stringValue)")
         select(selected)
     }
 
     func select(_ selected: Bool) {
+        setAccessibilitySelected(selected)
         guard self.selected != selected else { return }
         self.selected = selected
         needsDisplay = true

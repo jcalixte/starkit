@@ -90,9 +90,19 @@ extension Watcher {
             }
         }
 
+        /// Give the stream back before this object goes. The C callback below holds an unretained
+        /// pointer to `self`, so a stream still running after a deallocation would dispatch into
+        /// freed memory. Invalidating first is what guarantees no callback is in flight or to come.
+        deinit {
+            guard let stream else { return }
+            FSEventStreamStop(stream)
+            FSEventStreamInvalidate(stream)
+            FSEventStreamRelease(stream)
+        }
+
         func watch(_ directory: URL) throws(Refusal) {
-            // Passed as a retained pointer rather than captured: the C callback carries no context of
-            // its own, and `stop` releases the stream before this object could go.
+            // Passed unretained rather than captured: the C callback carries no context of its own,
+            // and `deinit` above invalidates the stream before this object could go.
             var context = FSEventStreamContext(
                 version: 0,
                 info: Unmanaged.passUnretained(self).toOpaque(),

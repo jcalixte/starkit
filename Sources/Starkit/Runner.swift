@@ -68,52 +68,22 @@ struct Runner {
             )
         }
 
-        // Both pipes must drain off this thread, with the deadline waited on separately. Reading to
-        // EOF here would hand the deadline to the child — a **Script** that hangs never closes its
-        // stdout. Draining concurrently also stops either stream deadlocking the other by filling
-        // its 64 KB buffer while we read the wrong one.
-        let collected = Collected()
+        // Both pipes drain off this thread, with the deadline waited on separately — see `Drain`.
+        let answered = Drain()
+        let said = Drain()
         let drained = DispatchGroup()
-        DispatchQueue.global().async(group: drained) {
-            collected.reply = reply.fileHandleForReading.readDataToEndOfFile()
-        }
-        DispatchQueue.global().async(group: drained) {
-            collected.diagnostics = diagnostics.fileHandleForReading.readDataToEndOfFile()
-        }
+        answered.drain(reply, in: drained)
+        said.drain(diagnostics, in: drained)
 
         if exited.wait(timeout: .now() + Self.deadline) == .timedOut {
             kill(process.processIdentifier, SIGKILL)
             // The kill closes both write ends, so the drains finish on their own.
             drained.wait()
-            throw Refusal(
-                "\(what) was killed after 5 seconds.",
-                detail: collected.text(of: collected.diagnostics)
-            )
+            throw Refusal("\(what) was killed after 5 seconds.", detail: said.text)
         }
         drained.wait()
 
-        return (
-            collected.reply,
-            collected.text(of: collected.diagnostics),
-            process.terminationStatus
-        )
-    }
-
-    /// Somewhere for two concurrent reads to land. Lock-free only because of the ordering: each
-    /// queue writes only its own field, and nothing is read until `drained.wait()` has returned.
-    private final class Collected {
-        var reply = Data()
-        var diagnostics = Data()
-
-        /// bun ignores `NO_COLOR` (ADR 0003), so the escapes come out here or a stack trace reaches
-        /// the menu bar wearing them. Empty becomes `nil`: "nothing to say" and "an empty string"
-        /// read differently at the other end.
-        func text(of data: Data) -> String? {
-            let text = String(decoding: data, as: UTF8.self)
-                .withoutTerminalColour
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            return text.isEmpty ? nil : text
-        }
+        return (answered.data, said.text, process.terminationStatus)
     }
 
     /// Encoding cannot fail for a `Payload` — every field is a `String` or a list of them — so the

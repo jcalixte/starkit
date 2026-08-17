@@ -87,9 +87,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             try hotKey.register()
             report("⌃⌘K is Starkit's.")
         } catch {
-            status.set(error.reason, for: .hotKey)
-            report(error.reason)
+            note(error, as: .hotKey)
         }
+    }
+
+    /// Say a **Refusal** in both places it belongs: the menu bar item, which holds one sentence, and
+    /// the log, which also gets whatever came with it.
+    ///
+    /// - Parameter concern: which **Concern** this replaces. They are kept apart because they fail
+    ///   independently, so writing one must never erase another.
+    private func note(_ refusal: Refusal, as concern: MenuBarStatus.Concern) {
+        status.set(refusal.reason, for: concern)
+        report(refusal.reason)
+        if let detail = refusal.detail { report(detail) }
     }
 
     private func prepare() {
@@ -118,9 +128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // `bun`, so watching without them would report the same **Refusal** on every keystroke.
             watch(home: home, using: toolchain)
         } catch {
-            status.set(error.reason, for: .scripts)
-            report(error.reason)
-            if let detail = error.detail { report(detail) }
+            note(error, as: .scripts)
             if !cached.isEmpty {
                 report("Listing \(cached.count) Scripts from the last build that worked.")
             }
@@ -173,9 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return patient
         } catch {
-            status.set(error.reason, for: .scripts)
-            report(error.reason)
-            if let detail = error.detail { report(detail) }
+            note(error, as: .scripts)
             return false
         }
     }
@@ -184,9 +190,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status.set("Building the Scripts…", for: .scripts)
         report("Building the Scripts — a seeded or upgraded home resolves dependencies, so this is slow.")
 
-        Task.detached {
+        Task.detached { [weak self] in
             let outcome = Self.rebuild(toolchain: toolchain, home: home)
             await MainActor.run {
+                guard let self else { return }
                 self.settle(outcome, listing: cached)
                 // Only once the Scripts are real: watching before this would report the same Refusal
                 // for every file the first build writes.
@@ -228,9 +235,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             panel.catalogue = scripts
             report("\(scripts.count) Scripts: \(scripts.map(\.keyword).joined(separator: ", "))")
         case .failure(let refusal):
-            status.set(refusal.reason, for: .scripts)
-            report(refusal.reason)
-            if let detail = refusal.detail { report(detail) }
+            note(refusal, as: .scripts)
             if !previous.isEmpty {
                 report("Listing \(previous.count) Scripts from the last build that worked.")
             }
@@ -266,9 +271,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             // Not `.scripts`: overwriting that **Concern** would hide a real compile error behind a
             // watcher problem.
-            status.set(error.reason, for: .watcher)
-            report(error.reason)
-            if let detail = error.detail { report(detail) }
+            note(error, as: .watcher)
         }
     }
 
@@ -279,9 +282,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let file = try Scaffolder(home: Toolchain.home).create(keyword)
             report("Created \(file.path) — Zed has it, and C6 will build it.")
         } catch {
-            status.set(error.reason, for: .scripts)
-            report(error.reason)
-            if let detail = error.detail { report(detail) }
+            note(error, as: .scripts)
         }
     }
 
@@ -290,9 +291,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let file = try Scaffolder(home: Toolchain.home).edit(manifest.keyword)
             report("Editing \(file.path).")
         } catch {
-            status.set(error.reason, for: .scripts)
-            report(error.reason)
-            if let detail = error.detail { report(detail) }
+            note(error, as: .scripts)
         }
     }
 
@@ -304,9 +303,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     + trashed.map(\.lastPathComponent).joined(separator: ", ")
             )
         } catch {
-            status.set(error.reason, for: .scripts)
-            report(error.reason)
-            if let detail = error.detail { report(detail) }
+            note(error, as: .scripts)
         }
     }
 
@@ -337,9 +334,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             payload = try ContextGatherer()
                 .payload(input: input, keyword: manifest.keyword, needs: manifest.needs)
         } catch {
-            report(error.reason)
-            if let detail = error.detail { report(detail) }
-            status.set(error.reason, for: .run)
+            note(error, as: .run)
             panel.settled(error.reason, for: run)
             return
         }
