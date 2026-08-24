@@ -5,7 +5,10 @@
 # certificate from setup-signing.sh otherwise. Set STARKIT_IDENTITY to override both, e.g. with an
 # "Apple Development: …" certificate you already have. Any stable identity works; the only thing that
 # matters is that it does not change between builds, so TCC keeps the Accessibility grant that Paste
-# needs — and changing which identity signs costs one re-tick in System Settings.
+# needs. Changing which identity signs costs a reset, not a re-tick: TCC stores the requirement the
+# old signature satisfied beside the tick, and System Settings rewrites the tick alone — the box
+# reads on while the app goes on asking. `tccutil reset Accessibility` on the identifier below, then
+# grant it once more.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -84,7 +87,8 @@ if security find-certificate -c "$IDENTITY" >/dev/null 2>&1; then
 else
 	codesign --force --sign - --identifier "$BUNDLE_ID" "$APP"
 	echo "! No '$IDENTITY' certificate found, so this build is signed ad-hoc."
-	echo "  Every rebuild will reset Accessibility, so Paste will stop working."
+	echo "  Every rebuild changes the signature, so the grant stops matching and Paste stops"
+	echo "  working — and re-ticking the box does not bring it back."
 	echo "  Run scripts/setup-signing.sh once to fix that."
 fi
 

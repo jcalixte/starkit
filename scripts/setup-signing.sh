@@ -3,8 +3,9 @@
 #
 # Why this exists: macOS ties the Accessibility grant to an app's code signature, and an ad-hoc
 # signature changes on every build — so without this, every rebuild silently drops the grant and
-# Paste fails until you re-tick the box in System Settings. Signing with a stable identity pins the
-# app's designated requirement to this certificate, and the grant survives rebuilds.
+# Paste fails until it is reset and given again. Re-ticking the box in System Settings does not do
+# it, for the reason build.sh gives. Signing with a stable identity pins the app's designated
+# requirement to this certificate, and the grant survives rebuilds.
 #
 # The certificate is never trusted as a root and does not need to be: codesign accepts it by name
 # regardless, and TCC matches on the leaf certificate hash rather than on trust. It will not appear

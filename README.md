@@ -52,6 +52,14 @@ Starkit lives in the menu bar, and the icon turns red when something is wrong.
 
 - **Accessibility** is requested the first time a Script uses `Paste`, because synthesising ⌘V needs
   it. Nothing else does. System Settings → Privacy & Security → Accessibility → Starkit.
+  If Starkit is ticked there and asks anyway, the grant belongs to a signature this build no longer
+  has — a copy you signed yourself, before this one. Ticking the box again writes the answer without
+  replacing the requirement it is stored against, so reset it instead and grant it at the next
+  prompt:
+
+  ```sh
+  tccutil reset Accessibility dev.apoena.starkit
+  ```
 - **Start at Login** is turned on once by the app itself on a first launch
   and can be toggled from the menu afterwards.
 
