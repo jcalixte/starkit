@@ -1,6 +1,6 @@
 # House III — Components × Operations
 
-**Cascade:** [I Goals × Functions](./house-1-goals-functions.md) → [II Functions × Components](./house-2-functions-components.md) → **III Components × Operations** → [IV Operations × Controls](./house-4-operations-controls.md) · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
+**Cascade:** [I Needs × Functions](./house-1-needs-functions.md) → [II Functions × Components](./house-2-functions-components.md) → **III Components × Operations** → [IV Operations × Controls](./house-4-operations-controls.md) · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
 
 Process planning: the components against the commands that produce or verify them.
 
@@ -391,7 +391,7 @@ command while nothing in the system reports that it stopped. Their weights arriv
 **Carried from [House II](./house-2-functions-components.md), carries into
 [House IV](./house-4-operations-controls.md).** This basement's Rel % becomes House IV's importance
 column, so a **Control** is weighted by the **Operations** it guards and, through them, by the
-**Goals** at the top of the chain.
+**Needs** at the top of the chain.
 
 Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of
 order silently mixes generations — the rule is in

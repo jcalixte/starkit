@@ -49,8 +49,8 @@ missing runtime is what F15 and C10 already handle: red before it is needed, the
 last paragraph of ADR 0001. Nothing else in that decision changes, because the compilation target is
 still JavaScript and every **Script** written against it is unaffected.
 
-G7 takes on a faster-moving runtime. bun ships patch releases weekly where node ships monthly, and
-G7 promises an upgrade is never an event. Measured instead of assumed: 1.3.8 and 1.3.14 spawn within
+N7 takes on a faster-moving runtime. bun ships patch releases weekly where node ships monthly, and
+N7 promises an upgrade is never an event. Measured instead of assumed: 1.3.8 and 1.3.14 spawn within
 noise of each other. That is one data point and not a guarantee, and the risk is knowingly accepted
 here.
 

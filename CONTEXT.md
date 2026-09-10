@@ -228,7 +228,7 @@ _Avoid_: processes, open apps
   its own _Avoid_ list already ruled out "show", which C1 was using. Resolved: the act is a
   **Dismissal**, and `NSApp.hide` is one of the things it does. Found while specifying T2.6, when
   clicking outside became a third way to do the first one and nothing named it. It costs the
-  **Vocabulary** nothing (G6): no **Script** author ever writes it, for the same reason none of them
+  **Vocabulary** nothing (N6): no **Script** author ever writes it, for the same reason none of them
   writes **Shelf** or **Artefact**.
 - The reply to a run was briefly called an "envelope", a word from messaging that named the JSON
   shape rather than anything in the domain. Resolved: it carries **Effects** or a **Refusal**, and

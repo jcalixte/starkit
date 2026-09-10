@@ -101,8 +101,8 @@ Limits, all of them deliberate:
 - [tasks/todo.md](./tasks/todo.md) — the ordered task list, with checkpoints
 - [tasks/plan.md](./tasks/plan.md) — dependency graph, verification per task, and what would change the plan
 - [SPEC.md](./SPEC.md) — build order, acceptance criteria, commands, and boundaries
-- [DESIGN.md](./DESIGN.md) — goals, measurable functions, and the trade-offs taken
-- [docs/houses/house-1-goals-functions.md](./docs/houses/house-1-goals-functions.md) — the whole
+- [DESIGN.md](./DESIGN.md) — needs, measurable functions, and the trade-offs taken
+- [docs/houses/house-1-needs-functions.md](./docs/houses/house-1-needs-functions.md) — the whole
   design on one page: what Starkit is for, what it must do to deliver that, and where the engineering
   weight lands. First of four cascaded houses, each one's weights derived from the one above; the
   other three carry them down into **Components**, the commands that build them, and the gates that

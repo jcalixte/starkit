@@ -1,7 +1,7 @@
 # Starkit — Specification
 
 What to build, in what order, and how to know each part works. The vocabulary is in
-[CONTEXT.md](./CONTEXT.md); the goals, measured targets and trade-offs are in
+[CONTEXT.md](./CONTEXT.md); the needs, measured targets and trade-offs are in
 [DESIGN.md](./DESIGN.md). Neither is repeated here. This document is the build order and the
 acceptance criteria.
 
@@ -110,7 +110,7 @@ install, so the **Vocabulary** can be upgraded without asking you to merge it by
 
 The **Shelf** runs `bun run.mjs`, never `gleam run`. Gleam's `entry.mjs` exports `main` without
 calling it, and the file that does the calling is named `gleam@@private_main_v<version>.mjs`, which
-is private and is renamed by every Gleam upgrade, and G7 rules out depending on that. `run.mjs` is
+is private and is renamed by every Gleam upgrade, and N7 rules out depending on that. `run.mjs` is
 ours, so the only assumption left is that `entry.mjs` exports a function, and it fails at import
 rather than silently. This is also why `entry.gleam` need not match the package name: nothing
 resolves it as a package entry point.
@@ -132,7 +132,7 @@ Match `cmd-tab`, which is the house style for this kind of app:
   `Keyword`. If code needs a word that `CONTEXT.md` does not define, either the word is wrong or
   the glossary is incomplete. Resolve it; don't invent a synonym locally.
 - Gleam: standard `gleam format`. **Scripts** contain no `@external`, since zero FFI is a measured
-  property of the design (G5).
+  property of the design (N5).
 
 ## Testing strategy
 
@@ -193,7 +193,7 @@ and §8 records where their numbers came from instead.
 
 **Ask first**
 
-- Adding a word to the **Effect** or **Context** vocabulary. It is a design decision (G6), and
+- Adding a word to the **Effect** or **Context** vocabulary. It is a design decision (N6), and
   two **Scripts** wanting the same one is coincidence; three is a signal.
 - Anything requiring a permission beyond Accessibility. One grant is a property worth keeping.
 - Adding a dependency to `gleam.toml`, or any Swift dependency at all.

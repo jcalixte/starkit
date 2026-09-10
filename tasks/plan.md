@@ -271,7 +271,7 @@ changes the *list*, and a moved band is two rows redrawing.
 
 T2.6 was added after T2.4 rather than designed with it, because using the bar is what showed the
 gap: click into another window and it stays on top of your work — `.floating`, on every space —
-until you come back and press Escape. G2 asks for it to be there every time you reach for it, not
+until you come back and press Escape. N2 asks for it to be there every time you reach for it, not
 for it to be there when you did not.
 
 The mechanism is the whole task. `hidesOnDeactivate` is the one-line version and it is wrong: at
@@ -298,7 +298,7 @@ monitor costs nothing anyone can see.
 
 The monitor lives only while the bar is up. A global monitor is Starkit in the path of every click on
 the machine, and it would hold that position for the ~99% of the time the bar is not on screen, which
-G4 is a promise about. Installing it in `summon` and removing it in `dismiss` is also what makes
+N4 is a promise about. Installing it in `summon` and removing it in `dismiss` is also what makes
 "outside" free: a *global* monitor never sees events going to Starkit itself, so a click on the bar
 is excluded by the window server rather than by hit-testing a frame — and the menu bar item is inside
 for the same reason, which a frame test would have got wrong.
@@ -826,7 +826,7 @@ person launched. What is written down here is what that boot said while it was s
 | ID | Task | Depends | Verify with |
 | -- | ---- | ------- | ----------- |
 | T8.1 | `--bench` flag; measure every row of [DESIGN.md](../DESIGN.md) §8 and record actuals | T7.1 | all 7 budget rows carry a measured number, not a target |
-| T8.2 | Idle cost measurement for G4 | T7.1 | idle RSS and idle CPU recorded in `DESIGN.md` §3, next to Script Kit's |
+| T8.2 | Idle cost measurement for N4 | T7.1 | idle RSS and idle CPU recorded in `DESIGN.md` §3, next to Script Kit's |
 
 T8.2 fills the one blank in the competitive assessment: Script Kit's idle RSS was never measured
 because it wasn't running. Starkit's should not be a blank too.
@@ -873,7 +873,7 @@ note predicted.
 **T8.2 is a zero, and the zero is the point.** 0.47 s of CPU across a 22-minute life, none of it in a
 300 s window — below what `ps` resolves — because after launch nothing runs until the chord arrives.
 Memory is two figures on purpose: 86 MB resident, most of it AppKit pages shared with every
-application on the machine, and 21 MB phys footprint, which is the part that is Starkit's alone. G4 is
+application on the machine, and 21 MB phys footprint, which is the part that is Starkit's alone. N4 is
 about the second. Script Kit's side stays blank deliberately: measuring it means launching it, and its
 event tap would take ⌃⌘K away from the system being compared.
 

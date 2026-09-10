@@ -170,7 +170,7 @@ criteria per slice are in [SPEC.md](../SPEC.md).
       `starkit.toml` override deletes C12's 330 ms rather than trimming it (0.063 ms), and **F7's
       "≤ 10 ms otherwise" is withdrawn**, because an **Open** costs what LaunchServices costs and a
       budget over what Starkit does not control can be neither met nor missed
-- [x] **T8.2** Idle RSS and CPU for G4, recorded next to Script Kit's in `DESIGN.md` §3 — 0 ms of CPU
+- [x] **T8.2** Idle RSS and CPU for N4, recorded next to Script Kit's in `DESIGN.md` §3 — 0 ms of CPU
       across 300 s against a 0.47 s lifetime, all of it spent at launch, because nothing polls or
       watches until the chord arrives. Memory is two numbers rather than one: 86 MB resident, mostly
       AppKit pages shared with every application on the machine, and 21 MB phys footprint, which is

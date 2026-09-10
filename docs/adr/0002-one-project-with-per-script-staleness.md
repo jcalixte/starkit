@@ -3,7 +3,7 @@
 All **Scripts** live in a single Gleam project, one module each. The obvious alternative, a project
 per **Script**, buys true isolation but costs five dependency trees, five ~2 s cold builds, ~14 MB
 of build output against 2.8 MB, and turns "create a **Script**" from writing one file into
-scaffolding a project. Against the footprint goal, that is the wrong trade.
+scaffolding a project. Against the footprint need, that is the wrong trade.
 
 The problem with one project is that `gleam build` fails as a whole, so a single broken **Script**
 would stop every other one from running. That is unacceptable: the failure would surface at the

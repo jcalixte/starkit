@@ -1,6 +1,6 @@
 # House IV — Operations × Controls
 
-**Cascade:** [I Goals × Functions](./house-1-goals-functions.md) → [II Functions × Components](./house-2-functions-components.md) → [III Components × Operations](./house-3-components-operations.md) → **IV Operations × Controls** · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
+**Cascade:** [I Needs × Functions](./house-1-needs-functions.md) → [II Functions × Components](./house-2-functions-components.md) → [III Components × Operations](./house-3-components-operations.md) → **IV Operations × Controls** · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
 
 Process control: the operations against the gates that would catch a regression in one.
 
@@ -384,8 +384,8 @@ whole reason to draw four houses instead of one.
 
 **Carried from [House III](./house-3-components-operations.md). Nothing carries on from here** —
 **Controls** are the last phase of the cascade, so this basement feeds no further house. Read the
-chain backwards from any weight in it and you reach a **Goal** in
-[House I](./house-1-goals-functions.md) with a number beside it.
+chain backwards from any weight in it and you reach a **Need** in
+[House I](./house-1-needs-functions.md) with a number beside it.
 
 Recompute in order I → II → III → IV. Each house reads the one before it, so redrawing them out of
 order silently mixes generations — the rule is in

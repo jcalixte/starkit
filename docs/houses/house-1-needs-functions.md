@@ -1,11 +1,11 @@
-# House I — Goals × Functions
+# House I — Needs × Functions
 
-**Cascade:** **I Goals × Functions** → [II Functions × Components](./house-2-functions-components.md) → [III Components × Operations](./house-3-components-operations.md) → [IV Operations × Controls](./house-4-operations-controls.md) · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
+**Cascade:** **I Needs × Functions** → [II Functions × Components](./house-2-functions-components.md) → [III Components × Operations](./house-3-components-operations.md) → [IV Operations × Controls](./house-4-operations-controls.md) · [all four in DESIGN.md](../../DESIGN.md#houses-of-quality)
 
 The first house of the QFD cascade: what Starkit is for, against what it must do to deliver that.
 
-`DESIGN.md` §1 holds the **Goals** and their weights, §2 the **Functions** and their targets,
-[§5](../../DESIGN.md#5-house-i--goals--functions) the relation cells this renders, and
+`DESIGN.md` §1 holds the **Needs** and their weights, §2 the **Functions** and their targets,
+[§5](../../DESIGN.md#5-house-i--needs--functions) the relation cells this renders, and
 [§6](../../DESIGN.md#6-roof--function--function) the roof.
 
 <!-- Rendered from the tables named above. A house is a rendering, not a source: change the
@@ -253,7 +253,7 @@ The first house of the QFD cascade: what Starkit is for, against what it must do
   \end{tikzpicture}%
 }
 
-% --- House I: 7 Goals x 18 Functions -----------------------------------
+% --- House I: 7 Needs x 18 Functions -----------------------------------
 \def\qfdNW{7}
 \def\qfdNH{18}
 \def\qfdWhatW{5.2}
@@ -261,26 +261,26 @@ The first house of the QFD cascade: what Starkit is for, against what it must do
 \def\qfdHdrH{3.5}
 \def\qfdBasementN{4}
 \qfdshowcompetitivefalse
-\def\qfdWhatsTitle{Goals (the WHATs)}
+\def\qfdWhatsTitle{Needs (the WHATs)}
 \def\qfdImpTitle{Weight}
 \def\qfdProjectTitle{Starkit --- House I}
-\def\qfdConcept{Seven weighted \textbf{Goals} against the eighteen measurable
+\def\qfdConcept{Seven weighted \textbf{Needs} against the eighteen measurable
   \textbf{Functions} that deliver them. The basement computes where the
   engineering weight actually falls.}
 
 \begin{document}
 \begin{qfdhouse}
 
-  % ---- WHATs: the seven Goals, in weight order (rows 1..7) ----
+  % ---- WHATs: the seven Needs, in weight order (rows 1..7) ----
   \pgfmathsetmacro{\qfdWhatTextW}{\qfdWhatW - 0.2}
   \foreach \r/\t in {%
-    1/{G2 It's there every time I reach for it},
-    2/{G1 The automation fires before I notice waiting},
-    3/{G4 It costs nothing while I'm not using it},
-    4/{G3 A new automation is one file and one minute},
-    5/{G7 Upgrading bun or Gleam never breaks it},
-    6/{G5 I write Gleam, not glue around Gleam},
-    7/{G6 There's almost nothing to remember}}
+    1/{N2 It's there every time I reach for it},
+    2/{N1 The automation fires before I notice waiting},
+    3/{N4 It costs nothing while I'm not using it},
+    4/{N3 A new automation is one file and one minute},
+    5/{N7 Upgrading bun or Gleam never breaks it},
+    6/{N5 I write Gleam, not glue around Gleam},
+    7/{N6 There's almost nothing to remember}}
     \node[anchor=west, font=\scriptsize,
           text width=\qfdWhatTextW cm, align=left]
       at ({\qfdLeftEdge + 0.1}, {-\r + 0.5}) {\t};
@@ -314,24 +314,24 @@ The first house of the QFD cascade: what Starkit is for, against what it must do
   % ---- Relations. Every cell is backed by section 4's cascade. ----
   \foreach \c/\r/\s in {%
     % Summon & match
-    1/2/S, 1/1/M,                 % F1  -> G1 strong, G2 (first summon = every summon)
-    2/2/S, 2/1/S,                 % F2  -> G1, and G2: a cache keeps the bar usable while broken
+    1/2/S, 1/1/M,                 % F1  -> N1 strong, N2 (first summon = every summon)
+    2/2/S, 2/1/S,                 % F2  -> N1, and N2: a cache keeps the bar usable while broken
     3/2/S,                        % F3
     4/2/S,                        % F18
-    5/2/S, 5/4/M, 5/7/S,          % F13 -> G1, G3, and G6: inherited bindings, nothing to learn
+    5/2/S, 5/4/M, 5/7/S,          % F13 -> N1, N3, and N6: inherited bindings, nothing to learn
     % Build & run
-    6/1/S, 6/2/M, 6/4/M,          % F4  -> G2 strong, G1, G3
-    7/2/S, 7/3/S,                 % F5  -> G1, and G4: no resident process, 0 MB idle
-    8/2/S, 8/6/M, 8/7/M,          % F6  -> G1, G5, G6
+    6/1/S, 6/2/M, 6/4/M,          % F4  -> N2 strong, N1, N3
+    7/2/S, 7/3/S,                 % F5  -> N1, and N4: no resident process, 0 MB idle
+    8/2/S, 8/6/M, 8/7/M,          % F6  -> N1, N5, N6
     % Act
-    9/2/S, 9/6/S,                 % F7  -> G1, and G5: Effects are the whole escape-hatch-free surface
+    9/2/S, 9/6/S,                 % F7  -> N1, and N5: Effects are the whole escape-hatch-free surface
     % Survive
     10/1/S,                       % F8
-    11/1/S, 11/3/M, 11/5/M,       % F9  -> G2, G4, G7
-    12/1/S, 12/4/S, 12/3/M,       % F10 -> G2, G3 (the only path a Script becomes visible), G4
+    11/1/S, 11/3/M, 11/5/M,       % F9  -> N2, N4, N7
+    12/1/S, 12/4/S, 12/3/M,       % F10 -> N2, N3 (the only path a Script becomes visible), N4
     13/1/S,                       % F12
     14/1/S,                       % F14
-    15/5/S, 15/1/M, 15/7/M,       % F15 -> G7, G2, G6
+    15/5/S, 15/1/M, 15/7/M,       % F15 -> N7, N2, N6
     % Author
     16/4/S, 16/7/M,               % F11
     17/4/S,                       % F16

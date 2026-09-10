@@ -1,6 +1,6 @@
 # Starkit — Design (QFD)
 
-How Starkit delivers what `CONTEXT.md` names. This document owns goals, measurable functions,
+How Starkit delivers what `CONTEXT.md` names. This document owns needs, measurable functions,
 chosen approaches, and the trade-offs taken. It does not define vocabulary, which is `CONTEXT.md`'s
 job, and it does not record hard-to-reverse decisions, which live in `docs/adr/`.
 
@@ -13,7 +13,7 @@ Strength weights used in matrices: **9** strong, **3** medium, **1** weak, blank
 
 ## Houses of Quality
 
-Four houses, cascaded, each one's importance column carried down from the one before: **Goals** set
+Four houses, cascaded, each one's importance column carried down from the one before: **Needs** set
 the weight, **Functions** inherit it, **Components** inherit theirs from the functions, **Operations**
 from the components, and **Controls** from the operations. Nothing in a basement is asserted.
 
@@ -22,14 +22,14 @@ project-level one — and 240 lines of LaTeX ahead of §1 would bury the documen
 
 | House | Renders | Drawn in | Table behind it |
 | ----- | ------- | -------- | --------------- |
-| **I** | Goals × Functions | [house-1-goals-functions.md](./docs/houses/house-1-goals-functions.md) | §1, §2, §5, §6 |
+| **I** | Needs × Functions | [house-1-needs-functions.md](./docs/houses/house-1-needs-functions.md) | §1, §2, §5, §6 |
 | **II** | Functions × Components | [house-2-functions-components.md](./docs/houses/house-2-functions-components.md) | §7 |
 | **III** | Components × Operations | [house-3-components-operations.md](./docs/houses/house-3-components-operations.md) | §11 |
 | **IV** | Operations × Controls | [house-4-operations-controls.md](./docs/houses/house-4-operations-controls.md) | §11 |
 
-Start with [House I](./docs/houses/house-1-goals-functions.md): it is the whole design on one page.
+Start with [House I](./docs/houses/house-1-needs-functions.md): it is the whole design on one page.
 
-No house draws the perception zone. §3 holds measured function benchmarks and no 0–5 goal ratings,
+No house draws the perception zone. §3 holds measured function benchmarks and no 0–5 need ratings,
 and inventing seven of them for Script Kit would be the guess §3 refuses on the record.
 
 **What the four of them found**, in one place, with the detail in §5, §7, §11 and §10:
@@ -37,27 +37,27 @@ and inventing seven of them for Script Kit would be the guess §3 refuses on the
 - **F10 and F2 rank first and second**, which is C6 and C2. §7 had argued that about C6 already.
 - **C1 ranks first among components** at 15.6 % and had never been singled out at all.
 - **C7 is joint-riskiest and 9th by weight.** §7 was ranking by risk and calling it effort.
-- **G4 is weight 8 and has no function.** Footprint is met by trades, not by anything §2 holds.
+- **N4 is weight 8 and has no function.** Footprint is met by trades, not by anything §2 holds.
 - **The cascade stops at `swift build` for C1 and C6** — 29.3 % of the component weight reaches no
   operation and therefore no control. Deliberate, per `SPEC.md`, and now sized.
 
 ---
 
-## 1. Goals — the WHATs
+## 1. Needs — the WHATs
 
 One user, so weights are asserted directly instead of derived from segments.
 
-| ID  | Goal                                          | Weight | Source            |
+| ID  | Need                                          | Weight | Source            |
 | --- | --------------------------------------------- | :----: | ----------------- |
-| G2  | It's there every time I reach for it          |   10   | stated: boot start, broken Script must not block others |
-| G1  | The automation fires before I notice waiting  |   9    | stated twice: "speed is important" |
-| G4  | It costs nothing while I'm not using it       |   8    | stated: "smallest footprint", sharpened to idle cost |
-| G3  | A new automation is one file and one minute   |   7    | original ask: "create or edit files" |
-| G7  | Upgrading bun or Gleam never breaks it, and I never tell it where they are | 7 | stated: "easily update node and gleam versions or getting the default one" |
-| G5  | I write Gleam, not glue around Gleam          |   6    | choosing Gleam was the point; [ADR 0001](./docs/adr/0001-compile-gleam-to-javascript.md) |
-| G6  | There's almost nothing to remember            |   6    | stated: "real simplicity", a small **Vocabulary** baseline and not a cap |
+| N2  | It's there every time I reach for it          |   10   | stated: boot start, broken Script must not block others |
+| N1  | The automation fires before I notice waiting  |   9    | stated twice: "speed is important" |
+| N4  | It costs nothing while I'm not using it       |   8    | stated: "smallest footprint", sharpened to idle cost |
+| N3  | A new automation is one file and one minute   |   7    | original ask: "create or edit files" |
+| N7  | Upgrading bun or Gleam never breaks it, and I never tell it where they are | 7 | stated: "easily update node and gleam versions or getting the default one" |
+| N5  | I write Gleam, not glue around Gleam          |   6    | choosing Gleam was the point; [ADR 0001](./docs/adr/0001-compile-gleam-to-javascript.md) |
+| N6  | There's almost nothing to remember            |   6    | stated: "real simplicity", a small **Vocabulary** baseline and not a cap |
 
-G2 outranks G1 deliberately: a launcher that is fast but occasionally absent is worse than one
+N2 outranks N1 deliberately: a launcher that is fast but occasionally absent is worse than one
 that is merely quick, because the absence costs a whole trip to diagnose.
 
 ## 2. Functions — the HOWs
@@ -116,23 +116,23 @@ machine; blanks are where nothing was measured.
 | ---------------------------- | ------------------ | --------------------- |
 | F5 execute                   | 27–29 ms           | —                     |
 | F6 gather **Running Apps**   | 0.013–0.020 ms in-process, 4.2–5.7 ms on the first read | 463 ms, `osascript` |
-| **Vocabulary** size (G6)     | 12 bespoke names   | 356 injected globals  |
-| On-disk total (G4)           | 3.9 MB             | 1.86 GB               |
+| **Vocabulary** size (N6)     | 12 bespoke names   | 356 injected globals  |
+| On-disk total (N4)           | 3.9 MB             | 1.86 GB               |
 | — the app                    | 492 KB             | 717 MB (Electron)     |
 | — support directory          | 3.4 MB `~/.starkit`, of which 3.3 MB is Gleam's `build/` | 1.1 GB `~/.kit` + 42 MB `~/.kenv` |
-| Idle RSS (G4)                | 86 MB resident, 21 MB phys footprint | — |
-| Idle CPU (G4)                | 0 ms over 300 s, and 0 again over 60 s with C6 watching | — |
+| Idle RSS (N4)                | 86 MB resident, 21 MB phys footprint | — |
+| Idle CPU (N4)                | 0 ms over 300 s, and 0 again over 60 s with C6 watching | — |
 
 What this tells us: the `osascript` figure is the single largest latency in the current system and
 disappears entirely by moving **Context** gathering in-process. The 356-to-12 vocabulary ratio is
 what "real simplicity" meant, and it is already banked by the closed vocabularies in `CONTEXT.md`,
-so the design's job on G6 is not to erode it.
+so the design's job on N6 is not to erode it.
 
 Idle cost was measured at T8.2 against the installed bundle launched by `SMAppService` and left
 alone. The two memory figures are both true and answer different questions: 86 MB is what `ps`
 reports resident, most of it AppKit and CoreGraphics pages shared with every other application on the
 machine, and 21 MB is the phys footprint, the part that is Starkit's alone and would be returned if
-it quit. G4 is about the second. Script Kit's column stays a blank on both rows on purpose: measuring
+it quit. N4 is about the second. Script Kit's column stays a blank on both rows on purpose: measuring
 it means launching it, and it takes ⌃⌘K with a `CGEventTap` that consumes the chord before Carbon
 dispatch (§4 F8), so the measurement would cost the working system it is being compared against.
 
@@ -145,11 +145,11 @@ across 60 s and the resident size did not either. An `FSEvents` stream is a subs
 is told, it does not ask. A polling design would have shown up in this row; this one contains no
 poll.
 
-## 4. Cascade — Goals → Functions → How → Components
+## 4. Cascade — Needs → Functions → How → Components
 
-Each function sits under the goal it serves most; secondary goals are noted inline.
+Each function sits under the need it serves most; secondary needs are noted inline.
 
-- **G2** It's there every time I reach for it _W:10_
+- **N2** It's there every time I reach for it _W:10_
   - **F8** Hold the chord, be visibly broken when it can't
     - **How**: `RegisterEventHotKey`, which needs no permission and cannot be silently disabled,
       unlike the `CGEventTap` in `cmd-tab`, which only needed a tap because it *intercepts* ⌘⇥
@@ -162,7 +162,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         eaten upstream is visible in one place only, which is the bar not coming up. Paying
         Accessibility for a tap of our own buys nothing, since an earlier tap still consumes first
       - **Component**: C3 HotKey · C10 MenuBarStatus
-  - **F9** Be ready after login _(also G4)_
+  - **F9** Be ready after login _(also N4)_
     - **How**: `SMAppService.mainApp`, no helper bundle. A login-launched app gets a minimal
       `PATH`, so the **Toolchain** is resolved at each launch by asking the login shell: one spawn
       for both tools, `command -v` so the shell's own answer wins and a version manager's shim
@@ -212,7 +212,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         correct and writes nothing, which is convergence and not a path filter, since an editor's
         temporary is a name this code would have to guess at
       - **Component**: C6 Watcher · C10 MenuBarStatus
-  - **F4** Bring the **Artefact** up to date, or **Refuse** _(also G1)_
+  - **F4** Bring the **Artefact** up to date, or **Refuse** _(also N1)_
     - **How**: watcher builds on save, so **Summon** usually finds the work already done; the
       shelf re-checks as a safety net. Per-**Script** content hashing against what the last
       successful build compiled decides **Stale**
@@ -241,7 +241,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         loses the bar it was going to speak into, so nothing arrives on screen minutes later
       - **Component**: C4 Runner · C1 SummonPanel
 
-- **G1** The automation fires before I notice waiting _W:9_
+- **N1** The automation fires before I notice waiting _W:9_
   - **F1** Put the bar on screen
     - **How**: one `NSPanel` built at launch, then shown and hidden, so the first ⌃⌘K of a
       session costs what the hundredth does (`cmd-tab`'s precedent)
@@ -325,7 +325,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       it, because half a **Context** is not a smaller **Context** but a **Script** deciding about a
       machine that does not exist
       - **Component**: C8 ContextGatherer
-  - **F7** Perform each **Effect** in order, restoring focus before **Paste** _(also G5)_
+  - **F7** Perform each **Effect** in order, restoring focus before **Paste** _(also N5)_
     - **How**: `NSWorkspace.open` / `forceTerminate` need no permission. **Open** measured at
       T1.5 at ~35 ms warm and seconds cold, since it returns only once the launch is under way.
       **Kill** arrived at T4.3 and needs no permission either, which is what makes the one guarantee
@@ -369,7 +369,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         T5.4
       - **Component**: C7 Effector
 
-- **G3** A new automation is one file and one minute _W:7_
+- **N3** A new automation is one file and one minute _W:7_
   - **F11** Turn an unmatched **Keyword** into a new **Script**
     - **How**: write `src/scripts/<keyword>.gleam` from a template and open it in `$EDITOR`
       (Zed). The bar scaffolds, the editor is where all typing happens. Registry generation is a
@@ -437,7 +437,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         **Input** stage hands the key back to the text, where the field holds an answer rather than
         a **Keyword**
       - **Component**: C11 Scaffolder · C6 Watcher
-  - **F17** Open a **Script** where it is written _(also G5)_
+  - **F17** Open a **Script** where it is written _(also N5)_
     - **How**: ⌥↩ on the selected **Script** opens it in Zed and **Dismisses** the bar. It is
       F11's "the editor is where all typing happens" applied to a **Script** that already exists, so
       it is the same `open` and not a second way to reach one
@@ -453,7 +453,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
         question nobody asked — which is the opposite case from the offer, where nothing is listed
         because nothing was ever written
       - **Component**: C11 Scaffolder
-  - **F13** Drive the whole bar from the home row _(also G1)_
+  - **F13** Drive the whole bar from the home row _(also N1)_
     - ⌘ chords travel a different road from ⌃ chords, and that is why ⌘V did not work. Everything
       above arrives through `StandardKeyBinding.dict` and the field editor, which needs no menu.
       ⌘V, ⌘C, ⌘X, ⌘A and ⌘Z are dispatched by AppKit as *menu key equivalents*, so with no
@@ -467,7 +467,7 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       future `DefaultKeyBinding.dict` for free
       - **Component**: C1 SummonPanel
 
-- **G7** Upgrading bun or Gleam never breaks it _W:7_
+- **N7** Upgrading bun or Gleam never breaks it _W:7_
   - **F15** Follow the **Toolchain** the shell reports, and notice when it moves
     - **How**: ask the login shell at each launch. Nothing is pinned, so a bun or Gleam upgrade is
       not an event, and this was verified instead of assumed: 1.3.8 and 1.3.14 spawn within noise of
@@ -480,19 +480,19 @@ Each function sits under the goal it serves most; secondary goals are noted inli
       same blind spot `-lc` had, arrived at from the other direction
       - **Component**: C12 Toolchain · C10 MenuBarStatus
 
-- **G5** I write Gleam, not glue _W:6_ · **G6** Almost nothing to remember _W:6_
+- **N5** I write Gleam, not glue _W:6_ · **N6** Almost nothing to remember _W:6_
   - Both are served by the **Vocabulary** being closed and by every capability arriving as an
     **Effect** instead of an escape hatch. No function of their own: they are constraints the
     other functions are judged against. Current standing: 0 FFI declarations, 10 bespoke names.
 
-## 5. House I — Goals × Functions
+## 5. House I — Needs × Functions
 
 Transposed against the canonical orientation: functions are rows here, because eighteen markdown
-columns do not fit and [House I](./docs/houses/house-1-goals-functions.md) already draws it the
-other way round. Σ = `Σ(goal weight ×
+columns do not fit and [House I](./docs/houses/house-1-needs-functions.md) already draws it the
+other way round. Σ = `Σ(need weight ×
 strength)`. Rel % is Σ over the house total of 2061, and it is the number House II carries down.
 
-| Function                    | G2 (10) | G1 (9) | G4 (8) | G3 (7) | G7 (7) | G5 (6) | G6 (6) |   Σ | Rank | Rel % |
+| Function                    | N2 (10) | N1 (9) | N4 (8) | N3 (7) | N7 (7) | N5 (6) | N6 (6) |   Σ | Rank | Rel % |
 | --------------------------- | :-----: | :----: | :----: | :----: | :----: | :----: | :----: | --: | :--: | ----: |
 | F1 bar on screen            |    3    |   9    |        |        |        |        |        | 111 |  9   |   5.4 |
 | F2 catalogue without build  |    9    |   9    |        |        |        |        |        | 171 |  2   |   8.3 |
@@ -512,20 +512,20 @@ strength)`. Rel % is Σ over the house total of 2061, and it is the number House
 | F11 **Keyword** to **Script** |       |        |        |   9    |        |        |   3    |  81 |  14  |   3.9 |
 | F16 take one away           |         |        |        |   9    |        |        |        |  63 |  18  |   3.1 |
 | F17 open in editor          |         |        |        |   9    |        |   3    |        |  81 |  14  |   3.9 |
-| **Σ per goal**              |   690   |  675   |  120   |  294   |   84   |   90   |  108   | 2061 |     |       |
+| **Σ per need**              |   690   |  675   |  120   |  294   |   84   |   90   |  108   | 2061 |     |       |
 
 **Top engineering priorities.** F10 first (8.6 %) and F2 second (8.3 %), which is C6 and C2, the
 watcher and the catalogue. §7's prose reached the same place by argument — "C6 is the quiet
 load-bearing one" — and the arithmetic did not need telling. F13 third (7.6 %) is the one that
 would not have been guessed: driving the bar from the home row is worth more than executing an
-**Artefact**, because it is the only function that lands on three goals at once, two of them
+**Artefact**, because it is the only function that lands on three needs at once, two of them
 strongly. F16 is last (3.1 %), the newest function in the doc and the least load-bearing, which is
 the right order to have built things in.
 
-**What the goal row exposes.** G1 and G2 hold 36 % of the total goal weight and take **66 % of the
-house**. The other four goals hold 51 % of the weight and take 19 %. For G5 and G6 that is already
-on the record — §4 says outright they have "no function of their own" — but G4 and G7 are in exactly
-the same position and §4 does not say so. G4 is weight 8, the third-heaviest goal in the document,
+**What the need row exposes.** N1 and N2 hold 36 % of the total need weight and take **66 % of the
+house**. The other four needs hold 51 % of the weight and take 19 %. For N5 and N6 that is already
+on the record — §4 says outright they have "no function of their own" — but N4 and N7 are in exactly
+the same position and §4 does not say so. N4 is weight 8, the third-heaviest need in the document,
 and 120 of 2061. Nothing in §2 names a footprint. §3 measures one, and the 3.9 MB against 1.86 GB is
 won by T1, T2 and T12 — by trades, not by a function anybody has to hold. See §10.
 
@@ -560,7 +560,7 @@ answer: most function pairs in this system do not touch. Symbols follow the hous
 - **F1 against F7** is not resolved and cannot be: it is one decision split across C1 and C7, and
   §9 keeps it as a watched tension rather than a fixed bug. The 19.4 ms is the price of the split.
 - **F9 against F15** is paid, knowingly, and is the largest single cost in the system. The
-  alternative — pinning paths in `starkit.toml` — buys 330 ms by trading away the thing G7 exists
+  alternative — pinning paths in `starkit.toml` — buys 330 ms by trading away the thing N7 exists
   to get, so it stays a debugging convenience.
 - **F3 against F18** and **F13 against F16** were both resolved inside the function that caused
   them: four match bands, and accepting the loss of `deleteForward:`. Neither needs an ADR.
@@ -590,7 +590,7 @@ the panel, so nothing competes with F1's 50 ms. A mark would claim a tension tha
 
 Transposed for the same reason §5 is, and drawn as
 [House II](./docs/houses/house-2-functions-components.md). Component Σ = `Σ(function Σ from §5 × strength)`, so a
-component's weight is inherited from the goals and not asserted here. House total 27 765.
+component's weight is inherited from the needs and not asserted here. House total 27 765.
 
 | Function                      | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 | C11 | C12 |
 | ----------------------------- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
@@ -709,9 +709,9 @@ largest single cost in the system and still the reason F9's budget is in seconds
 | T7 | **Kill** over quit | an empty screen, immediately | unsaved work is lost, deliberately | |
 | T8 | ~~Local `install.sh` over Homebrew~~ — **revisited once a Developer ID existed** | bought no notarization, no quarantine, and a stable signature that keeps the Accessibility grant; confirmed at T5.5 across a changed binary and a deleted-and-recopied bundle | cost was that nobody else could install it in one line, and that the grant lasted exactly as long as one machine's certificate. Both were paid until the Apple Developer Program made a Developer ID available: its designated requirement is the same on every machine and across every release, so the grant outlives the certificate that happened to be in one keychain. `setup-signing.sh` stays for anyone building their own copy, which is still the path the README leads with | |
 | T15 | A notarized download, and the app seeding its own home | Gatekeeper opens the app on a machine that has never seen it, with no right-click-open and no `xattr -d`; a cask can name `gleam` and `bun` as dependencies, which a caveat could only ask for | the seeding rule moves out of `install.sh` and into the binary, because a cask drops the `.app` and runs nothing. First launch grew a branch that only ever runs once, and `seed/` is now carried twice — in the repo and in `Contents/Resources` — with `build.sh` the only thing keeping them the same. Apple's queue has no SLA: the first submission took seven hours, which is why the staple is reachable on its own | |
-| T9 | ~~Tree only, no importance matrix~~ — **reversed once the tree had eighteen functions** | bought no grid to keep current, while component priority was argued from goal weights rather than computed. That held while the argument was small enough to hold in one head. Both houses are now drawn: F10, F2 and F13 rank by arithmetic instead of by assertion; C1 turns out to be the heaviest component and had never been named; C7 turns out to be 9th by weight and joint-first by risk, which is the sentence §7 was making without saying which axis it meant; and G4, weight 8, turns out to have no function at all | 126 relation cells and 216 more, recomputed whenever a goal weight, a function or a component moves, plus two TikZ diagrams that must be redrawn with them — and the diagrams carry the preamble twice, since there is no project-level one. The original T9 was right about the cost and wrong about it being avoidable: the tree hid a missing function behind a goal nobody had checked | |
+| T9 | ~~Tree only, no importance matrix~~ — **reversed once the tree had eighteen functions** | bought no grid to keep current, while component priority was argued from need weights rather than computed. That held while the argument was small enough to hold in one head. Both houses are now drawn: F10, F2 and F13 rank by arithmetic instead of by assertion; C1 turns out to be the heaviest component and had never been named; C7 turns out to be 9th by weight and joint-first by risk, which is the sentence §7 was making without saying which axis it meant; and N4, weight 8, turns out to have no function at all | 126 relation cells and 216 more, recomputed whenever a need weight, a function or a component moves, plus two TikZ diagrams that must be redrawn with them — and the diagrams carry the preamble twice, since there is no project-level one. The original T9 was right about the cost and wrong about it being avoidable: the tree hid a missing function behind a need nobody had checked | |
 | T10 | Borrow the **Toolchain**, resolve it every launch | bun and Gleam upgrades are non-events; nothing to configure | ~40 ms per launch for both, and a broken `.zshrc` breaks resolution, though it would break your terminal first | |
-| T12 | bun over node as the runtime | cold spawn 17.6 ms vs 54.9 ms, which puts a run inside F5's budget with no resident process; one self-contained binary, no version-manager shim | a faster-moving runtime under G7; bun ignores `NO_COLOR`, so C4 must strip ANSI from stderr before F12 shows it | |
+| T12 | bun over node as the runtime | cold spawn 17.6 ms vs 54.9 ms, which puts a run inside F5's budget with no resident process; one self-contained binary, no version-manager shim | a faster-moving runtime under N7; bun ignores `NO_COLOR`, so C4 must strip ANSI from stderr before F12 shows it | |
 | T13 | A **Script** declares its **Input** in a field, over a `Need` variant | the **Vocabulary** keeps **Context** and **Input** apart, since a **Need** is a slice of the machine the **Shelf** gathers, and C8 never has to know one word in that list is not for it | a constructor gained a field, so every **Script** already written on every machine has to be edited once, and `install.sh` cannot do it: the one upgrade this design has no migration for. Taken at T5.1 because five stubs is the cheapest it will ever be | |
 | T14 | One vendored `text.gleam` both pasting **Scripts** import, over a copy in each | every note agrees on how a title is spelled, and the mapping is tested once instead of twice, so the split it exists to prevent cannot open up between two files | T1.6's isolation, partly: a **Script** importing it shares its fate, where until now a **Script** that did not compile took only itself down. Bounded by the module being the **Shelf**'s, replaced wholesale on install, and seven string replacements with no dependencies. Taken at T6.1 with the second caller in hand, as T5.2 said to | |
 | T11 | `gleam_json` for the wire, over hand-rolled encoding | escaping is the library's problem on the two paths that carry arbitrary text: a page title into **Paste**, an error into **Notify** | one dependency in a **Shelf**-owned `gleam.toml`, resolved on first install; **Scripts** never import it | |
@@ -736,7 +736,7 @@ largest single cost in the system and still the reason F9's budget is in seconds
   fate affordable. **Trigger to revisit:** the second function wanting in. A module that accumulates
   helpers stops being a mapping and becomes a library every **Script** depends on, and the isolation
   T1.6 measured is spent one import at a time.
-- The **Vocabulary** will want to grow. G6 is weight 6 and not a cap. **Trigger:** a third
+- The **Vocabulary** will want to grow. N6 is weight 6 and not a cap. **Trigger:** a third
   **Script** wanting the same missing **Effect**.
 
   **Fired, for two words at once: `Browse(url:)` and `Copy(text:)`.** Both were reached by the same
@@ -787,9 +787,9 @@ largest single cost in the system and still the reason F9's budget is in seconds
   since `run.mjs` awaits whatever `entry.run` hands back and awaiting a plain string costs nothing,
   so what is open is the Gleam type and not the plumbing. The candidates are not equal: making every
   `run` return a `Promise` is uniform but puts `gleam/javascript/promise` in front of Clean and
-  Work, which pay for a concurrency primitive they never use (G5, G6); a second `Script`
+  Work, which pay for a concurrency primitive they never use (N5, N6); a second `Script`
   constructor for the asynchronous kind keeps the simple case simple and costs a word in the
-  **Vocabulary** (G6 again, and *Ask first*). **Trigger to revisit:** T5.2, which is the first
+  **Vocabulary** (N6 again, and *Ask first*). **Trigger to revisit:** T5.2, which is the first
   **Script** that fetches, so decide it there with a real one in hand rather than now on a guess.
 
   Settled at T5.2: the second constructor. `Fetching` sits beside `Script` and differs in one
@@ -813,7 +813,7 @@ largest single cost in the system and still the reason F9's budget is in seconds
   `export`s `main`, so nothing calls it and `node entry.mjs` exits silently. `gleam run` works by
   generating a second file named `gleam@@private_main_v1.18.1.mjs`: marked private, and carrying
   the Gleam version in its name, so every upgrade renames it. Depending on that would have put a
-  `brew upgrade gleam` between the user and all five **Scripts**, which is exactly what G7 forbids.
+  `brew upgrade gleam` between the user and all five **Scripts**, which is exactly what N7 forbids.
   Shelling out to `gleam run` avoids the path but re-resolves the project on every **Summon**, far
   outside the F5 budget. Resolved with `run.mjs`, a shim we own and vendor: it depends only on
   `entry.mjs` exporting a function, and a rename would break it loudly at import rather than
@@ -850,7 +850,7 @@ largest single cost in the system and still the reason F9's budget is in seconds
 - `CONTEXT.md` claimed a **Script** is pure. Writing the **Manifest** type showed it can't be,
   since Youtube's fetch decides its **Effects**. `CONTEXT.md` now records where the boundary
   actually falls.
-- "Footprint" meant three things. Split into G4 (idle cost), G2 (ready at login) and G6
+- "Footprint" meant three things. Split into N4 (idle cost), N2 (ready at login) and N6
   (**Vocabulary** size). Only after splitting did the 356-vs-10 number become the headline.
 - The **Stale** rule compared mtimes, and Gleam compares content. Found at T1.4 by the first
   real `Starkit run work`, which **Refused** a **Script** that was perfectly current: `touch` a
@@ -890,22 +890,22 @@ largest single cost in the system and still the reason F9's budget is in seconds
   target set before the spike would have shipped 8× slower than necessary and looked green.
 - F13 was missing entirely from the first pass at functions, and F12 and F14 nearly were.
   Keyboard navigation is not a detail of the bar; it is most of what using the bar *is*.
-- **G4 has no function.** It is weight 8, the third-heaviest goal in the document, and §5 gives it
+- **N4 has no function.** It is weight 8, the third-heaviest need in the document, and §5 gives it
   120 of 2061 — 5.8 % of a house where it holds 15 % of the weight. Its three cells are all
   side-effects of decisions taken for other reasons: F5 keeps nothing between runs so the run is
   fast, F9 is a login item, F10's FSEvents happens to be a subscription rather than a poll. §3
-  measures the goal thoroughly — 3.9 MB against 1.86 GB, 21 MB phys footprint, 0 measurable idle CPU
+  measures the need thoroughly — 3.9 MB against 1.86 GB, 21 MB phys footprint, 0 measurable idle CPU
   — and every one of those numbers is won by a *trade* (T1, T2, T12) rather than by anything §2 holds
-  anyone to. So G4 is currently met by luck that happens to be structural. Not resolved by adding a
-  function on the spot, because inventing a target for a goal already being met would be the
+  anyone to. So N4 is currently met by luck that happens to be structural. Not resolved by adding a
+  function on the spot, because inventing a target for a need already being met would be the
   reverse of how every other row here was written. Recorded instead, with the trigger: the first
-  change that costs idle memory or disk, at which point G4 needs a function with a number, and the
-  material to write it is already in §3. The same reading applies more weakly to G7, which at least
+  change that costs idle memory or disk, at which point N4 needs a function with a number, and the
+  material to write it is already in §3. The same reading applies more weakly to N7, which at least
   has F15 owning it outright.
 - **§7 was ranking by risk and calling it effort.** "C4 and C7 carry the most risk" is true; it sat
   under the heading "where the effort goes" next to no computed weights, so it read as a priority
   ordering. Computing it puts C7 9th of 12. Resolved by naming both axes in §7 rather than by
-  changing either judgement — risk says where a mistake costs most, weight says where the goals land,
+  changing either judgement — risk says where a mistake costs most, weight says where the needs land,
   and C7 is the row where they disagree hardest.
 - **C5's responsibility still said "**Stale** check by mtime."** The mtime rule was replaced by
   content hashing at T1.4, and §10 has recorded that since — but §7's own table kept the old word,
@@ -1060,7 +1060,7 @@ this system that is silent by construction.
   `Target (now)`**. §2 was left out of this rule until T8.1 and went stale for it: F5 still read
   "measured 6.7 ms warm", which is the warm-process number from the alternative T3 *rejected*, so the
   one line most people would read first described a design that was never built.
-- Goals change rarely; functions change with each release; matrices are recomputed when either side changes.
+- Needs change rarely; functions change with each release; matrices are recomputed when either side changes.
 - **A house is a rendering, not a source.** §5, §7 and §11 hold the cells; the four files under
   `docs/houses/` hold the same numbers a second time and cannot be recomputed from anything. So the
   order is always tables first, houses after, and never one without the other.
