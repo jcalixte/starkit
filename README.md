@@ -24,6 +24,7 @@ Five are seeded on install:
 | `link` | Reads a URL's `h1` and pastes `[Title](url)` |
 | `youtube`, `yt` | Turns a YouTube link into the note a video gets written down as |
 | `clean` | Kills every running application except the ones on your keep list |
+| `monitor`, `mon` | Seats the second screen where it physically stands: `monitor left` |
 | `work` | Opens your working day — **ships empty, fill it in yourself** |
 | `personal` | The same, for everything else |
 
