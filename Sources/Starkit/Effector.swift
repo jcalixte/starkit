@@ -26,6 +26,7 @@ struct Effector {
             case .kill(let app): try kill(app)
             case .copy(let text): copy(text)
             case .paste(let text): try paste(text)
+            case .seat(let side): try seat(side)
             case .notify(let message): notify(message)
             }
         }
@@ -206,6 +207,114 @@ struct Effector {
             "   Paste — \(text.count) characters into \(into ?? "whatever is in front")"
                 + String(format: " in %.1f ms", (CFAbsoluteTimeGetCurrent() - start) * 1000)
         )
+    }
+
+    /// Put the screen that is not the main one on a side of the one that is.
+    ///
+    /// Needs no grant of any kind: the arrangement belongs to the display configuration, which is
+    /// CoreGraphics', and not to Accessibility, which is what **Paste** had to ask for. Nothing that
+    /// is open is touched either — macOS reshuffles windows itself when the desktop changes shape,
+    /// exactly as it does when the screen is dragged in Displays.
+    private func seat(_ side: Side) throws(Refusal) {
+        switch onMain({ Effector.reseat(side) }) {
+        case .success(let where_): report("   Seat — \(where_)")
+        case .failure(let refusal): throw refusal
+        }
+    }
+
+    /// Read the screens, work out the origin, and write it, all on the main thread.
+    ///
+    /// On main because `NSScreen` is AppKit's — the same rule `onMain` exists for — and because a
+    /// display reconfiguration is a global one: two of them interleaved is a state neither asked for.
+    private static func reseat(_ side: Side) -> Result<String, Refusal> {
+        let main = CGMainDisplayID()
+        var ids = [CGDirectDisplayID](repeating: 0, count: 16)
+        var found: UInt32 = 0
+        guard CGGetActiveDisplayList(16, &ids, &found) == .success else {
+            return .failure(Refusal("Starkit could not read the screens attached to this machine."))
+        }
+
+        // A mirrored screen shows another one's desktop and holds no place of its own in the
+        // arrangement, so it is neither a candidate nor a reason to refuse.
+        let others = ids.prefix(Int(found)).filter {
+            $0 != main && CGDisplayMirrorsDisplay($0) == kCGNullDirectDisplay
+        }
+
+        guard let other = others.first else {
+            return .failure(
+                Refusal(
+                    "There is only one screen attached.",
+                    detail: "Seat puts the second one beside the main one, and with one screen "
+                        + "there is no arrangement to change."
+                ))
+        }
+        guard others.count == 1 else {
+            return .failure(
+                Refusal(
+                    "Seat cannot tell which of \(others.count) screens you meant.",
+                    detail: others.map(name(of:)).joined(separator: ", ")
+                        + " are all attached beside \(name(of: main)), and Seat carries a side "
+                        + "rather than a screen."
+                ))
+        }
+
+        // The main screen is at (0, 0) by definition, so the other one's origin *is* the whole of the
+        // offset. y grows downward in this space as it does in `CGDisplayBounds`, which is why Top is
+        // the negative one. Centres are aligned along the shared edge, because a side on its own does
+        // not say where along it.
+        let its = CGDisplayBounds(other)
+        let mains = CGDisplayBounds(main)
+        let origin =
+            switch side {
+            case .left: CGPoint(x: -its.width, y: (mains.height - its.height) / 2)
+            case .right: CGPoint(x: mains.width, y: (mains.height - its.height) / 2)
+            case .top: CGPoint(x: (mains.width - its.width) / 2, y: -its.height)
+            case .bottom: CGPoint(x: (mains.width - its.width) / 2, y: mains.height)
+            }
+
+        var configuration: CGDisplayConfigRef?
+        guard CGBeginDisplayConfiguration(&configuration) == .success, let configuration else {
+            return .failure(Refusal("Starkit could not begin a display configuration."))
+        }
+        guard
+            CGConfigureDisplayOrigin(
+                configuration, other, Int32(origin.x.rounded()), Int32(origin.y.rounded())
+            ) == .success
+        else {
+            CGCancelDisplayConfiguration(configuration)
+            return .failure(
+                Refusal(
+                    "Starkit could not move \(name(of: other)).",
+                    detail: "The arrangement is as it was."
+                ))
+        }
+
+        // `.permanently`: this is the arrangement macOS remembers for this set of screens, so the
+        // same screens plugged in again arrive already seated and the Script is never needed twice.
+        guard CGCompleteDisplayConfiguration(configuration, .permanently) == .success else {
+            return .failure(
+                Refusal(
+                    "macOS refused the arrangement.",
+                    detail: "\(name(of: other)) is still where it was."
+                ))
+        }
+
+        // Read back rather than reported from the request: macOS snaps an arrangement to leave no gap
+        // between screens, so where it landed and where it was asked to go are not always the same.
+        let landed = CGDisplayBounds(other)
+        return .success(
+            "\(name(of: other)) is \(side.said) \(name(of: main)) "
+                + "at \(Int(landed.origin.x)), \(Int(landed.origin.y))"
+        )
+    }
+
+    /// The name a person reads in Displays, which is `NSScreen`'s: CoreGraphics has only the number.
+    private static func name(of display: CGDirectDisplayID) -> String {
+        let number = NSDeviceDescriptionKey("NSScreenNumber")
+        let screen = NSScreen.screens.first {
+            ($0.deviceDescription[number] as? NSNumber)?.uint32Value == display
+        }
+        return screen?.localizedName ?? "screen \(display)"
     }
 
     /// Wait for the application the bar took the keyboard from to have it back.

@@ -50,6 +50,7 @@ Every one of them is performed by the **Shelf**, in the order you listed them.
 | `Kill(app:)` | Terminates it immediately | Never asks, never lets it save. Same two spellings accepted |
 | `Copy(text:)` | Puts the text on the clipboard | Types nothing anywhere, so it does not care what was in front. Reach for it when the result is worth keeping and there is nowhere to put it |
 | `Paste(text:)` | Puts the text on the clipboard, restores focus to the application you came from, and synthesises ⌘V | The text stays on the clipboard afterwards, so it can be pasted again by hand. Needs Accessibility; a `Copy` does not |
+| `Seat(side:)` | Puts the screen that is not the main one on a side of the one that is | `Left`, `Top`, `Right`, `Bottom`, with the two screens' centres aligned. This is the arrangement Displays remembers, so it is wanted once for a new screen and not once per plug. Needs no permission, and is **Refused** when nothing is attached beside the main screen, or when more than one thing is |
 | `Notify(message:)` | Shows a message in the bar while it is still on screen | Not a system notification, and the only way a **Script** reports anything, failure included |
 
 Returning `[]` is legitimate: the seeded `work.gleam` is exactly that until you fill it in.

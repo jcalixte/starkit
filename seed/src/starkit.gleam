@@ -34,8 +34,28 @@ pub type Effect {
   /// afterwards, so it can be pasted again by hand. Copy is this without the keystroke.
   Paste(text: String)
 
+  /// Put the screen that is not the main one on a side of the one that is, with their centres
+  /// aligned — the arrangement Displays remembers, and not a window move. Nothing that is open
+  /// changes size, though macOS shuffles windows itself when the desktop changes shape, exactly as
+  /// it does when the screen is dragged by hand.
+  ///
+  /// Refused when nothing is attached beside the main screen, and refused when more than one thing
+  /// is: which of them you meant is not a guess worth making.
+  Seat(side: Side)
+
   /// Show a message in the bar. The only way a Script reports anything, including failure.
   Notify(message: String)
+}
+
+/// Which side of the main screen a Seat puts the other one on.
+///
+/// Physical rather than logical: it is where the screen actually stands on the desk, so that the
+/// pointer leaves by the edge it looks like it should.
+pub type Side {
+  Left
+  Top
+  Right
+  Bottom
 }
 
 /// A slice of machine state a Script needs in order to decide. Scripts cannot read the machine

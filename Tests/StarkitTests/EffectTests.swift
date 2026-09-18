@@ -28,7 +28,8 @@ struct EffectTests {
         let reply = """
             {"effects":[{"kind":"open","app":"Slack"},{"kind":"browse","url":"https://gleam.run"},\
             {"kind":"kill","app":"Notion"},{"kind":"copy","text":"kept"},\
-            {"kind":"paste","text":"hello"},{"kind":"notify","message":"nothing to do"}]}
+            {"kind":"paste","text":"hello"},{"kind":"seat","side":"left"},\
+            {"kind":"notify","message":"nothing to do"}]}
             """
         #expect(
             try read(reply) == [
@@ -37,9 +38,37 @@ struct EffectTests {
                 .kill(app: "Notion"),
                 .copy(text: "kept"),
                 .paste(text: "hello"),
+                .seat(side: .left),
                 .notify(message: "nothing to do"),
             ]
         )
+    }
+
+    /// The other end is `every_side_crosses_the_wire_as_its_own_word_test`. A Side is the one value
+    /// in the Vocabulary that is a closed set of words rather than free text, so the four spellings
+    /// are as much of the contract as the field name is.
+    @Test("each Side arrives as its own word")
+    func everySide() throws {
+        let reply = """
+            {"effects":[{"kind":"seat","side":"left"},{"kind":"seat","side":"top"},\
+            {"kind":"seat","side":"right"},{"kind":"seat","side":"bottom"}]}
+            """
+        #expect(
+            try read(reply) == [
+                .seat(side: .left), .seat(side: .top), .seat(side: .right), .seat(side: .bottom),
+            ]
+        )
+    }
+
+    // A side Starkit does not know is the same kind of drift as an Effect it does not know, and has
+    // to fail the same way: the reply is refused whole, so a Seat is never performed on a guess at
+    // which way "leftt" was meant to point.
+    @Test("a side that is not one of the four is a Refusal, not a default")
+    func unknownSide() {
+        let refusal = #expect(throws: Refusal.self) {
+            try read(#"{"effects":[{"kind":"seat","side":"leftt"}]}"#)
+        }
+        #expect(refusal?.reason == "Starkit could not read what \"work\" answered.")
     }
 
     // Open and Browse both name something to bring up and both carry one string, so a Browse that
@@ -153,5 +182,8 @@ struct EffectTests {
         #expect("\(Effect.copy(text: "kept"))" == #"Copy("kept")"#)
         #expect("\(Effect.notify(message: "offline"))" == #"Notify("offline")"#)
         #expect("\(Effect.paste(text: "two\nlines"))" == #"Paste("two\nlines")"#)
+        // `Seat(Left)`, as it is written in Gleam — not `Seat("left")`, which is only how it travels.
+        #expect("\(Effect.seat(side: .left))" == "Seat(Left)")
+        #expect("\(Effect.seat(side: .bottom))" == "Seat(Bottom)")
     }
 }

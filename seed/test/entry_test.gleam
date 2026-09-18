@@ -7,7 +7,9 @@
 
 import entry
 import gleam/string
-import starkit.{Browse, Copy, Kill, Notify, Open, Paste}
+import starkit.{
+  Bottom, Browse, Copy, Kill, Left, Notify, Open, Paste, Right, Seat, Top,
+}
 
 /// Every word of the Effect vocabulary, each under the field name the Vocabulary gave it. `Open` and
 /// `Browse` both carry one string, so the field name is the second lock behind the kind.
@@ -18,9 +20,17 @@ pub fn every_effect_crosses_the_wire_under_its_own_field_name_test() {
       Kill("Notion"),
       Copy("kept"),
       Paste("hello"),
+      Seat(Left),
       Notify("nothing to do"),
     ])
-    == "{\"effects\":[{\"kind\":\"open\",\"app\":\"Slack\"},{\"kind\":\"browse\",\"url\":\"https://gleam.run\"},{\"kind\":\"kill\",\"app\":\"Notion\"},{\"kind\":\"copy\",\"text\":\"kept\"},{\"kind\":\"paste\",\"text\":\"hello\"},{\"kind\":\"notify\",\"message\":\"nothing to do\"}]}"
+    == "{\"effects\":[{\"kind\":\"open\",\"app\":\"Slack\"},{\"kind\":\"browse\",\"url\":\"https://gleam.run\"},{\"kind\":\"kill\",\"app\":\"Notion\"},{\"kind\":\"copy\",\"text\":\"kept\"},{\"kind\":\"paste\",\"text\":\"hello\"},{\"kind\":\"seat\",\"side\":\"left\"},{\"kind\":\"notify\",\"message\":\"nothing to do\"}]}"
+}
+
+/// Every Side, because the wire carries a word and a misspelled one is a Refusal at the moment
+/// somebody presses ↩ rather than anything the compiler can see.
+pub fn every_side_crosses_the_wire_as_its_own_word_test() {
+  assert entry.encode([Seat(Left), Seat(Top), Seat(Right), Seat(Bottom)])
+    == "{\"effects\":[{\"kind\":\"seat\",\"side\":\"left\"},{\"kind\":\"seat\",\"side\":\"top\"},{\"kind\":\"seat\",\"side\":\"right\"},{\"kind\":\"seat\",\"side\":\"bottom\"}]}"
 }
 
 /// A Script that decided on nothing is not a Script that Refused, and the two shapes are told apart

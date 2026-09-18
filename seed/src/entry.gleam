@@ -18,9 +18,9 @@ import gleam/json.{type Json}
 import gleam/list
 import registry
 import starkit.{
-  type Asking, type Context, type Effect, type Need, type Script, Asks, Browse,
-  Context, Copy, Decides, Fetching, Kill, Notify, Open, Paste, RunningApps,
-  Script,
+  type Asking, type Context, type Effect, type Need, type Script, type Side,
+  Asks, Bottom, Browse, Context, Copy, Decides, Fetching, Kill, Left, Notify,
+  Open, Paste, Right, RunningApps, Script, Seat, Top,
 }
 
 /// Every Script's Manifest, as JSON.
@@ -134,7 +134,20 @@ fn effect(effect: Effect) -> Json {
     Kill(app) -> tagged("kill", "app", app)
     Copy(text) -> tagged("copy", "text", text)
     Paste(text) -> tagged("paste", "text", text)
+    Seat(on) -> tagged("seat", "side", side(on))
     Notify(message) -> tagged("notify", "message", message)
+  }
+}
+
+/// Lowercase, like every other value on the wire, and the whole of what a Seat carries: the Shelf
+/// reads the side back as a word rather than as coordinates, because where a screen goes is its to
+/// work out from the sizes it can see and a Script's is not.
+fn side(side: Side) -> String {
+  case side {
+    Left -> "left"
+    Top -> "top"
+    Right -> "right"
+    Bottom -> "bottom"
   }
 }
 

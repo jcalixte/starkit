@@ -14,7 +14,32 @@ public enum Effect: Equatable, Sendable {
     case copy(text: String)
     /// Put text on the clipboard, restore focus, and synthesise the paste keystroke.
     case paste(text: String)
+    /// Put the screen that is not the main one on a side of the one that is.
+    case seat(side: Side)
     case notify(message: String)
+}
+
+/// Which side of the main screen a **Seat** puts the other one on.
+///
+/// A word rather than coordinates: where the screen goes is the **Shelf**'s to work out from the
+/// sizes it can see, and a **Script** cannot see them.
+public enum Side: String, Equatable, Sendable, Decodable {
+    case left, top, right, bottom
+}
+
+extension Side {
+    /// Printed as the **Script** author wrote it — `Left`, not `"left"`.
+    public var written: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
+
+    /// Reads as English in a report: *above*, not *top of*.
+    public var said: String {
+        switch self {
+        case .left: "to the left of"
+        case .right: "to the right of"
+        case .top: "above"
+        case .bottom: "below"
+        }
+    }
 }
 
 extension Effect {
@@ -62,11 +87,11 @@ extension Effect {
 
 extension Effect: Decodable {
     private enum Key: String, CodingKey {
-        case kind, app, url, text, message
+        case kind, app, url, text, side, message
     }
 
     /// Each value arrives under the **Vocabulary**'s own name for it — `app`, `url`, `text`,
-    /// `message`. `entry.gleam`'s `tagged` is the other end of exactly this.
+    /// `side`, `message`. `entry.gleam`'s `tagged` is the other end of exactly this.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: Key.self)
         let kind = try container.decode(String.self, forKey: .kind)
@@ -76,6 +101,9 @@ extension Effect: Decodable {
         case "kill": self = .kill(app: try container.decode(String.self, forKey: .app))
         case "copy": self = .copy(text: try container.decode(String.self, forKey: .text))
         case "paste": self = .paste(text: try container.decode(String.self, forKey: .text))
+        // A side that is not one of the four is a decode failure like an unknown `kind` is: the
+        // reply is refused whole, so nothing before it in the list is performed on a guess.
+        case "seat": self = .seat(side: try container.decode(Side.self, forKey: .side))
         case "notify": self = .notify(message: try container.decode(String.self, forKey: .message))
         default:
             throw DecodingError.dataCorruptedError(
@@ -98,6 +126,7 @@ extension Effect: CustomStringConvertible {
         case .kill(let app): "Kill(\(String(reflecting: app)))"
         case .copy(let text): "Copy(\(String(reflecting: text)))"
         case .paste(let text): "Paste(\(String(reflecting: text)))"
+        case .seat(let side): "Seat(\(side.written))"
         case .notify(let message): "Notify(\(String(reflecting: message)))"
         }
     }

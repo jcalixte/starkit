@@ -138,6 +138,16 @@ clipboard is deliberately **not** restored: pasting the same result into several
 common case, re-running the **Script** on the same subject is not.
 _Avoid_: type, insert, set selected text
 
+**Seat**:
+Put the screen that is not the main one on a side of the one that is, as dragging it in Displays
+does. Names where a screen *is*, not where a window goes — the machine answers it through the
+display configuration and refuses it for display reasons: nothing attached beside the main screen,
+or several things attached and no way to tell which was meant. Centres are aligned along the shared
+edge, because a side on its own does not say where along it. macOS remembers the arrangement per set
+of screens, so a **Seat** is done once for a screen rather than once per plug.
+_Avoid_: arrange, position, place, move, layout. And not **Extend**, which is the mode where screens
+are not mirrored rather than the side one sits on.
+
 **Notify**:
 Tell the person why a **Script** did nothing, in the **Shelf** itself, while it is still on
 screen. Not a system notification, because nothing Starkit says is worth keeping.
