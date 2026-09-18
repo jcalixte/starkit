@@ -15,16 +15,17 @@ public enum Overrides {
     /// **Refuse** with a path that is not there rather than falling back to the login shell.
     public static func read(_ text: String, keys: [String]) -> [String: String] {
         var found: [String: String] = [:]
-        for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
-            // Newlines as well as spaces: a file written on Windows ends every line in a carriage
-            // return, and a path with one on the end is not a path to anything.
-            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        // `isNewline`, not `separator: "\n"`: Swift reads the CRLF a file written on Windows ends
+        // every line with as one Character, which is not `"\n"`, so splitting on the newline alone
+        // leaves the whole file as a single line and the first key takes the rest of it as its value.
+        for line in text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
             guard !trimmed.hasPrefix("#"), let equals = trimmed.firstIndex(of: "=") else { continue }
             let key = trimmed[..<equals].trimmingCharacters(in: .whitespaces)
             guard keys.contains(key) else { continue }
             // Only the *first* `=` separates, so a value may contain one.
             let value = trimmed[trimmed.index(after: equals)...]
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .trimmingCharacters(in: .whitespaces)
                 .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
             if !value.isEmpty { found[key] = value }
         }
