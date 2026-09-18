@@ -27,7 +27,7 @@ pub fn script() -> Script {
 /// Which screen moves is the Shelf's to decide and not this Script's — there is one screen that is
 /// not the main one, or there is a Refusal saying why not.
 pub fn seats(input: String) -> List(Effect) {
-  case string.lowercase(string.trim(input)) {
+  case input |> string.trim |> string.lowercase {
     "left" | "l" -> [Seat(Left)]
     "top" | "t" | "above" -> [Seat(Top)]
     "right" | "r" -> [Seat(Right)]
