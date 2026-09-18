@@ -192,8 +192,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Task.detached { [weak self] in
             let outcome = Self.rebuild(toolchain: toolchain, home: home)
+            // Resolved here rather than inside the hop: a weak `self` captured by the inner closure
+            // is a var two closures share, which Swift 6 reads as a data race and refuses.
+            guard let self else { return }
             await MainActor.run {
-                guard let self else { return }
                 self.settle(outcome, listing: cached)
                 // Only once the Scripts are real: watching before this would report the same Refusal
                 // for every file the first build writes.
